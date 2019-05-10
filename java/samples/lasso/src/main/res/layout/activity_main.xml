@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/root_frame"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+
+  <include layout="@layout/editor_view"/>
+
+  <include layout="@layout/editor_view"/>
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+      <Button
+          android:id="@+id/button_input_mode_forcePen"
+          android:layout_width="@dimen/text_button_width"
+          android:layout_height="@dimen/text_button_height"
+          android:layout_marginStart="@dimen/text_button_margin"
+          android:layout_marginLeft="@dimen/text_button_margin"
+          android:layout_marginTop="@dimen/text_button_margin"
+          android:background="@drawable/button_background"
+          android:text="@string/inputMode_forcePen"
+          android:textColor="@color/button_text_color"/>
+
+      <Button
+          android:id="@+id/button_input_mode_forceTouch"
+          android:layout_width="@dimen/text_button_width"
+          android:layout_height="@dimen/text_button_height"
+          android:layout_marginTop="@dimen/text_button_margin"
+          android:background="@drawable/button_background"
+          android:text="@string/inputMode_forceTouch"
+          android:textColor="@color/button_text_color"/>
+
+      <Button
+          android:id="@+id/button_input_mode_auto"
+          android:layout_width="@dimen/text_button_width"
+          android:layout_height="@dimen/text_button_height"
+          android:layout_marginTop="@dimen/text_button_margin"
+          android:background="@drawable/button_background"
+          android:text="@string/inputMode_auto"
+          android:textColor="@color/button_text_color"/>
+
+      <Button
+          android:id="@+id/button_lasso"
+          android:layout_width="@dimen/text_button_width"
+          android:layout_height="@dimen/text_button_height"
+          android:layout_marginTop="@dimen/text_button_margin"
+          android:background="@drawable/button_background"
+          android:text="@string/Lasso"
+          android:textColor="@color/button_text_color"/>
+
+      <View
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:visibility="invisible"/>
+
+      <ImageButton
+          android:id="@+id/button_undo"
+          android:layout_width="@dimen/image_button_size"
+          android:layout_height="@dimen/image_button_size"
+          android:background="?android:selectableItemBackground"
+          android:src="@drawable/ic_undo"/>
+
+      <ImageButton
+          android:id="@+id/button_redo"
+          android:layout_width="@dimen/image_button_size"
+          android:layout_height="@dimen/image_button_size"
+          android:background="?android:selectableItemBackground"
+          android:src="@drawable/ic_redo"/>
+
+      <ImageButton
+          android:id="@+id/button_clear"
+          android:layout_width="@dimen/image_button_size"
+          android:layout_height="@dimen/image_button_size"
+          android:background="?android:selectableItemBackground"
+          android:src="@drawable/ic_delete"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/message_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:textColor="@android:color/black"/>
+
+  </LinearLayout>
+
+</FrameLayout>

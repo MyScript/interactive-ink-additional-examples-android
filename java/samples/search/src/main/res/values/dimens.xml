@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) MyScript. All rights reserved.
+  -->
+
+<resources>
+
+    <dimen name="image_button_size">40dp</dimen>
+    <dimen name="text_button_width">55dp</dimen>
+    <dimen name="text_button_height">30dp</dimen>
+    <dimen name="text_button_margin">5dp</dimen>
+    <dimen name="search_word_width">200dp</dimen>
+    <dimen name="search_button_width">100dp</dimen>
+    <dimen name="search_button_height">30dp</dimen>
+    <dimen name="search_button_margin">5dp</dimen>
+
+</resources>

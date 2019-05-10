@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+rootProject.name = 'myscript.iink.samples.android.java'
+
+def myProjects = [
+        // samples
+        ':batch-mode-sample'         : file("$settingsDir/samples/batch-mode"),
+        ':exercise-assessment-sample': file("$settingsDir/samples/exercise-assessment"),
+        ':search-sample'             : file("$settingsDir/samples/search"),
+        ':lasso-sample'              : file("$settingsDir/samples/lasso"),
+        // MyScript certificate
+        ':certificate'               : file("${settingsDir.parent}/certificate"),
+        // common libraries
+        ':common'                    : file("$settingsDir/common"),
+        // MyScript iink UI reference implementation.
+        // Copy from: https://github.com/MyScript/interactive-ink-examples-android/tree/43170e5ab239c15818dc254c4a68cdbc96f6ba27/UIReferenceImplementation
+        ':UIReferenceImplementation' : file("${settingsDir.parent}/UIReferenceImplementation")
+
+]
+
+myProjects.each { myProject, dir ->
+    logger.info("Including $myProject")
+    include myProject
+    if (dir != null)
+        project(myProject).projectDir = dir
+}

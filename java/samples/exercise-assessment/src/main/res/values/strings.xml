@@ -1,0 +1,35 @@
+<!--
+  ~ Copyright (c) MyScript. All rights reserved.
+  -->
+
+<resources>
+    <string name="app_name">Exercise Assessment</string>
+
+    <string name="menu_undo">Undo</string>
+    <string name="menu_redo">Redo</string>
+    <string name="menu_clear">Clear</string>
+    <string name="menu_convert">Convert</string>
+
+    <string name="math_problem_1">
+        In mathematics, an integral assigns numbers to functions in a way that can describe
+        displacement, area, volume, and other concepts that arise by combining infinitesimal data.
+        Integration is one of the two main operations of calculus, with its inverse operation,
+        differentiation, being the other.\n\nSolve:
+    </string>
+
+    <string name="math_problem_2">
+        The UN is an intergovernmental organization that was tasked to maintain international peace
+        and security, develop friendly relations among nations,achieve international co-operation
+        and be a centre for harmonizing the actions of nations. The headquarters of the UN is in
+        Manhattan, New York City, and is subject to extraterritoriality. Further main offices are
+        situated in Geneva, Nairobi, and Vienna. The organization is financed by assessed and
+        voluntary contributions from its member states. Its objectives include maintaining
+        international peace and security, protecting human rights, delivering humanitarian aid,
+        promoting sustainable development and upholding international law. The UN is the largest,
+        most familiar, most internationally represented and most powerful intergovernmental
+        organization in the world.\n\nWhat does the abbreviation UN stands for?
+    </string>
+
+    <string name="problem_answer">Answer:</string>
+    <string name="problem_score">Score:</string>
+</resources>

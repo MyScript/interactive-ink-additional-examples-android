@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- App name -->
+    <string name="app_name" translatable="false">Lasso sample</string>
+
+    <string name="inputMode_forcePen">Pen</string>
+    <string name="inputMode_forceTouch">Touch</string>
+    <string name="inputMode_auto">Auto</string>
+    <string name="Lasso">Lasso</string>
+
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+
+</resources>

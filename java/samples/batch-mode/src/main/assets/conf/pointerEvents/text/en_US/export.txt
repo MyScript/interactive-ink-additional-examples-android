@@ -1,0 +1,8 @@
+Welcome to Nebo!
+Myscript is happy to present you Nebo, a note-taking application that understands what you write.
+With Nebo, the MyScript team has done what has never been done before: you write and edit what you write-titles, paragraphs, lists and more. Neto converts them in real-time into digital text and keeps the formatting and document layout. No more retyping from handwritten notes. Time and effort is saved-you are more productive.
+What's more, you can create diagrams and each cell can be moved independently, edited with the pen and converted on demand.
+This level of interactivity is achieved through Interactive Ink, MyScript's new innovative technology.
+What's next? Ploy with the next pages of this notebook and experience Nebo's interactivity. Learn more with the online user guide, FAQ, and tips. Just look for help or tutorial within the main menu in the top right. Enjoy and send your feedback on www.mysaipt.com/nebo.
+Thanks,
+The Myscript team.

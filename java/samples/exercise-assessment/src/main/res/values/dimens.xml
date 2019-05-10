@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) MyScript. All rights reserved.
+  -->
+
+<resources>
+    <dimen name="text_view_drawable_padding">16dp</dimen>
+</resources>
