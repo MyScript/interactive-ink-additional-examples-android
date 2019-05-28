@@ -14,8 +14,6 @@ This repository comes in addition with further advanced Android examples that de
 
 3. Copy this certificate to `certificate/src/main/java/com/myscript/certificate/MyCertificate.java`
 
-4. The lasso example is illustrating how you can perform recognition of strokes captured with a lasso in the drawing area of your application: It is based on two "Drawing" parts: one for the drawing/writing area and the other one for the lasso capture. In lasso mode, the lassoed strokes are sent as a series of event to a batch recognition of a "Text" part and the result is displayed.
-
 ## Various examples
 
 This repository provides you with an additional set of ready-to-use examples based on Android:
@@ -29,7 +27,21 @@ This repository provides you with an additional set of ready-to-use examples bas
 
 2. The exercise assessment illustrates the case when you want to use several writing areas each one for a specific purpose (here the example is based on problem solving and score writing) in your application. It is thus using multiple editors, one per writing area, as each one has a different purpose: one of them is dedicated to "Math" content types and the three other ones to "Text" content type.
 
+<div align="center">
+ <img src="assessment.gif" alt="assessment" width="302">
+</div>
+
 3. The search example shows how to perform word search on raw digital ink and highlights the result found in the ink. it is based on "Raw Content" Content Type.
+
+<div align="center">
+ <img src="search-sample.gif" alt="search sample"  width="302">
+</div>
+
+4. The lasso example is illustrating how you can perform recognition of strokes captured with a lasso in the drawing area of your application: It is based on two "Drawing" parts: one for the drawing/writing area and the other one for the lasso capture. In lasso mode, the lassoed strokes are sent as a series of event to a batch recognition of a "Text" part and the result is displayed.
+
+<div align="center">
+ <img src="lasso.gif" alt="lasso"  width="302">
+</div>
 
 ## Documentation
 
