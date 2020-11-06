@@ -5,7 +5,6 @@
 package com.myscript.iink.sample.assessment;
 
 import android.app.Application;
-import android.support.annotation.NonNull;
 
 import com.myscript.certificate.MyCertificate;
 import com.myscript.iink.Configuration;
@@ -13,6 +12,8 @@ import com.myscript.iink.Engine;
 import com.myscript.iink.app.common.IInteractiveInkApplication;
 
 import java.io.File;
+
+import androidx.annotation.NonNull;
 
 /**
  * Please replace the content of {@link MyCertificate} with a valid certificate you received from

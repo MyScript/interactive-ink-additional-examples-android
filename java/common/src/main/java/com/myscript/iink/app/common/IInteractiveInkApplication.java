@@ -4,9 +4,8 @@
 
 package com.myscript.iink.app.common;
 
-import android.support.annotation.NonNull;
-
 import com.myscript.iink.Engine;
+import androidx.annotation.NonNull;
 
 /**
  * Defines an iink application containing a runtime {@link Engine}.

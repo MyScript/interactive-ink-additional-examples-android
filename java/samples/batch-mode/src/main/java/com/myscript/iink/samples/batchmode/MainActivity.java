@@ -4,9 +4,8 @@
 
 package com.myscript.iink.samples.batchmode;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -20,12 +19,18 @@ import com.myscript.iink.MimeType;
 import com.myscript.iink.PointerEvent;
 import com.myscript.iink.PointerEventType;
 import com.myscript.iink.Renderer;
+import com.myscript.iink.uireferenceimplementation.FontMetricsProvider;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -67,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
         editor = engine.createEditor(renderer);
 
         // The editor requires a font metrics provider and a view size *before* calling setPart()
-        editor.setFontMetricsProvider(null);
+        Map<String, Typeface> typefaceMap = new HashMap<>();
+        editor.setFontMetricsProvider(new FontMetricsProvider(displayMetrics, typefaceMap));
         editor.setViewSize(displayMetrics.widthPixels, displayMetrics.heightPixels);
 
         // Load the pointerEvents from the right .json file depending of the part type

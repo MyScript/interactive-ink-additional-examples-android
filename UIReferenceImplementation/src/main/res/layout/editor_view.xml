@@ -6,48 +6,27 @@
         android:id="@+id/editor_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/white"
         android:visibility="invisible">
-
-        <com.myscript.iink.uireferenceimplementation.LayerView
-            android:id="@+id/layer_background"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="0dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginRight="0dp"
-            android:layout_marginBottom="0dp"
-            custom:layerType="BACKGROUND" />
 
         <com.myscript.iink.uireferenceimplementation.LayerView
             android:id="@+id/layer_model"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="0dp"
             android:layout_marginTop="0dp"
-            android:layout_marginRight="0dp"
-            android:layout_marginBottom="0dp"
-            custom:layerType="MODEL" />
-
-        <com.myscript.iink.uireferenceimplementation.LayerView
-            android:id="@+id/layer_temporary"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
             android:layout_marginLeft="0dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginRight="0dp"
             android:layout_marginBottom="0dp"
-            custom:layerType="TEMPORARY" />
+            android:layout_marginRight="0dp"
+            custom:layerType="MODEL"/>
 
         <com.myscript.iink.uireferenceimplementation.LayerView
             android:id="@+id/layer_capture"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="0dp"
             android:layout_marginTop="0dp"
-            android:layout_marginRight="0dp"
+            android:layout_marginLeft="0dp"
             android:layout_marginBottom="0dp"
-            custom:layerType="CAPTURE" />
+            android:layout_marginRight="0dp"
+            custom:layerType="CAPTURE"/>
 
         <com.myscript.iink.uireferenceimplementation.SmartGuideView
             android:id="@+id/smart_guide_view"
@@ -60,22 +39,22 @@
                 android:id="@+id/style_view"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:background="@drawable/rectangle_border"
                 android:gravity="center"
                 android:paddingLeft="@dimen/smart_guide_horizontal_padding"
-                android:paddingTop="@dimen/smart_guide_vertical_padding"
                 android:paddingRight="@dimen/smart_guide_horizontal_padding"
+                android:paddingTop="@dimen/smart_guide_vertical_padding"
                 android:paddingBottom="@dimen/smart_guide_vertical_padding"
+                android:textSize="@dimen/smart_guide_text_size"
                 android:text="@string/style_view_string_normal"
                 android:textColor="@color/control_gray"
-                android:textSize="@dimen/smart_guide_text_size" />
+                android:background="@drawable/rectangle_border"/>
 
             <HorizontalScrollView
                 android:id="@+id/scroll_view"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:background="@drawable/bottom_border"
-                android:fillViewport="true">
+                android:fillViewport="true"
+                android:background="@drawable/bottom_border">
 
                 <LinearLayout
                     android:id="@+id/stack_view"
@@ -89,9 +68,9 @@
                         android:id="@+id/word_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textSize="@dimen/smart_guide_text_size"
                         android:text="hello"
-                        android:textColor="@color/word_gray"
-                        android:textSize="@dimen/smart_guide_text_size" />
+                        android:textColor="@color/word_gray"/>
 
                 </LinearLayout>
 
@@ -101,15 +80,15 @@
                 android:id="@+id/more_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bottom_border"
                 android:gravity="center"
                 android:paddingLeft="@dimen/smart_guide_horizontal_padding"
-                android:paddingTop="@dimen/smart_guide_vertical_padding"
                 android:paddingRight="@dimen/smart_guide_horizontal_padding"
+                android:paddingTop="@dimen/smart_guide_vertical_padding"
                 android:paddingBottom="@dimen/smart_guide_vertical_padding"
+                android:textSize="@dimen/smart_guide_text_size"
                 android:text="@string/more_view_string"
                 android:textColor="@color/control_gray"
-                android:textSize="@dimen/smart_guide_text_size" />
+                android:background="@drawable/bottom_border"/>
 
         </com.myscript.iink.uireferenceimplementation.SmartGuideView>
 

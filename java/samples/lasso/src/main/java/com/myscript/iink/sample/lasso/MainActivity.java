@@ -2,10 +2,8 @@
 
 package com.myscript.iink.sample.lasso;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +27,7 @@ import com.myscript.iink.app.common.activities.ErrorActivity;
 import com.myscript.iink.graphics.Point;
 import com.myscript.iink.graphics.Transform;
 import com.myscript.iink.uireferenceimplementation.EditorView;
+import com.myscript.iink.uireferenceimplementation.FontMetricsProvider;
 import com.myscript.iink.uireferenceimplementation.ImageLoader;
 import com.myscript.iink.uireferenceimplementation.InputController;
 
@@ -37,9 +36,15 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
@@ -110,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.e(TAG, "Failed to edit block \"" + blockId + "\"" + message);
             }
         });
-        drawingView.setImageLoader(new ImageLoader(drawingEditor, this.getCacheDir()));
+        drawingView.setImageLoader(new ImageLoader(drawingEditor));
 
         lassoView = (EditorView) frame.getChildAt(1);
         lassoView.setEngine(engine);
@@ -139,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.e(TAG, "Failed to edit block \"" + blockId + "\"" + message);
             }
         });
-        lassoView.setImageLoader(new ImageLoader(lassoEditor, this.getCacheDir()));
+        lassoView.setImageLoader(new ImageLoader(lassoEditor));
 
         int inputMode = InputController.INPUT_MODE_FORCE_PEN; // If using an active pen, put INPUT_MODE_AUTO here
         if (savedInstanceState != null)
@@ -151,7 +156,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Create the batch editor
         batchEditor = engine.createEditor(engine.createRenderer(displayMetrics.xdpi, displayMetrics.ydpi, null));
         // The editor requires a font metrics provider and a view size *before* calling setPart()
-        batchEditor.setFontMetricsProvider(null);
+        Map<String, Typeface> typefaceMap = new HashMap<>();
+        batchEditor.setFontMetricsProvider(new FontMetricsProvider(displayMetrics, typefaceMap));
         batchEditor.setViewSize(displayMetrics.widthPixels, displayMetrics.heightPixels);
 
         // wait for view size initialization before setting part

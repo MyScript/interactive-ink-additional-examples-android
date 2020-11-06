@@ -4,14 +4,14 @@
   ~ Copyright (c) MyScript. All rights reserved.
   -->
 
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:showIn="@layout/activity_main">
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_vertical"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -59,4 +59,4 @@
         android:text="@string/problem_score"
         app:layout_constraintStart_toStartOf="@id/guideline_vertical"
         app:layout_constraintTop_toTopOf="parent" />
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

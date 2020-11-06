@@ -7,7 +7,6 @@ package com.myscript.iink.app.common.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.widget.TextView;
 
@@ -15,6 +14,8 @@ import com.myscript.iink.app.common.R;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * This activity displays an error message when an uncaught exception is thrown within an activity

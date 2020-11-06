@@ -6,8 +6,8 @@ package com.myscript.iink.sample.assessment.activities;
 
 import android.app.Application;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements IEditorListener {
     }
 
     private void initWith(@NonNull final EditorView editorView) {
+        editorView.setTypefaces(FontUtils.loadFontsFromAssets(getApplicationContext().getAssets()));
         editorView.setEngine(engine);
         final Editor editor = editorView.getEditor();
         if (editor == null) return;
@@ -89,8 +90,8 @@ public class MainActivity extends AppCompatActivity implements IEditorListener {
         // - InputController.INPUT_MODE_FORCE_PEN
         // - InputController.INPUT_MODE_FORCE_TOUCH
         editorView.setInputMode(InputController.INPUT_MODE_FORCE_PEN);
-        editorView.setTypefaces(FontUtils.loadFontsFromAssets(getApplicationContext().getAssets()));
         // attach content part to the editor.
+
         editorView.post(new Runnable() {
             @Override
             public void run() {
