@@ -28,7 +28,7 @@ This repository provides you with an additional set of ready-to-use examples bas
     offScreenProcess(typeOfPart[it])
 ~~~
 <div align="center">
- <img src="batch.gif" alt="batch" width="302">
+ <img src="batch.gif" alt="batch sample" width="302">
 </div>
 
 NB: you will retrieve data converted in your device internal storage : Android\data\com.myscript.iink.samples.batchmode\files
@@ -41,7 +41,7 @@ NB: you will retrieve data converted in your device internal storage : Android\d
 - Fifth one  is dedicated to "Draw" content types
 
 <div align="center">
- <img src="assesment.gif" alt="assessment_new" width="302">
+ <img src="assessment.gif" alt="assessment sample" width="302">
 </div>
 
 3. The search example shows how to perform word search on raw digital ink and highlights the result found in the ink. it is based on "Raw Content" Content Type by default but you can change it to "Text Document" by modifying the following line in the MainActivity class:
