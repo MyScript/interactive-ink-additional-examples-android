@@ -2,6 +2,7 @@
 
 package com.myscript.iink.uireferenceimplementation;
 
+import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -10,9 +11,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Build;
-import androidx.annotation.NonNull;
-import androidx.collection.LruCache;
-import androidx.core.util.Pair;
 import android.text.Layout;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -22,16 +20,21 @@ import android.text.style.MetricAffectingSpan;
 import android.text.style.TextAppearanceSpan;
 import android.util.DisplayMetrics;
 
+import androidx.annotation.NonNull;
+import androidx.collection.LruCache;
+import androidx.core.util.Pair;
+
 import com.myscript.iink.graphics.Rectangle;
 import com.myscript.iink.graphics.Style;
 import com.myscript.iink.text.GlyphMetrics;
-import com.myscript.iink.text.IFontMetricsProvider2;
+import com.myscript.iink.text.IFontMetricsProvider;
 import com.myscript.iink.text.Text;
 import com.myscript.iink.text.TextSpan;
 
+import java.util.Objects;
 import java.util.Map;
 
-public class FontMetricsProvider implements IFontMetricsProvider2
+public class FontMetricsProvider implements IFontMetricsProvider
 {
   private static class FontKey
   {
@@ -50,7 +53,7 @@ public class FontMetricsProvider implements IFontMetricsProvider2
     @Override
     public int hashCode()
     {
-      return family.hashCode() ^ style ^ size;
+      return Objects.hash(family, style, size);
     }
 
     @Override
@@ -60,7 +63,7 @@ public class FontMetricsProvider implements IFontMetricsProvider2
         return true;
       if (!(obj instanceof FontKey))
         return false;
-      FontKey other = (FontKey) obj;
+      FontKey other = (FontKey)obj;
       return style == other.style && size == other.size && family.equals(other.family);
     }
   }
@@ -70,15 +73,14 @@ public class FontMetricsProvider implements IFontMetricsProvider2
     T get();
   }
 
-  private DisplayMetrics displayMetrics;
-  private TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-  private TextPaint paint_ = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-  private Path charPath = new Path();
-  private RectF charBox = new RectF();
-  private Map<String, Typeface> typefaceMap;
+  private final DisplayMetrics displayMetrics;
+  private final TextPaint paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+  private final TextPaint paint_ = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+  private final Path charPath = new Path();
+  private final RectF charBox = new RectF();
+  private final Map<String, Typeface> typefaceMap;
 
   private final LruCache<Pair<FontKey, String>, GlyphMetrics> glyphMetricsCache = new LruCache<>(1024);
-  private final LruCache<Pair<FontKey, String>, Float> pairKerningCache = new LruCache<>(2048);
 
   public FontMetricsProvider(DisplayMetrics displayMetrics, Map<String, Typeface> typefaceMap)
   {
@@ -113,7 +115,7 @@ public class FontMetricsProvider implements IFontMetricsProvider2
   }
 
   @Override
-  public Rectangle[] getCharacterBoundingBoxes(Text text, TextSpan[] spans)
+  public Rectangle[] getCharacterBoundingBoxes(@NonNull Text text, TextSpan[] spans)
   {
     GlyphMetrics[] metrics = getGlyphMetrics(text, spans);
     Rectangle[] charBoxes = new Rectangle[metrics.length];
@@ -126,6 +128,12 @@ public class FontMetricsProvider implements IFontMetricsProvider2
   public float getFontSizePx(Style style)
   {
     return style.getFontSize() * displayMetrics.scaledDensity;
+  }
+
+  @Override
+  public boolean supportsGlyphMetrics()
+  {
+    return true;
   }
 
   private GlyphMetrics getGlyphMetrics(FontKey fontKey, String glyph, IValueProvider<GlyphMetrics> valueProvider)
@@ -143,18 +151,18 @@ public class FontMetricsProvider implements IFontMetricsProvider2
     }
   }
 
-  private float getPairKerning(FontKey fontKey, String glyph1, String glyph2, IValueProvider<Float> valueProvider)
+  @SuppressLint("NewApi")
+  @SuppressWarnings("deprecation")
+  @NonNull
+  private StaticLayout getLayout(@NonNull SpannableString string)
   {
-    Pair<FontKey, String> key = new Pair<>(fontKey, glyph1 + glyph2);
-    synchronized (pairKerningCache)
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M)
     {
-      Float value = pairKerningCache.get(key);
-      if (value == null)
-      {
-        value = valueProvider.get();
-        pairKerningCache.put(key, value);
-      }
-      return value;
+      return StaticLayout.Builder.obtain(string, 0, string.length(), paint_, Integer.MAX_VALUE).setIncludePad(false).build();
+    }
+    else
+    {
+      return new StaticLayout(string, paint_, Integer.MAX_VALUE, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
     }
   }
 
@@ -174,14 +182,14 @@ public class FontMetricsProvider implements IFontMetricsProvider2
 
     for (int i = 0; i < spans.length; i++)
     {
-      Style style = spans[i].getStyle();
+      Style style = spans[i].style;
 
-      String fontFamily = toPlatformFontFamily(style);
+      String fontFamily = style.getFontFamily();
 
       int typefaceStyle = FontUtils.getTypefaceStyle(style);
       int fontSize = Math.round(y_mm2px(style.getFontSize()));
-      int start = text.getGlyphBeginAt(spans[i].getBeginPosition());
-      int end = text.getGlyphEndAt(spans[i].getEndPosition() - 1);
+      int start = text.getGlyphBeginAt(spans[i].beginPosition);
+      int end = text.getGlyphEndAt(spans[i].endPosition - 1);
 
       MetricAffectingSpan span;
       Typeface typeface = FontUtils.getTypeface(typefaceMap, fontFamily, style.getFontStyle(), style.getFontVariant(), style.getFontWeight());
@@ -203,109 +211,65 @@ public class FontMetricsProvider implements IFontMetricsProvider2
     int spanEnd = -1;
     int spanIndex = -1;
     FontKey fontKey = null;
-    float pos = 0;
-    String glyph_ = null;
-    final Layout[] layout = new Layout[1];
+
+    final StaticLayout layout = getLayout(string);
+    if (layout.getLineCount() != 1)
+    {
+      throw new RuntimeException();
+    }
+
     for (int i = 0; i < glyphCount; ++i)
     {
       if (i >= spanEnd)
       {
         ++spanIndex;
-        fontKey = new FontKey(toPlatformFontFamily(spans[spanIndex].getStyle()), typefaces[spanIndex].getStyle(), fontSizes[spanIndex]);
-        spanEnd = spans[spanIndex].getEndPosition();
+        fontKey = new FontKey(spans[spanIndex].style.getFontFamily(), typefaces[spanIndex].getStyle(), fontSizes[spanIndex]);
+        spanEnd = spans[spanIndex].endPosition;
         updatePaint(fontSizes, typefaces, spanIndex);
       }
 
       final int start = text.getGlyphBeginAt(i);
       final int end = text.getGlyphEndAt(i);
       String glyph = label.substring(start, end);
-      GlyphMetrics m = getGlyphMetrics(fontKey, glyph, new IValueProvider<GlyphMetrics>()
-      {
-        @Override
-        public GlyphMetrics get()
+      GlyphMetrics m = getGlyphMetrics(fontKey, glyph, () -> {
+        paint.getTextPath(label, start, end, 0, 0, charPath);
+        charPath.computeBounds(charBox, true);
+
+        // some glyphs paths may not be available (like for emojis)
+        // in that case we use simple text bounds, which are less precise but correct
+        if (charBox.isEmpty() && !label.equals(" "))
         {
-          paint.getTextPath(label, start, end, 0, 0, charPath);
-          charPath.computeBounds(charBox, true);
-
-          // some glyphs paths may not be available (like for emojis)
-          // in that case we use simple text bounds, which are less precise but correct
-          if (charBox.isEmpty() && !label.equals(" "))
-          {
-            Rect box = new Rect();
-            paint.getTextBounds(label, start, end, box);
-            charBox.left = box.left;
-            charBox.top = box.top;
-            charBox.right = box.right;
-            charBox.bottom = box.bottom;
-          }
-
-          float x = x_px2mm(charBox.left);
-          float y = y_px2mm(charBox.top);
-          float width = x_px2mm(charBox.width());
-          float height = y_px2mm(charBox.height());
-
-          float leftSideBearing = -x;
-          float rightSideBearing;
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-          {
-            float advance = paint.getRunAdvance(label, start, end, start, end, false, end);
-            rightSideBearing = x_px2mm(advance - charBox.right);
-          }
-          else
-          {
-            rightSideBearing = 0; // expect degraded reflow of typeset text
-          }
-
-          return new GlyphMetrics(x, y, width, height, leftSideBearing, rightSideBearing);
+          Rect box = new Rect();
+          paint.getTextBounds(label, start, end, box);
+          charBox.left = box.left;
+          charBox.top = box.top;
+          charBox.right = box.right;
+          charBox.bottom = box.bottom;
         }
-      });
 
-      if (i > 0)
-      {
-        float pairKerning;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (" ".equals(glyph_) || " ".equals(glyph)))
+        float x = x_px2mm(charBox.left);
+        float y = y_px2mm(charBox.top);
+        float width = x_px2mm(charBox.width());
+        float height = y_px2mm(charBox.height());
+
+        float leftSideBearing = -x;
+        float rightSideBearing;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
-          pairKerning = 0; // pair kerning is zero for space, when right side bearing is correct
+          float advance = paint.getRunAdvance(label, start, end, start, end, false, end);
+          rightSideBearing = x_px2mm(advance - charBox.right);
         }
         else
         {
-          final float defaultPos = pos;
-          pairKerning = getPairKerning(fontKey, glyph_, glyph, new IValueProvider<Float>()
-          {
-            @Override
-            public Float get()
-            {
-              if (layout[0] == null)
-              {
-                layout[0] = new StaticLayout(string, paint_, 100000, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
-                if (layout[0].getLineCount() != 1)
-                  throw new RuntimeException();
-              }
-              float posPx = layout[0].getPrimaryHorizontal(start);
-              float pos = x_px2mm(posPx);
-              return pos - defaultPos;
-            }
-          });
+          rightSideBearing = 0; // expect degraded reflow of typeset text
         }
-        pos += pairKerning;
-      }
 
-      charBoxes[i] = new GlyphMetrics(pos + m.boundingBox.x, m.boundingBox.y, m.boundingBox.width, m.boundingBox.height, m.leftSideBearing, m.rightSideBearing);
+        return new GlyphMetrics(x, y, width, height, leftSideBearing, rightSideBearing);
+      });
 
-      glyph_ = glyph;
-      pos += m.boundingBox.width - m.leftSideBearing + m.rightSideBearing;
+      charBoxes[i] = new GlyphMetrics(x_px2mm(layout.getPrimaryHorizontal(start)) + m.boundingBox.x, m.boundingBox.y, m.boundingBox.width, m.boundingBox.height, m.leftSideBearing, m.rightSideBearing);
     }
 
     return charBoxes;
-  }
-
-  public static final String toPlatformFontFamily(Style style)
-  {
-    return toPlatformFontFamily(style.getFontFamily(), style.getFontStyle());
-  }
-
-  public static final String toPlatformFontFamily(String fontFamily, String fontStyle)
-  {
-    return "STIXGeneral".equals(fontFamily) && "italic".equals(fontStyle) ? "STIX" : fontFamily;
   }
 }

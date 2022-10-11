@@ -15,7 +15,7 @@ class CopyResourceAssetsTask extends DefaultTask {
 
     @TaskAction
     void copyResourceAssets() {
-        def baseUrl = "https://s3-us-west-2.amazonaws.com/iink/assets/1.4.0"
+        def baseUrl = "https://s3-us-west-2.amazonaws.com/iink/assets/$project.ext.iinkVersionName"
         def urls = [
                 "$baseUrl/myscript-iink-recognition-diagram.zip",
                 "$baseUrl/myscript-iink-recognition-raw-content.zip",

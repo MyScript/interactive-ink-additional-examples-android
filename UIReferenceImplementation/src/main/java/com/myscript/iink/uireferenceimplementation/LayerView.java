@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import androidx.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.View;
 
 import com.myscript.iink.Editor;
@@ -23,7 +24,7 @@ import java.util.Map;
 
 public class LayerView extends View implements IRenderView
 {
-  private LayerType type;
+  private final LayerType type;
   private IRenderTarget renderTarget;
 
   private ImageLoader imageLoader;
@@ -44,6 +45,14 @@ public class LayerView extends View implements IRenderView
   private Canvas iinkCanvas;
   @Nullable
   private OfflineSurfaceManager offlineSurfaceManager = null;
+  @Nullable
+  private Renderer renderer = null;
+  private int pageHeight = 0;
+  private int viewHeight = 0;
+  private int viewWidth = 0;
+  private int pageWidth = 0;
+  private int yMin = 0;
+  private int xMin = 0;
 
   public LayerView(Context context)
   {
@@ -91,7 +100,7 @@ public class LayerView extends View implements IRenderView
     this.renderTarget = renderTarget;
   }
 
-  public void setOfflineSurfaceManager(OfflineSurfaceManager offlineSurfaceManager)
+  public void setOfflineSurfaceManager(@Nullable OfflineSurfaceManager offlineSurfaceManager)
   {
     this.offlineSurfaceManager = offlineSurfaceManager;
   }
@@ -136,20 +145,13 @@ public class LayerView extends View implements IRenderView
       {
         switch (type)
         {
-          case BACKGROUND:
-            renderer.drawBackground(localUpdateArea.left, localUpdateArea.top, localUpdateArea.width(), localUpdateArea.height(), iinkCanvas);
-            break;
           case MODEL:
             renderer.drawModel(localUpdateArea.left, localUpdateArea.top, localUpdateArea.width(), localUpdateArea.height(), iinkCanvas);
-            break;
-          case TEMPORARY:
-            renderer.drawTemporaryItems(localUpdateArea.left, localUpdateArea.top, localUpdateArea.width(), localUpdateArea.height(), iinkCanvas);
             break;
           case CAPTURE:
             renderer.drawCaptureStrokes(localUpdateArea.left, localUpdateArea.top, localUpdateArea.width(), localUpdateArea.height(), iinkCanvas);
             break;
           default:
-            // unknown layer type
             break;
         }
       }
@@ -171,7 +173,8 @@ public class LayerView extends View implements IRenderView
     }
     bitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888);
     sysCanvas = new android.graphics.Canvas(bitmap);
-    iinkCanvas = new Canvas(sysCanvas, typefaceMap, imageLoader, renderTarget, offlineSurfaceManager);
+    DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+    iinkCanvas = new Canvas(sysCanvas, typefaceMap, imageLoader, offlineSurfaceManager, metrics.xdpi, metrics.ydpi);
 
     super.onSizeChanged(newWidth, newHeight, oldWidth, oldHeight);
   }
@@ -204,8 +207,56 @@ public class LayerView extends View implements IRenderView
       emptyArea = updateArea.isEmpty();
       lastRenderer = renderer;
     }
-
     if (!emptyArea)
       postInvalidate(x, y, x + width, y + height);
+  }
+
+  public void setScrollbar(Renderer renderer, int viewWidthPx, int pageWidthtPx, int xMin, int viewHeightPx, int pageHeightPx, int yMin)
+  {
+    this.viewWidth = viewWidthPx;
+    this.pageWidth = pageWidthtPx;
+    this.renderer = renderer;
+    this.pageHeight = pageHeightPx;
+    this.viewHeight = viewHeightPx;
+    this.xMin = xMin;
+    this.yMin = yMin;
+    setVerticalScrollBarEnabled(true);
+    awakenScrollBars();
+  }
+
+  @Override
+  protected int computeVerticalScrollRange()
+  {
+    return pageHeight;
+  }
+
+  @Override
+  protected int computeVerticalScrollExtent()
+  {
+    return viewHeight;
+  }
+
+  @Override
+  protected int computeVerticalScrollOffset()
+  {
+    return renderer != null ? (int) renderer.getViewOffset().y - yMin : 0;
+  }
+
+  @Override
+  protected int computeHorizontalScrollRange()
+  {
+    return pageWidth;
+  }
+
+  @Override
+  protected int computeHorizontalScrollExtent()
+  {
+    return viewWidth;
+  }
+
+  @Override
+  protected int computeHorizontalScrollOffset()
+  {
+    return renderer != null ? (int) renderer.getViewOffset().x - xMin : 0;
   }
 }

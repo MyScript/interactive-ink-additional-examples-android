@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    compileSdkVersion project.ext.compileSdkVersion
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    defaultConfig {
+        minSdkVersion project.ext.minSdkVersion
+        targetSdkVersion project.ext.targetSdkVersion
+
+        applicationId 'com.myscript.iink.samples.batchmode'
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+
+        vectorDrawables.useSupportLibrary true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:${project.ext.kotlinCoreVersion}"
+    implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
+    implementation "com.google.android.material:material:${project.ext.materialLibraryVersion}"
+    implementation "com.google.code.gson:gson:${project.ext.gsonVersion}"
+
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+    implementation project(':common-kotlin')
+}

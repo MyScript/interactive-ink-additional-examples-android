@@ -8,39 +8,51 @@ This repository comes in addition with further advanced Android examples that de
 
 ## Installation
 
-1. Clone the examples repository  `git clone https://github.com/MyScript/iink_sdk-additional-examples-android.git`.
+1. Clone the examples repository  `git clone https://github.com/MyScript/iink_sdk-additional-examples-android.git`.
 
 2. If you already have a certificate go to next step, else claim to receive the free license to start develop your application by following the first steps of [Getting Started](https://developer.myscript.com/getting-started).
 
 3. Copy this certificate to `certificate/src/main/java/com/myscript/certificate/MyCertificate.java`
 
+4. Open `java` folder in Android Studio.
+
 ## Various examples
 
 This repository provides you with an additional set of ready-to-use examples based on Android:
 
-1. The batch mode sample is an example of how to integrate iink SDK off-screen, without any user interface. It consists in batch processing content, i.e. processing a series of pointer events corresponding to already collected ink strokes and exporting the recognition result. It comes with four pointer events samples that correspond to four different content types "Text", "Math", "Diagram", "Raw Content". Those content types are exported in respectively .txt, LaTeX, svg and JIIX formats. By default, the example is working with the "Text" content type but all you have to do to try another type is modifying the content type in the MainActivity class:
+1. The batch mode sample is an example of how to integrate iink SDK off-screen, without any user interface. It consists in batch processing content, i.e. processing a series of pointer events corresponding to already collected ink strokes and exporting the recognition result. It comes with four pointer events samples that correspond to four different content types "Text", "Math", "Diagram", "Raw Content". When starting the app a dialog will be displayed to choose which type of part you want to proceed. By default those content types are exported in respectively .txt, LaTeX, svg and JIIX formats, but you can choose to export in png by modifying the following line in the MainActivity class:
 
 ~~~#!java
-    // Choose type of content ("Text", "Math", "Diagram", "Raw Content")
-    private static String partType = "Text";
+    // this is the function where we process exteranl output and export it
+    // add true if you want to export in png
+    offScreenProcess(typeOfPart[it])
 ~~~
-
-2. The exercise assessment illustrates the case when you want to use several writing areas each one for a specific purpose (here the example is based on problem solving and score writing) in your application. It is thus using multiple editors, one per writing area, as each one has a different purpose: one of them is dedicated to "Math" content types and the three other ones to "Text" content type.
-
 <div align="center">
- <img src="assessment.gif" alt="assessment" width="302">
+ <img src="batch.gif" alt="batch" width="302">
 </div>
 
-3. The search example shows how to perform word search on raw digital ink and highlights the result found in the ink. it is based on "Raw Content" Content Type.
+NB: you will retrieve data converted in your device internal storage : Android\data\com.myscript.iink.samples.batchmode\files
 
+2. The exercise assessment illustrates the case when you want to use several writing areas each one for a specific purpose in your application. It is thus using multiple editors, one per writing area, as each one has a different purpose:
+- First one is dedicated to "Math" content types
+- Second one  is dedicated to "Math" content types but with user defined gramar which is dynamically loaded at start.
+- Third one is dedicated to "Text" content types
+- Fourth one  is dedicated to "Diagram" content types
+- Fifth one  is dedicated to "Draw" content types
+
+<div align="center">
+ <img src="assesment.gif" alt="assessment_new" width="302">
+</div>
+
+3. The search example shows how to perform word search on raw digital ink and highlights the result found in the ink. it is based on "Raw Content" Content Type by default but you can change it to "Text Document" by modifying the following line in the MainActivity class:
+
+~~~#!java
+  // wait for view size initialization before setting part
+        editorView!!.post(Runnable() {
+            val partType = "Raw Content" // change to "Text Document" if you want to test
+~~~
 <div align="center">
  <img src="search-sample.gif" alt="search sample"  width="302">
-</div>
-
-4. The lasso example is illustrating how you can perform recognition of strokes captured with a lasso in the drawing area of your application: It is based on two "Drawing" parts: one for the drawing/writing area and the other one for the lasso capture. In lasso mode, the lassoed strokes are sent as a series of event to a batch recognition of a "Text" part and the result is displayed.
-
-<div align="center">
- <img src="lasso.gif" alt="lasso"  width="302">
 </div>
 
 ## Documentation

@@ -1,0 +1,32 @@
+<!--
+  ~ Copyright (c) MyScript. All rights reserved.
+  -->
+
+<resources>
+    <string name="app_name">Exercise Assessment</string>
+
+    <string name="menu_undo">Undo</string>
+    <string name="menu_redo">Redo</string>
+    <string name="menu_clear">Clear</string>
+    <string name="menu_convert">Convert</string>
+
+    <string name="math_problem_1">\nSolve:
+    </string>
+
+    <string name="math_problem_2">\n Tony has two apples and one banana. \nHow many fruits does he have?
+    </string>
+
+    <string name="math_problem_3">\n What is the capital of the United Kingdom ?
+    </string>
+
+    <string name="diagram_problem_4">\n Please draw a Third Generation family tree :
+    </string>
+
+    <string name="drawing_problem_5">\n Can you draw a circle, a square, and a triangle?
+    </string>
+
+
+    <string name="problem_answer">Answer:</string>
+    <string name="problem_score">Score:</string>
+
+</resources>

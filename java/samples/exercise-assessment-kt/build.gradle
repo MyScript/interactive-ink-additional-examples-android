@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    compileSdk project.ext.compileSdkVersion
+
+    defaultConfig {
+        applicationId "com.myscript.iink.samples.assessment"
+
+        minSdkVersion project.ext.minSdkVersion
+        targetSdkVersion project.ext.targetSdkVersion
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    implementation "androidx.core:core-ktx:${project.ext.kotlinCoreVersion}"
+    implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
+    implementation "com.google.android.material:material:${project.ext.materialLibraryVersion}"
+
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+    implementation project(':common-kotlin')
+}
+
+task copyCustomMathConfigRecognitionAssets(type: org.gradle.api.tasks.Copy) {
+    from "${projectDir}/custom_res"
+    into "${projectDir}/src/main/assets"
+}
+
+preBuild.dependsOn(copyCustomMathConfigRecognitionAssets)

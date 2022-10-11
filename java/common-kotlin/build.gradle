@@ -1,0 +1,53 @@
+import com.myscript.gradle.tasks.CopyResourceAssetsTask
+
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    compileSdk project.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion project.ext.minSdkVersion
+        targetSdkVersion project.ext.targetSdkVersion
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    implementation "androidx.core:core-ktx:${project.ext.kotlinCoreVersion}"
+    implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
+    implementation "com.google.android.material:material:${project.ext.materialLibraryVersion}"
+
+    // iink SDK.
+    // once iink wil be published we will use this
+    api "com.myscript:iink:${project.ext.iinkVersionName}"
+}
+
+clean.doFirst {
+    delete "${projectDir}/src/main/assets/conf"
+    delete "${projectDir}/src/main/assets/resources"
+}
+
+task copyResourceAssets(type: CopyResourceAssetsTask)
+preBuild.dependsOn copyResourceAssets

@@ -1,4 +1,6 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
     compileSdkVersion project.ext.compileSdkVersion
@@ -6,15 +8,15 @@ android {
     defaultConfig {
         minSdkVersion project.ext.minSdkVersion
         targetSdkVersion project.ext.targetSdkVersion
-        versionCode 1410
-        versionName '1.4.1'
+        versionCode 2010
+        versionName '2.0.1'
 
         vectorDrawables.useSupportLibrary true
     }
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:${project.ext.supportLibraryVersion}"
-    implementation "com.google.code.gson:gson:2.8.2"
-    api "com.myscript:iink:1.4.1"
+    implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
+    implementation "com.google.code.gson:gson:${project.ext.gsonVersion}"
+    api "com.myscript:iink:${project.ext.iinkVersionName}"
 }
