@@ -75,6 +75,14 @@ NB: the Recognizer API is available from iink SDK 2.1.
 
 For more details on the sample, read more [here](https://github.com/MyScript/interactive-ink-additional-examples-android/blob/master/java/samples/write-to-type/ReadMe.pdf). 
 
+5. The offscreen-interactivity samples shows how to integrate MyScript iink SDK interactivity with your own rendering.
+It drives the content model by sending the captured strokes to iink SDK and keeps the incremental recognition principle and gesture notifications.
+This sample uses a third-party rendering library to manage the captured strokes and display its model, and get real-time recognition results and gesture notifications.
+
+<div align="center">
+ <img src="offscreen-sample.gif" alt="offscreen interacticity sample" width="302">
+</div>
+
 ## Documentation
 
 A complete guide is available on [MyScript Developer Portal](https://developer.myscript.com/docs/interactive-ink/latest/android/).

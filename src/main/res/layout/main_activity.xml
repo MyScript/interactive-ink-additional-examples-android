@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.myscript.iink.demo.inksample.ui.MainActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="?attr/actionBarTheme"
+        android:orientation="vertical"
+        android:animateLayoutChanges="true">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/clear_ink_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/outline_delete_forever_24"
+                    android:contentDescription="Clear" />
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.microsoft.device.ink.InkView
+            android:id="@+id/ink_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:enable_pressure="false"
+            app:ink_color="?android:textColorPrimary"
+            app:max_stroke_width="25"
+            app:min_stroke_width="10" />
+
+        <FrameLayout
+            android:id="@+id/recognition_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/iink_model_preview_layout"
+            android:layout_width="@dimen/iink_model_preview_size"
+            android:layout_height="@dimen/iink_model_preview_size"
+            android:layout_gravity="top|end"
+            android:layout_margin="4dp"
+            android:padding="2dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="#1E000000"
+            android:visibility="invisible"
+            tools:visibility="visible">
+
+            <WebView
+                android:id="@+id/iink_model_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/dividerHorizontal" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/recognition_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:layout_marginVertical="16dp"
+            android:layout_marginHorizontal="16dp"
+            app:switchPadding="8dp"
+            android:text="Show recognition"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/iink_model_preview_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:layout_marginVertical="16dp"
+            android:layout_marginHorizontal="16dp"
+            app:switchPadding="8dp"
+            android:text="Show iink model"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+</LinearLayout>
