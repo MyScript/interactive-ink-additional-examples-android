@@ -22,7 +22,10 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Surface
 import android.view.TextureView
+import com.myscript.iink.demo.ink.serialization.json
+import com.myscript.iink.demo.ink.serialization.parseJson
 import com.myscript.iink.offscreen.demo.R
+import java.util.UUID
 
 // constants
 const val minPointsForValidStroke = 2
@@ -115,10 +118,11 @@ class InkView constructor(
     }
 
     data class Brush(
-        val color: Int,
-        val strokeWidth: Float,
-        val strokeWidthMax: Float,
-        val paintHandler: DynamicPaintHandler?,
+        val id: String = UUID.randomUUID().toString(),
+        val color: Int = Color.BLACK,
+        val strokeWidth: Float = 0f,
+        val strokeWidthMax: Float = 0f,
+        val paintHandler: DynamicPaintHandler? = null,
         val stroke: InputManager.ExtendedStroke
     )
 
@@ -177,7 +181,12 @@ class InkView constructor(
                     redrawTexture()
                     strokeList += stroke
                     brushList.add(
-                        Brush(color, strokeWidth, strokeWidthMax, dynamicPaintHandler, stroke)
+                        Brush(
+                            color = color,
+                            strokeWidth = strokeWidth,
+                            strokeWidthMax = strokeWidthMax,
+                            paintHandler = dynamicPaintHandler,
+                            stroke = stroke)
                     )
                 }
             },
@@ -266,33 +275,35 @@ class InkView constructor(
         return bitmap
     }
 
-    fun saveInk(): List<Brush> {
-        // create a copy of the list to avoid references in both brush list and load ink list
-        return brushList.map { it.copy() }
+    fun saveInk(): String {
+        return brushList.json()
     }
 
-    fun loadInk(brushes: List<Brush>) {
-        // reset canvas
-        drawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-        strokeList.clear()
-        inputManager.currentStroke = InputManager.ExtendedStroke()
-        brushList.clear()
+    fun loadInk(json: String?) {
 
-        // draw each of the brush strokes
-        for (brush in brushes) {
-            brush.stroke.lastPointReferenced = 0
-            strokeList.add(brush.stroke)
-            brushList.add(brush)
+        json?.let {
+            // reset canvas
+            drawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+            strokeList.clear()
+            inputManager.currentStroke = InputManager.ExtendedStroke()
+            brushList.clear()
 
-            color = brush.color
-            strokeWidth = brush.strokeWidth
-            strokeWidthMax = brush.strokeWidthMax
-            dynamicPaintHandler = brush.paintHandler
-            inputManager.currentStroke = brush.stroke
+            val brushes = parseJson(it)
 
-            drawStroke()
+            // draw each of the brush strokes
+            for (brush in brushes) {
+                brush.stroke.lastPointReferenced = 0
+                strokeList.add(brush.stroke)
+                brushList.add(brush)
+
+                color = brush.color
+                dynamicPaintHandler = brush.paintHandler
+                inputManager.currentStroke = brush.stroke
+
+                drawStroke()
+            }
+            redrawTexture()
         }
-        redrawTexture()
     }
 
     private fun updateStrokeWidth(pressure: Float) {

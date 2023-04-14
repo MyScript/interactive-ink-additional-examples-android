@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var seekBar: SeekBar
     private lateinit var circleView: ImageView
 
-    private var savedInk: List<InkView.Brush> = listOf()
+    private var savedInk: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {

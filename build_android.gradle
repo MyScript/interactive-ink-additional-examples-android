@@ -18,7 +18,9 @@ android {
 
 dependencies {
     implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
-    implementation 'com.google.code.gson:gson:2.9.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation libs.material
+
+    testImplementation "junit:junit:4.13.2"
 }
