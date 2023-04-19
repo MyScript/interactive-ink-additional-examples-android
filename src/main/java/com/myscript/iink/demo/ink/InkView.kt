@@ -25,11 +25,14 @@ import android.view.TextureView
 import com.myscript.iink.demo.ink.serialization.json
 import com.myscript.iink.demo.ink.serialization.parseJson
 import com.myscript.iink.offscreen.demo.R
+import java.io.File
+import java.io.FileNotFoundException
 import java.util.UUID
 
 // constants
 const val minPointsForValidStroke = 2
 const val defaultHoverStrokeWidth = 5f
+const val jsonInkFileName = "current.json"
 
 class InkView constructor(
     context: Context,
@@ -276,19 +279,24 @@ class InkView constructor(
     }
 
     fun saveInk(): String {
-        return brushList.json()
+        val jsonString = brushList.json()
+
+        File(context.filesDir, jsonInkFileName).writeText(jsonString)
+
+        return jsonString
     }
 
-    fun loadInk(json: String?) {
+    fun loadInk() {
+        try {
+            val jsonString = context.openFileInput(jsonInkFileName).bufferedReader().readLine()
 
-        json?.let {
             // reset canvas
             drawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             strokeList.clear()
             inputManager.currentStroke = InputManager.ExtendedStroke()
             brushList.clear()
 
-            val brushes = parseJson(it)
+            val brushes = parseJson(jsonString)
 
             // draw each of the brush strokes
             for (brush in brushes) {
@@ -303,6 +311,8 @@ class InkView constructor(
                 drawStroke()
             }
             redrawTexture()
+        } catch (e: FileNotFoundException) {
+            return
         }
     }
 

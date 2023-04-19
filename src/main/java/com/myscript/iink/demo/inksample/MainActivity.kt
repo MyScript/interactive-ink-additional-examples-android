@@ -38,8 +38,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var seekBar: SeekBar
     private lateinit var circleView: ImageView
 
-    private var savedInk: String? = null
-
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,11 +106,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveInk(view: View) {
-        savedInk = inkView.saveInk()
+        inkView.saveInk()
     }
 
     private fun loadInk(view: View) {
-        inkView.loadInk(savedInk)
+        inkView.loadInk()
     }
 
     private fun fancySwitchChanged(view: View) {
