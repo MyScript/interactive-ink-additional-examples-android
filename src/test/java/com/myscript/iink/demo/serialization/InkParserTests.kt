@@ -1,4 +1,4 @@
-package com.myscript.iink.demo
+package com.myscript.iink.demo.serialization
 
 import com.myscript.iink.demo.ink.InkView.Brush
 import com.myscript.iink.demo.ink.InputManager

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License.
  */
 
-package com.myscript.iink.demo.inksample
+package com.myscript.iink.demo.inksample.ui
 
 import android.annotation.SuppressLint
 import android.graphics.Color
@@ -19,6 +19,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.graphics.blue
@@ -26,6 +27,7 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.view.isVisible
 import com.myscript.iink.demo.ink.InkView
+import com.myscript.iink.demo.ink.InkView.Brush
 import com.myscript.iink.demo.ink.InkView.DynamicPaintHandler
 import com.myscript.iink.demo.ink.InputManager
 import com.myscript.iink.offscreen.demo.R
@@ -37,6 +39,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fancySwitch: SwitchCompat
     private lateinit var seekBar: SeekBar
     private lateinit var circleView: ImageView
+
+    private val inkViewModel: InkViewModel by viewModels { InkViewModel.Factory }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +73,20 @@ class MainActivity : AppCompatActivity() {
         )
 
         setStrokeWidth()
+
+        inkViewModel.strokes.observe(this, inkView::drawStrokes)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        inkView.strokesListener = StrokesListener()
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        inkView.strokesListener = null
     }
 
     fun setStrokeWidth() {
@@ -97,7 +115,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun clickClear(@Suppress("UNUSED_PARAMETER") view: View) {
-        inkView.clearInk()
+        inkViewModel.clearInk()
     }
 
     private fun copyImage(view: View) {
@@ -105,12 +123,12 @@ class MainActivity : AppCompatActivity() {
         image.setImageBitmap(inkView.saveBitmap())
     }
 
-    private fun saveInk(view: View) {
-        inkView.saveInk()
+    private fun saveInk(@Suppress("UNUSED_PARAMETER") view: View) {
+        inkViewModel.saveInk()
     }
 
-    private fun loadInk(view: View) {
-        inkView.loadInk()
+    private fun loadInk(@Suppress("UNUSED_PARAMETER") view: View) {
+        inkViewModel.loadInk()
     }
 
     private fun fancySwitchChanged(view: View) {
@@ -148,6 +166,15 @@ class MainActivity : AppCompatActivity() {
             paint.strokeCap = Paint.Cap.ROUND
 
             return paint
+        }
+    }
+
+    /**
+     * Listen for strokes from InkView.InputManager
+     */
+    inner class StrokesListener: InkView.StrokesListener {
+        override fun onStrokeAdded(brush: Brush) {
+            inkViewModel.addStroke(brush)
         }
     }
 

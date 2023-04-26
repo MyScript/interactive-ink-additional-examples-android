@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DuoSDK"
         android:fullBackupContent="false">
-        <activity android:name="com.myscript.iink.demo.inksample.MainActivity"
+        <activity android:name="com.myscript.iink.demo.inksample.ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -22,17 +22,12 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Surface
 import android.view.TextureView
-import com.myscript.iink.demo.ink.serialization.json
-import com.myscript.iink.demo.ink.serialization.parseJson
 import com.myscript.iink.offscreen.demo.R
-import java.io.File
-import java.io.FileNotFoundException
 import java.util.UUID
 
 // constants
 const val minPointsForValidStroke = 2
 const val defaultHoverStrokeWidth = 5f
-const val jsonInkFileName = "current.json"
 
 class InkView constructor(
     context: Context,
@@ -42,8 +37,8 @@ class InkView constructor(
 
     private var surface: Surface? = null
     private var inputManager: InputManager
+    private var drawCanvas: Canvas = Canvas()
     private lateinit var canvasBitmap: Bitmap
-    private lateinit var drawCanvas: Canvas
     private val currentStrokePaint = Paint()
     private val strokeList = mutableListOf<InputManager.ExtendedStroke>()
     private val overridePaint: Paint
@@ -115,9 +110,14 @@ class InkView constructor(
         }
 
     var dynamicPaintHandler: DynamicPaintHandler? = null
+    var strokesListener: StrokesListener? = null
 
     interface DynamicPaintHandler {
         fun generatePaintFromPenInfo(penInfo: InputManager.PenInfo): Paint
+    }
+
+    interface StrokesListener {
+        fun onStrokeAdded(brush: Brush)
     }
 
     data class Brush(
@@ -128,8 +128,6 @@ class InkView constructor(
         val paintHandler: DynamicPaintHandler? = null,
         val stroke: InputManager.ExtendedStroke
     )
-
-    val brushList: MutableList<Brush> = mutableListOf()
 
     init {
         // handle attributes
@@ -183,7 +181,7 @@ class InkView constructor(
                 ) {
                     redrawTexture()
                     strokeList += stroke
-                    brushList.add(
+                    strokesListener?.onStrokeAdded(
                         Brush(
                             color = color,
                             strokeWidth = strokeWidth,
@@ -261,15 +259,6 @@ class InkView constructor(
         hoverEraserPaint.strokeCap = Paint.Cap.ROUND
     }
 
-    fun clearInk() {
-        drawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-        strokeList.clear()
-        brushList.clear()
-
-        inputManager.currentStroke = InputManager.ExtendedStroke()
-        redrawTexture()
-    }
-
     fun saveBitmap(): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val saveCanvas = Canvas(bitmap)
@@ -278,42 +267,25 @@ class InkView constructor(
         return bitmap
     }
 
-    fun saveInk(): String {
-        val jsonString = brushList.json()
+    fun drawStrokes(brushes: List<Brush>) {
 
-        File(context.filesDir, jsonInkFileName).writeText(jsonString)
+        // reset canvas
+        drawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        strokeList.clear()
+        inputManager.currentStroke = InputManager.ExtendedStroke()
 
-        return jsonString
-    }
+        // draw each of the brush strokes
+        for (brush in brushes) {
+            brush.stroke.lastPointReferenced = 0
+            strokeList.add(brush.stroke)
 
-    fun loadInk() {
-        try {
-            val jsonString = context.openFileInput(jsonInkFileName).bufferedReader().readLine()
+            color = brush.color
+            dynamicPaintHandler = brush.paintHandler
+            inputManager.currentStroke = brush.stroke
 
-            // reset canvas
-            drawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-            strokeList.clear()
-            inputManager.currentStroke = InputManager.ExtendedStroke()
-            brushList.clear()
-
-            val brushes = parseJson(jsonString)
-
-            // draw each of the brush strokes
-            for (brush in brushes) {
-                brush.stroke.lastPointReferenced = 0
-                strokeList.add(brush.stroke)
-                brushList.add(brush)
-
-                color = brush.color
-                dynamicPaintHandler = brush.paintHandler
-                inputManager.currentStroke = brush.stroke
-
-                drawStroke()
-            }
-            redrawTexture()
-        } catch (e: FileNotFoundException) {
-            return
+            drawStroke()
         }
+        redrawTexture()
     }
 
     private fun updateStrokeWidth(pressure: Float) {
