@@ -58,7 +58,7 @@
             android:layout_height="match_parent"
             android:visibility="invisible" />
 
-        <com.myscript.iink.demo.ink.InkView
+        <com.microsoft.device.ink.InkView
             android:id="@+id/ink_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.myscript.iink.demo.ink.InkView.Brush
+import com.microsoft.device.ink.InkView
 import com.myscript.iink.demo.ink.serialization.json
 import com.myscript.iink.demo.ink.serialization.parseJson
 import com.myscript.iink.demo.inksample.data.InkRepository
@@ -18,8 +18,8 @@ import kotlinx.coroutines.withContext
 
 class InkViewModel(private val repository: InkRepository): ViewModel() {
 
-    private val _strokes: MutableLiveData<List<Brush>> = MutableLiveData(listOf())
-    val strokes: LiveData<List<Brush>>
+    private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(listOf())
+    val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
 
 
@@ -53,7 +53,7 @@ class InkViewModel(private val repository: InkRepository): ViewModel() {
         }
     }
 
-    fun addStroke(brush: Brush) {
+    fun addStroke(brush: InkView.Brush) {
         viewModelScope.launch(Dispatchers.Main) {
             _strokes.value = _strokes.value?.plus(brush)
         }

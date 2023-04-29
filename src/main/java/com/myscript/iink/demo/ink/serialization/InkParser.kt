@@ -1,8 +1,8 @@
 package com.myscript.iink.demo.ink.serialization
 
 import com.google.gson.Gson
-import com.myscript.iink.demo.ink.InkView
-import com.myscript.iink.demo.ink.InputManager
+import com.microsoft.device.ink.InkView
+import com.microsoft.device.ink.InputManager
 
 fun List<InkView.Brush>.json(): String {
     val inkFormats = mutableListOf<InkFormat>()

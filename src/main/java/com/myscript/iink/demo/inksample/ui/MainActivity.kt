@@ -21,9 +21,8 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.view.isVisible
-import com.myscript.iink.demo.ink.InkView
-import com.myscript.iink.demo.ink.InkView.Brush
-import com.myscript.iink.demo.ink.InputManager
+import com.microsoft.device.ink.InkView
+import com.microsoft.device.ink.InputManager
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
 
 class MainActivity : AppCompatActivity() {
@@ -148,7 +147,7 @@ class MainActivity : AppCompatActivity() {
      * Listen for strokes from InkView.InputManager
      */
     inner class StrokesListener: InkView.StrokesListener {
-        override fun onStrokeAdded(brush: Brush) {
+        override fun onStrokeAdded(brush: InkView.Brush) {
             inkViewModel.addStroke(brush)
         }
     }

@@ -4,10 +4,10 @@
  */
 
 /*
- * https://github.com/microsoft/surface-duo-sdk
+ * https://github.com/microsoft/surface-duo-sdk/blob/main/inksdk/ink/src/main/java/com/microsoft/device/ink/InkView.kt
  */
 
-package com.myscript.iink.demo.ink
+package com.microsoft.device.ink
 
 import android.content.Context
 import android.graphics.Bitmap
