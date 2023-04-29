@@ -8,6 +8,10 @@ android {
 
     compileSdkVersion project.ext.compileSdkVersion
 
+    buildFeatures {
+        viewBinding true
+    }
+
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion project.ext.targetSdkVersion

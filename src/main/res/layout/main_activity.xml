@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.myscript.iink.demo.inksample.MainActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="?attr/actionBarTheme"
+        android:orientation="vertical"
+        android:animateLayoutChanges="true">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+
+            <ImageView
+                android:id="@+id/clear_ink_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:background="?attr/selectableItemBackground"
+                android:src="@drawable/outline_delete_forever_24"
+                android:contentDescription="Clear" />
+
+            <ImageView
+                android:id="@+id/save_ink_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:background="?attr/selectableItemBackground"
+                android:src="@drawable/outline_file_download_24"
+                android:contentDescription="Save" />
+
+            <ImageView
+                android:id="@+id/load_ink_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:background="?attr/selectableItemBackground"
+                android:src="@drawable/outline_file_upload_24"
+                android:contentDescription="Load" />
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/web_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="invisible" />
+
+        <com.myscript.iink.demo.ink.InkView
+            android:id="@+id/ink_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:enable_pressure="false"
+            app:ink_color="?android:textColorPrimary"
+            app:max_stroke_width="25"
+            app:min_stroke_width="10" />
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/dividerHorizontal" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginVertical="16dp"
+        android:layout_marginHorizontal="16dp">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/ink_pressure_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            app:switchPadding="8dp"
+            android:text="Pressure ink" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/web_view_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:layout_marginStart="8dp"
+            app:switchPadding="8dp"
+            android:text="Show web view" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <FrameLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp">
+
+            <ImageView
+                android:layout_gravity="center"
+                android:id="@+id/ink_width_feedback"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                app:srcCompat="@drawable/circle"
+                tools:ignore="ContentDescription" />
+        </FrameLayout>
+
+        <SeekBar
+            android:id="@+id/ink_width_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:max="48"
+            android:min="10"
+            android:progress="12" />
+    </LinearLayout>
+
+</LinearLayout>
