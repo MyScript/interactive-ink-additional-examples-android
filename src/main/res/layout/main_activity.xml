@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.myscript.iink.demo.inksample.MainActivity">
+    tools:context="com.myscript.iink.demo.inksample.ui.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -73,58 +73,15 @@
         android:layout_height="1dp"
         android:background="?android:attr/dividerHorizontal" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/web_view_switch"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:checked="false"
         android:layout_marginVertical="16dp"
-        android:layout_marginHorizontal="16dp">
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/ink_pressure_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            app:switchPadding="8dp"
-            android:text="Pressure ink" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/web_view_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:layout_marginStart="8dp"
-            app:switchPadding="8dp"
-            android:text="Show web view" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <FrameLayout
-            android:layout_width="56dp"
-            android:layout_height="56dp">
-
-            <ImageView
-                android:layout_gravity="center"
-                android:id="@+id/ink_width_feedback"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                app:srcCompat="@drawable/circle"
-                tools:ignore="ContentDescription" />
-        </FrameLayout>
-
-        <SeekBar
-            android:id="@+id/ink_width_seekbar"
-            android:layout_width="match_parent"
-            android:layout_height="24dp"
-            android:max="48"
-            android:min="10"
-            android:progress="12" />
-    </LinearLayout>
+        android:layout_marginHorizontal="16dp"
+        app:switchPadding="8dp"
+        android:text="Show web view"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>
