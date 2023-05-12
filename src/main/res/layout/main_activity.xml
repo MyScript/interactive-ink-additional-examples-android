@@ -18,32 +18,64 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize">
 
-            <ImageView
-                android:id="@+id/clear_ink_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="12dp"
-                android:background="?attr/selectableItemBackground"
-                android:src="@drawable/outline_delete_forever_24"
-                android:contentDescription="Clear" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/save_ink_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="12dp"
-                android:background="?attr/selectableItemBackground"
-                android:src="@drawable/outline_file_download_24"
-                android:contentDescription="Save" />
+                <ImageView
+                    android:id="@+id/clear_ink_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/outline_delete_forever_24"
+                    android:contentDescription="Clear" />
 
-            <ImageView
-                android:id="@+id/load_ink_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="12dp"
-                android:background="?attr/selectableItemBackground"
-                android:src="@drawable/outline_file_upload_24"
-                android:contentDescription="Load" />
+                <ImageView
+                    android:id="@+id/save_ink_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/outline_file_download_24"
+                    android:contentDescription="Save" />
+
+                <ImageView
+                    android:id="@+id/load_ink_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/outline_file_upload_24"
+                    android:contentDescription="Load" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:id="@+id/pen_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="@drawable/tool_selection_feedback_selector"
+                    android:backgroundTint="?attr/colorControlHighlight"
+                    android:src="@drawable/ic_pen_outlined"
+                    android:contentDescription="Pen" />
+
+                <ImageView
+                    android:id="@+id/eraser_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="@drawable/tool_selection_feedback_selector"
+                    android:backgroundTint="?attr/colorControlHighlight"
+                    android:src="@drawable/ic_eraser"
+                    android:contentDescription="Eraser" />
+            </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 

@@ -16,12 +16,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+enum class ToolType {
+    PEN, ERASER
+}
+data class ToolState(
+    val type: ToolType,
+    val isSelected: Boolean = false
+)
 class InkViewModel(private val repository: InkRepository): ViewModel() {
 
     private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(listOf())
     val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
 
+    private val _availableTools: MutableLiveData<List<ToolState>> = MutableLiveData(listOf(
+        ToolState(type = ToolType.PEN, isSelected = true),
+        ToolState(type = ToolType.ERASER, isSelected = false)
+    ))
+    val availableTools: LiveData<List<ToolState>>
+        get() = _availableTools
 
     fun clearInk() {
         viewModelScope.launch(Dispatchers.Main) {
@@ -56,6 +69,14 @@ class InkViewModel(private val repository: InkRepository): ViewModel() {
     fun addStroke(brush: InkView.Brush) {
         viewModelScope.launch(Dispatchers.Main) {
             _strokes.value = _strokes.value?.plus(brush)
+        }
+    }
+
+    fun selectTool(toolType: ToolType) {
+        viewModelScope.launch(Dispatchers.Main) {
+            _availableTools.value = _availableTools.value?.map {
+                it.copy(isSelected = it.type == toolType)
+            } ?: emptyList()
         }
     }
 
