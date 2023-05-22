@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 23
+        minSdkVersion project.ext.minSdkVersion
         targetSdkVersion project.ext.targetSdkVersion
 
         applicationId 'com.myscript.iink.offscreen.demo'
