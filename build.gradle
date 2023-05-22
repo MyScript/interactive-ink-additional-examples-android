@@ -6,15 +6,15 @@ plugins {
 android {
     namespace 'com.myscript.iink.offscreen.demo'
 
-    compileSdkVersion project.ext.compileSdkVersion
+    compileSdk project.ext.compileSdk
 
     buildFeatures {
         viewBinding true
     }
 
     defaultConfig {
-        minSdkVersion project.ext.minSdkVersion
-        targetSdkVersion project.ext.targetSdkVersion
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
 
         applicationId 'com.myscript.iink.offscreen.demo'
     }
