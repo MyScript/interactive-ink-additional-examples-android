@@ -8,7 +8,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:fullBackupContent="false">
+        android:fullBackupContent="false"
+        android:name="com.myscript.iink.demo.inksample.InkApplication">
         <activity android:name="com.myscript.iink.demo.inksample.ui.MainActivity"
             android:exported="true">
             <intent-filter>
