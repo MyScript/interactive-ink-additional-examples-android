@@ -1,14 +1,13 @@
 package com.myscript.iink.demo.inksample.data
 
-import android.content.Context
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
 
-class InkRepositoryImpl(private val context: Context): InkRepository {
+class InkRepositoryImpl(private val dataDir: File): InkRepository {
 
     private val inkFile: File
-        get() = File(context.filesDir, "current.json")
+        get() = File(dataDir, "current.json")
 
     override fun readInkFromFile(): String? {
         return try {
