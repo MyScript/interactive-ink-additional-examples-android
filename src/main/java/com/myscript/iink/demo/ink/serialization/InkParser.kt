@@ -1,10 +1,10 @@
 package com.myscript.iink.demo.ink.serialization
 
 import com.google.gson.Gson
-import com.microsoft.device.ink.InkView
+import com.microsoft.device.ink.InkView.Brush
 import com.microsoft.device.ink.InputManager
 
-fun List<InkView.Brush>.json(): String {
+fun List<Brush>.json(): String {
     val inkFormats = mutableListOf<InkFormat>()
 
     map { brush ->
@@ -31,9 +31,9 @@ fun List<InkView.Brush>.json(): String {
     return Gson().toJson(inkRoot)
 }
 
-fun parseJson(json: String): List<InkView.Brush> {
+fun parseJson(json: String): List<Brush> {
     val inkRoot = Gson().fromJson(json, InkRoot::class.java)
-    val brushes = mutableListOf<InkView.Brush>()
+    val brushes = mutableListOf<Brush>()
 
     inkRoot.items.map { item ->
         val stroke = InputManager.ExtendedStroke()
@@ -50,7 +50,7 @@ fun parseJson(json: String): List<InkView.Brush> {
             )
             stroke.addPoint(penInfo)
         }
-        val brush = InkView.Brush(
+        val brush = Brush(
             id = item.id,
             stroke = stroke
         )

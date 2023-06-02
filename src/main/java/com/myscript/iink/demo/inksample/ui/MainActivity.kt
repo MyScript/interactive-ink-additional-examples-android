@@ -42,8 +42,11 @@ class MainActivity : AppCompatActivity() {
             loadUrl("https://en.wikipedia.org/wiki/Special:Random")
         }
 
+        inkViewModel.displayMetrics = resources.displayMetrics
+
         inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
         inkViewModel.availableTools.observe(this, ::onToolsChanged)
+        inkViewModel.recognitionContent.observe(this, ::onRecognitionUpdate)
     }
 
     override fun onStart() {
@@ -64,6 +67,9 @@ class MainActivity : AppCompatActivity() {
             eraserBtn.setOnClickListener {
                 inkViewModel.selectTool(ToolType.ERASER)
             }
+            recognitionSwitch.setOnCheckedChangeListener { _, isChecked ->
+                inkViewModel.toggleRecognition(isVisible = isChecked)
+            }
         }
     }
 
@@ -76,9 +82,15 @@ class MainActivity : AppCompatActivity() {
             webViewSwitch.setOnClickListener(null)
             penBtn.setOnClickListener(null)
             eraserBtn.setOnClickListener(null)
+            recognitionSwitch.setOnCheckedChangeListener(null)
         }
 
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        inkViewModel.displayMetrics = null
     }
 
     private fun onToolsChanged(tools: List<ToolState>) {
@@ -101,6 +113,21 @@ class MainActivity : AppCompatActivity() {
         binding.eraserBtn.isSelected = tool.isSelected
         if (tool.isSelected) {
             binding.inkView.dynamicPaintHandler = EraserPaintHandler()
+        }
+    }
+
+    private fun onRecognitionUpdate(recognitionFeedback: RecognitionFeedback) {
+        with(binding) {
+            recognitionContent.removeAllViews()
+
+            inkView.alpha = if (recognitionFeedback.isVisible) .25f else 1f
+
+            if (recognitionFeedback.isVisible) {
+                recognitionFeedback.words.forEach { word ->
+                    val customView = WordView(this@MainActivity, word)
+                    recognitionContent.addView(customView)
+                }
+            }
         }
     }
 
