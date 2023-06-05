@@ -21,11 +21,11 @@ android {
 }
 
 dependencies {
-    def lifecycle_version = "2.4.1"
+    def lifecycle_version = "2.6.1"
     implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.fragment:fragment-ktx:1.5.6'
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.fragment:fragment-ktx:1.5.7'
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
@@ -35,7 +35,7 @@ dependencies {
     implementation project(':myscript-certificate')
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
 }
 
