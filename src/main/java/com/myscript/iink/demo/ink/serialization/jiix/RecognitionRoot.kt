@@ -8,5 +8,5 @@ data class RecognitionRoot(
     @SerializedName("bounding-box")
     val boundingBox: BoundingBox,
     @SerializedName("elements")
-    val elements: List<Element>?
+    val elements: List<Element>? = null
 )

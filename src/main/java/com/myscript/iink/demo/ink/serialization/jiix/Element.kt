@@ -12,5 +12,5 @@ data class Element(
     @SerializedName("bounding-box")
     val boundingBox: BoundingBox,
     @SerializedName("words")
-    val words: List<Word>?
+    val words: List<Word>? = null
 )
