@@ -84,8 +84,10 @@ class InkViewModel(
     var displayMetrics: DisplayMetrics? = null
         set(value) {
             field = value
-            if (value != null) {
-                converter = DisplayMetricsConverter(value)
+            converter = if (value != null) {
+                DisplayMetricsConverter(value)
+            } else {
+                null
             }
         }
 
