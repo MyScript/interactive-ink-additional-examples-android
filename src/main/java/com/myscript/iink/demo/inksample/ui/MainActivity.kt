@@ -7,6 +7,7 @@ package com.myscript.iink.demo.inksample.ui
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.microsoft.device.ink.InkView
@@ -36,7 +37,11 @@ class MainActivity : AppCompatActivity() {
         with(binding) {
             inkView.strokesListener = StrokesListener()
             clearInkBtn.setOnClickListener { inkViewModel.clearInk() }
-            saveInkBtn.setOnClickListener { inkViewModel.saveInk() }
+            saveInkBtn.setOnClickListener {
+                inkViewModel.saveInk {
+                    Toast.makeText(this@MainActivity, "Ink saved", Toast.LENGTH_SHORT).show()
+                }
+            }
             loadInkBtn.setOnClickListener { inkViewModel.loadInk() }
 
             penBtn.setOnClickListener {

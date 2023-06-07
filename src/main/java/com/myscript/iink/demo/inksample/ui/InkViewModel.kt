@@ -57,7 +57,7 @@ class InkViewModel(
     private val exportConfiguration: String
     ): ViewModel() {
 
-    private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(listOf())
+    private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
     val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
 
@@ -76,6 +76,8 @@ class InkViewModel(
     private var itemIdHelper by autoCloseable<ItemIdHelper>()
 
     private var converter: DisplayMetricsConverter? = null
+    // maps iink offScreen editor's data model ids to app's data model ids
+    private val strokeIdsMapping: MutableMap<String /*id of iink stroke*/, String /* id of app's stroke*/> = mutableMapOf()
 
     private val contentFile: File
         get() = File(dataDir, "OffscreenEditor.iink")
@@ -154,8 +156,9 @@ class InkViewModel(
 
     fun clearInk() {
         viewModelScope.launch(Dispatchers.Main) {
-            _strokes.value = emptyList()
             offscreenEditor?.clear()
+            strokeIdsMapping.clear()
+            _strokes.value = emptyList()
         }
     }
 
@@ -164,16 +167,40 @@ class InkViewModel(
             val jsonString = withContext(Dispatchers.IO) {
                 repository.readInkFromFile()
             }
-            jsonString?.let {
+
+            _strokes.value = if (jsonString != null) {
                 val brushes = parseJson(jsonString)
-                _strokes.value = brushes
-            } ?: run {
-                _strokes.value = listOf()
+                offscreenEditor?.clear()
+                strokeIdsMapping.clear()
+
+                val pointerEvents = withContext(Dispatchers.Default) {
+                    brushes.flatMap { brush ->
+                        brush.stroke.toPointerEvents().map { pointerEvent ->
+                            pointerEvent.convertPointerEvent(converter)
+                        }
+                    }.toTypedArray()
+                }
+
+                if (brushes.isNotEmpty()) { // offscreenEditor will refuse an empty list and crash
+                    val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
+                    if (addedStrokes != null) {
+                        brushes.forEachIndexed { index, brush ->
+                            if (index in addedStrokes.indices) {
+                                strokeIdsMapping[addedStrokes[index]] = brush.id
+                            }
+                        }
+                    }
+                }
+                brushes
+            } else {
+                offscreenEditor?.clear()
+                strokeIdsMapping.clear()
+                emptyList()
             }
         }
     }
 
-    fun saveInk() {
+    fun saveInk(callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.Main) {
             withContext(Dispatchers.IO) {
                 _strokes.value?.json()?.let { jsonString ->
@@ -183,6 +210,7 @@ class InkViewModel(
                     contentPackage.save()
                 }
             }
+            callback.invoke()
         }
     }
 
@@ -207,7 +235,9 @@ class InkViewModel(
                 pointerEvent.convertPointerEvent(converter)
             }.toTypedArray()
 
-            offscreenEditor?.addStrokes(pointerEvents, false)
+            offscreenEditor?.addStrokes(pointerEvents, false)?.firstNotNullOf { strokeId ->
+                strokeIdsMapping[strokeId] = brush.id
+            }
         }
     }
 
