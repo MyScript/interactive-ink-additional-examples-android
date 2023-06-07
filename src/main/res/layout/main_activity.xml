@@ -65,16 +65,6 @@
                     android:backgroundTint="?attr/colorControlHighlight"
                     android:src="@drawable/ic_pen_outlined"
                     android:contentDescription="Pen" />
-
-                <ImageView
-                    android:id="@+id/eraser_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:padding="12dp"
-                    android:background="@drawable/tool_selection_feedback_selector"
-                    android:backgroundTint="?attr/colorControlHighlight"
-                    android:src="@drawable/ic_eraser"
-                    android:contentDescription="Eraser" />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -83,12 +73,6 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
-
-        <WebView
-            android:id="@+id/web_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="invisible" />
 
         <com.microsoft.device.ink.InkView
             android:id="@+id/ink_view"
@@ -111,33 +95,15 @@
         android:layout_height="1dp"
         android:background="?android:attr/dividerHorizontal" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/recognition_switch"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/web_view_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:layout_marginVertical="16dp"
-            android:layout_marginHorizontal="16dp"
-            app:switchPadding="8dp"
-            android:text="Show web view"
-            tools:ignore="HardcodedText" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/recognition_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:layout_marginVertical="16dp"
-            android:layout_marginHorizontal="16dp"
-            app:switchPadding="8dp"
-            android:text="Show recognition"
-            tools:ignore="HardcodedText" />
-
-    </LinearLayout>
+        android:checked="false"
+        android:layout_marginVertical="16dp"
+        android:layout_marginHorizontal="16dp"
+        app:switchPadding="8dp"
+        android:text="Show recognition"
+        tools:ignore="HardcodedText" />
 
 </LinearLayout>

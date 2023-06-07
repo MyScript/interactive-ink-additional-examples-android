@@ -38,7 +38,7 @@ import java.io.File
 import java.lang.Exception
 
 enum class ToolType {
-    PEN, ERASER
+    PEN
 }
 data class ToolState(
     val type: ToolType,
@@ -66,8 +66,7 @@ class InkViewModel(
         get() = _recognitionFeedback
 
     private val _availableTools: MutableLiveData<List<ToolState>> = MutableLiveData(listOf(
-        ToolState(type = ToolType.PEN, isSelected = true),
-        ToolState(type = ToolType.ERASER, isSelected = false)
+        ToolState(type = ToolType.PEN, isSelected = true)
     ))
     val availableTools: LiveData<List<ToolState>>
         get() = _availableTools
