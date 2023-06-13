@@ -71,8 +71,25 @@
         <FrameLayout
             android:id="@+id/recognition_content"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent" />
 
+        <FrameLayout
+            android:id="@+id/iink_model_preview_layout"
+            android:layout_width="@dimen/iink_model_preview_size"
+            android:layout_height="@dimen/iink_model_preview_size"
+            android:layout_gravity="top|end"
+            android:layout_margin="4dp"
+            android:padding="2dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="#1E000000"
+            android:visibility="invisible"
+            tools:visibility="visible">
+
+            <WebView
+                android:id="@+id/iink_model_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
     </FrameLayout>
 
     <View
@@ -80,15 +97,32 @@
         android:layout_height="1dp"
         android:background="?android:attr/dividerHorizontal" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/recognition_switch"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checked="false"
-        android:layout_marginVertical="16dp"
-        android:layout_marginHorizontal="16dp"
-        app:switchPadding="8dp"
-        android:text="Show recognition"
-        tools:ignore="HardcodedText" />
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/recognition_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:layout_marginVertical="16dp"
+            android:layout_marginHorizontal="16dp"
+            app:switchPadding="8dp"
+            android:text="Show recognition"
+            tools:ignore="HardcodedText" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/iink_model_preview_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:layout_marginVertical="16dp"
+            android:layout_marginHorizontal="16dp"
+            app:switchPadding="8dp"
+            android:text="Show iink model"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
 
 </LinearLayout>

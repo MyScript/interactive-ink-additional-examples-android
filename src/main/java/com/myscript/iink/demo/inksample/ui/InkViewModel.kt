@@ -13,35 +13,35 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.gson.Gson
 import com.microsoft.device.ink.InkView
+import com.myscript.iink.ContentPart
 import com.myscript.iink.EditorError
 import com.myscript.iink.Engine
-import com.myscript.iink.OffscreenEditor
-import com.myscript.iink.ContentPart
-import com.myscript.iink.ItemIdHelper
 import com.myscript.iink.IOffscreenEditorListener
+import com.myscript.iink.ItemIdHelper
 import com.myscript.iink.MimeType
+import com.myscript.iink.OffscreenEditor
+import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
+import com.myscript.iink.demo.ink.serialization.jiix.Word
+import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
+import com.myscript.iink.demo.ink.serialization.jiix.toPointerEvents
+import com.myscript.iink.demo.ink.serialization.jiix.toScreenCoordinates
 import com.myscript.iink.demo.ink.serialization.json
 import com.myscript.iink.demo.ink.serialization.parseJson
 import com.myscript.iink.demo.inksample.InkApplication
 import com.myscript.iink.demo.inksample.data.InkRepository
 import com.myscript.iink.demo.inksample.data.InkRepositoryImpl
-import com.myscript.iink.demo.inksample.util.autoCloseable
-import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
-import com.myscript.iink.demo.ink.serialization.jiix.Word
-import com.myscript.iink.demo.ink.serialization.jiix.toScreenCoordinates
-import com.myscript.iink.demo.ink.serialization.jiix.toPointerEvents
-import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
 import com.myscript.iink.demo.inksample.util.DisplayMetricsConverter
+import com.myscript.iink.demo.inksample.util.autoCloseable
 import com.myscript.iink.demo.inksample.util.iinkExportConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.lang.Exception
 
 enum class ToolType {
     PEN
 }
+
 data class ToolState(
     val type: ToolType,
     val isSelected: Boolean = false
@@ -57,7 +57,7 @@ class InkViewModel(
     private val engine: Engine,
     private val dataDir: File,
     private val exportConfiguration: String
-    ): ViewModel() {
+) : ViewModel() {
 
     private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
     val strokes: LiveData<List<InkView.Brush>>
@@ -66,6 +66,10 @@ class InkViewModel(
     private val _recognitionFeedback: MutableLiveData<RecognitionFeedback> = MutableLiveData(RecognitionFeedback())
     val recognitionContent: LiveData<RecognitionFeedback>
         get() = _recognitionFeedback
+
+    private val _iinkModel: MutableLiveData<String> = MutableLiveData(EMPTY_HTML)
+    val iinkModel: LiveData<String>
+        get() = _iinkModel
 
     private val _availableTools: MutableLiveData<List<ToolState>> = MutableLiveData(listOf(
         ToolState(type = ToolType.PEN, isSelected = true)
@@ -101,6 +105,12 @@ class InkViewModel(
 
         override fun contentChanged(editor: OffscreenEditor, blockIds: Array<out String>) {
             viewModelScope.launch(Dispatchers.Main) {
+                val htmlExport = withContext(Dispatchers.Default) {
+                    offscreenEditor?.export_(emptyArray(), MimeType.HTML)
+                }
+
+                _iinkModel.value = htmlExport ?: EMPTY_HTML
+
                 val exportedData = withContext(Dispatchers.Default) {
                     offscreenEditor?.export_(emptyArray(), MimeType.JIIX)
                 }
@@ -252,6 +262,13 @@ class InkViewModel(
 
     companion object {
         private const val TAG = "InkViewModel"
+        private const val EMPTY_HTML = """<!DOCTYPE html><html>
+<head>
+  <title>iink model</title>
+</head>
+<body>
+</body>
+</html>"""
 
         val Factory = viewModelFactory {
             initializer {

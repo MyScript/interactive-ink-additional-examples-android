@@ -4,9 +4,12 @@ package com.myscript.iink.demo.inksample.ui
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.webkit.WebSettings
+import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import com.microsoft.device.ink.InkView
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
 
@@ -21,10 +24,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        binding.iinkModelPreview.apply {
+            webViewClient = WebViewClient()
+            settings.apply {
+                javaScriptEnabled = true
+                cacheMode = WebSettings.LOAD_NO_CACHE
+            }
+        }
+
         inkViewModel.displayMetrics = resources.displayMetrics
 
         inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
         inkViewModel.recognitionContent.observe(this, ::onRecognitionUpdate)
+        inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
     }
 
     override fun onStart() {
@@ -41,6 +53,9 @@ class MainActivity : AppCompatActivity() {
             loadInkBtn.setOnClickListener { inkViewModel.loadInk() }
             recognitionSwitch.setOnCheckedChangeListener { _, isChecked ->
                 inkViewModel.toggleRecognition(isVisible = isChecked)
+            }
+            iinkModelPreviewSwitch.setOnCheckedChangeListener { _, isChecked ->
+                iinkModelPreviewLayout.isVisible = isChecked
             }
         }
     }
@@ -75,6 +90,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun onIInkModelUpdate(htmlExport: String) {
+        binding.iinkModelPreview.loadData(htmlExport, "text/html", Charsets.UTF_8.toString())
     }
 
     /**
