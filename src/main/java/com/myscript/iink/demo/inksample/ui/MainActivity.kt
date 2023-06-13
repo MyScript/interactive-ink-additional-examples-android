@@ -24,7 +24,6 @@ class MainActivity : AppCompatActivity() {
         inkViewModel.displayMetrics = resources.displayMetrics
 
         inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
-        inkViewModel.availableTools.observe(this, ::onToolsChanged)
         inkViewModel.recognitionContent.observe(this, ::onRecognitionUpdate)
     }
 
@@ -40,10 +39,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             loadInkBtn.setOnClickListener { inkViewModel.loadInk() }
-
-            penBtn.setOnClickListener {
-                inkViewModel.selectTool(ToolType.PEN)
-            }
             recognitionSwitch.setOnCheckedChangeListener { _, isChecked ->
                 inkViewModel.toggleRecognition(isVisible = isChecked)
             }
@@ -56,7 +51,6 @@ class MainActivity : AppCompatActivity() {
             clearInkBtn.setOnClickListener(null)
             saveInkBtn.setOnClickListener(null)
             loadInkBtn.setOnClickListener(null)
-            penBtn.setOnClickListener(null)
             recognitionSwitch.setOnCheckedChangeListener(null)
         }
 
@@ -66,21 +60,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         inkViewModel.displayMetrics = null
-    }
-
-    private fun onToolsChanged(tools: List<ToolState>) {
-        tools.forEach { tool ->
-            when (tool.type) {
-                ToolType.PEN -> handlePen(tool)
-            }
-        }
-    }
-
-    private fun handlePen(tool: ToolState) {
-        binding.penBtn.isSelected = tool.isSelected
-        if (tool.isSelected) {
-            binding.inkView.dynamicPaintHandler = null
-        }
     }
 
     private fun onRecognitionUpdate(recognitionFeedback: RecognitionFeedback) {
@@ -105,9 +84,5 @@ class MainActivity : AppCompatActivity() {
         override fun onStrokeAdded(brush: InkView.Brush) {
             inkViewModel.addStroke(brush)
         }
-    }
-
-    companion object {
-        const val STROKE_MAX_MIN_RATIO = 10f
     }
 }

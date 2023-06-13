@@ -50,21 +50,6 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/outline_file_upload_24"
                     android:contentDescription="Load" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:id="@+id/pen_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:padding="12dp"
-                    android:background="@drawable/tool_selection_feedback_selector"
-                    android:backgroundTint="?attr/colorControlHighlight"
-                    android:src="@drawable/ic_pen_outlined"
-                    android:contentDescription="Pen" />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
