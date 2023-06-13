@@ -3,11 +3,12 @@
 package com.myscript.iink.demo
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.myscript.iink.demo.ink.InkView
-import com.myscript.iink.demo.ink.InputManager
+import com.microsoft.device.ink.InkView
+import com.microsoft.device.ink.InputManager
 import com.myscript.iink.demo.inksample.ui.InkViewModel
+import com.myscript.nebo.test.utils.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -25,7 +26,7 @@ class InkViewModelTests {
 
     // Sets the main coroutines dispatcher to a TestCoroutineScope for unit testing.
     @get:Rule
-    var mainCoroutineRule = MainCoroutineRule()
+    var mainDispatcherRule = MainDispatcherRule()
 
     private val inkRepository = FakeInkRepository()
 
@@ -37,7 +38,7 @@ class InkViewModelTests {
     }
 
     @Test
-    fun `loading ink should update live data`() = runBlocking {
+    fun `loading ink should update live data`() = runTest {
         inkRepository.saveInkToFile("{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[{\"timestamp\":\"-1\",\"X\":[1.0,2.0,3.0],\"Y\":[1.0,2.0,3.0],\"F\":[0.0,0.0,0.0],\"type\":\"stroke\",\"id\":\"1\"}]}")
 
         inkViewModel.loadInk()
@@ -45,13 +46,13 @@ class InkViewModelTests {
     }
 
     @Test
-    fun `loading ink when the repository returns a null json string should result in an empty strokes list`() = runBlocking {
+    fun `loading ink when the repository returns a null json string should result in an empty strokes list`() = runTest {
         inkViewModel.loadInk()
         assertTrue(inkViewModel.strokes.getOrAwaitValue().isEmpty())
     }
 
     @Test
-    fun `clearing ink should empty live data's content`() = runBlocking {
+    fun `clearing ink should empty live data's content`() = runTest {
         // start with a state where the viewModel has strokes
         inkRepository.saveInkToFile("{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[{\"timestamp\":\"-1\",\"X\":[1.0,2.0,3.0],\"Y\":[1.0,2.0,3.0],\"F\":[0.0,0.0,0.0],\"type\":\"stroke\",\"id\":\"1\"}]}")
         inkViewModel.loadInk()
@@ -61,7 +62,7 @@ class InkViewModelTests {
     }
 
     @Test
-    fun `adding a stroke should update live data`() = runBlocking {
+    fun `adding a stroke should update live data`() = runTest {
         val point1 = InputManager.PenInfo(
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 1f,

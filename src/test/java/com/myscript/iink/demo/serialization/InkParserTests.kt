@@ -2,10 +2,8 @@
 
 package com.myscript.iink.demo.serialization
 
-import com.myscript.iink.demo.ink.InkView.Brush
-import com.myscript.iink.demo.ink.InputManager
-import com.myscript.iink.demo.ink.InputManager.ExtendedStroke
-import com.myscript.iink.demo.ink.InputManager.PenInfo
+import com.microsoft.device.ink.InkView
+import com.microsoft.device.ink.InputManager
 import com.myscript.iink.demo.ink.serialization.json
 import com.myscript.iink.demo.ink.serialization.parseJson
 import junit.framework.TestCase.assertEquals
@@ -19,7 +17,7 @@ class InkParserTests {
 
     @Test
     fun serializeStrokesTest() {
-        val point1 = PenInfo(
+        val point1 = InputManager.PenInfo(
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 1f,
             y = 1f,
@@ -29,7 +27,7 @@ class InkParserTests {
             primaryButtonState = false,
             secondaryButtonState = false
         )
-        val point2 = PenInfo(
+        val point2 = InputManager.PenInfo(
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 2f,
             y = 2f,
@@ -39,7 +37,7 @@ class InkParserTests {
             primaryButtonState = false,
             secondaryButtonState = false
         )
-        val point3 = PenInfo(
+        val point3 = InputManager.PenInfo(
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 3f,
             y = 3f,
@@ -49,12 +47,12 @@ class InkParserTests {
             primaryButtonState = false,
             secondaryButtonState = false
         )
-        val stroke = ExtendedStroke().apply {
+        val stroke = InputManager.ExtendedStroke().apply {
             addPoint(point1)
             addPoint(point2)
             addPoint(point3)
         }
-        val brush = Brush(
+        val brush = InkView.Brush(
             id = "1",
             stroke = stroke
         )
@@ -67,7 +65,7 @@ class InkParserTests {
 
     @Test
     fun serializeEmptyStrokeListTest() {
-        val serialized = emptyList<Brush>().json()
+        val serialized = emptyList<InkView.Brush>().json()
 
         val json = "{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[]}"
 
