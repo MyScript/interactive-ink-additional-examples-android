@@ -1,3 +1,5 @@
+// Copyright @ MyScript. All rights reserved.
+
 package com.myscript.iink.demo.inksample.util
 
 val iinkExportConfig = """{

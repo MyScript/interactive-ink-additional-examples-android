@@ -1,3 +1,5 @@
+// Copyright @ MyScript. All rights reserved.
+
 package com.myscript.iink.demo.ink.serialization.jiix
 
 import com.google.gson.annotations.SerializedName

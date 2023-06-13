@@ -1,3 +1,5 @@
+// Copyright @ MyScript. All rights reserved.
+
 package com.myscript.iink.demo
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule

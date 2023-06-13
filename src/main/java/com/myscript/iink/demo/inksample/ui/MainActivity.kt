@@ -1,7 +1,4 @@
-/*
- * Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License.
- */
+// Copyright @ MyScript. All rights reserved.
 
 package com.myscript.iink.demo.inksample.ui
 
