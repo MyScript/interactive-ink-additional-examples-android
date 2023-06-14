@@ -25,7 +25,7 @@ fun InputManager.PenInfo.toPointerEvent(
         pointerEventType,
         x,
         y,
-        -1,
+        timestamp,
         pressure,
         pointerType.toIInkPointerType,
         pointerId

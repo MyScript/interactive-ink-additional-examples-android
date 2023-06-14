@@ -5,22 +5,30 @@ package com.myscript.iink.demo.ink.serialization
 import com.google.gson.Gson
 import com.microsoft.device.ink.InkView.Brush
 import com.microsoft.device.ink.InputManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 fun List<Brush>.json(): String {
-    val inkFormats = mutableListOf<InkFormat>()
-
-    map { brush ->
+    val inkFormats = mapNotNull { brush ->
         val stroke = brush.stroke
         val points = stroke.getPoints()
-        val item = InkFormat(
-            timestamp = "-1",
+
+        val initialTimestamp = stroke.getPenInfo(points.first())?.timestamp ?: return@mapNotNull null
+
+        val deltas = points.mapNotNull { point ->
+            stroke.getPenInfo(point)?.timestamp?.let { timestamp -> timestamp - initialTimestamp }
+        }
+
+        InkFormat(
+            timestamp = formatTimestamp(initialTimestamp),
             X = points.map { point -> point.x },
             Y = points.map { point ->  point.y},
+            T = deltas,
             F = points.map { point -> stroke.getPenInfo(point)?.pressure ?: 0f },
             type = "stroke",
             id = brush.id
         )
-        inkFormats.add(item)
     }
 
     val inkRoot = InkRoot(
@@ -35,16 +43,17 @@ fun List<Brush>.json(): String {
 
 fun parseJson(json: String): List<Brush> {
     val inkRoot = Gson().fromJson(json, InkRoot::class.java)
-    val brushes = mutableListOf<Brush>()
-
-    inkRoot.items.map { item ->
+    return inkRoot.items.map { item ->
+        val initialTimestamp = stringToTimestamp(item.timestamp)
         val stroke = InputManager.ExtendedStroke()
-        for (i in 0 until item.X.size) {
+
+        item.X.forEachIndexed { index, x ->
             val penInfo = InputManager.PenInfo(
                 pointerType = InputManager.PointerType.PEN_TIP,
-                x = item.X[i],
-                y = item.Y[i],
-                pressure = item.F[i],
+                x = x,
+                y = item.Y[index],
+                timestamp = initialTimestamp + item.T[index],
+                pressure = item.F[index],
                 orientation = 0f,
                 tilt = 0f,
                 primaryButtonState = false,
@@ -52,12 +61,20 @@ fun parseJson(json: String): List<Brush> {
             )
             stroke.addPoint(penInfo)
         }
-        val brush = Brush(
-            id = item.id,
-            stroke = stroke
-        )
-        brushes.add(brush)
-    }
 
-    return brushes
+        Brush(id = item.id, stroke = stroke)
+    }
+}
+
+private const val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS"
+private val simpleDateFormat = SimpleDateFormat(DATE_FORMAT, Locale.US)
+
+fun formatTimestamp(timestamp: Long): String {
+    val date = Date(timestamp)
+    return simpleDateFormat.format(date)
+}
+
+fun stringToTimestamp(dateString: String): Long {
+    val date = simpleDateFormat.parse(dateString)
+    return date?.time ?: 0L
 }

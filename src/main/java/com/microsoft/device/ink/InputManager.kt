@@ -10,10 +10,15 @@
 package com.microsoft.device.ink
 
 import android.annotation.SuppressLint
+import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
 
-class InputManager(view: View, private val penInputHandler: PenInputHandler, private val penHoverHandler: PenHoverHandler? = null) {
+class InputManager(
+    view: View,
+    private val penInputHandler: PenInputHandler,
+    private val penHoverHandler: PenHoverHandler? = null,
+    private val timeOffset: Long = System.currentTimeMillis() - SystemClock.uptimeMillis()) {
 
     var currentStroke = ExtendedStroke()
 
@@ -51,6 +56,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
         val pointerType: PointerType,
         val x: Float,
         val y: Float,
+        val timestamp: Long,
         val pressure: Float,
         val orientation: Float,
         val tilt: Float,
@@ -58,7 +64,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
         val secondaryButtonState: Boolean
     ) {
         companion object {
-            fun createFromEvent(event: MotionEvent): PenInfo {
+            fun createFromEvent(event: MotionEvent, timeOffset: Long): PenInfo {
                 val pointerType: PointerType = when (event.getToolType(0)) {
                     MotionEvent.TOOL_TYPE_FINGER -> PointerType.FINGER
                     MotionEvent.TOOL_TYPE_MOUSE -> PointerType.MOUSE
@@ -71,6 +77,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
                     pointerType = pointerType,
                     x = event.x,
                     y = event.y,
+                    timestamp = timeOffset + event.eventTime,
                     pressure = event.pressure,
                     orientation = event.orientation,
                     tilt = event.getAxisValue(MotionEvent.AXIS_TILT),
@@ -81,7 +88,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
                 )
             }
 
-            fun createFromHistoryEvent(event: MotionEvent, pos: Int): PenInfo {
+            fun createFromHistoryEvent(event: MotionEvent, pos: Int, timeOffset: Long): PenInfo {
                 val pointerType: PointerType = when (event.getToolType(0)) {
                     MotionEvent.TOOL_TYPE_FINGER -> PointerType.FINGER
                     MotionEvent.TOOL_TYPE_MOUSE -> PointerType.MOUSE
@@ -94,6 +101,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
                     pointerType = pointerType,
                     x = event.getHistoricalX(pos),
                     y = event.getHistoricalY(pos),
+                    timestamp = timeOffset + event.getHistoricalEventTime(pos),
                     pressure = event.getHistoricalPressure(pos),
                     orientation = event.getHistoricalOrientation(pos),
                     tilt = event.getHistoricalAxisValue(MotionEvent.AXIS_TILT, pos),
@@ -146,12 +154,12 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
             if (penHoverHandler == null) {
                 consumed = false
             } else {
-                val penInfo = PenInfo.createFromEvent(event)
+                val penInfo = PenInfo.createFromEvent(event, timeOffset)
 
                 when (event.actionMasked) {
                     MotionEvent.ACTION_HOVER_MOVE -> {
                         for (i in 0 until event.historySize) {
-                            penHoverHandler.hoverMoved(PenInfo.createFromHistoryEvent(event, i))
+                            penHoverHandler.hoverMoved(PenInfo.createFromHistoryEvent(event, i, timeOffset))
                         }
                         penHoverHandler.hoverMoved(penInfo)
                     }
@@ -168,7 +176,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
         }
         view.setOnTouchListener { _: View, event: MotionEvent ->
             var consumed = true
-            val penInfo = PenInfo.createFromEvent(event)
+            val penInfo = PenInfo.createFromEvent(event, timeOffset)
 
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -179,7 +187,7 @@ class InputManager(view: View, private val penInputHandler: PenInputHandler, pri
                 MotionEvent.ACTION_MOVE -> {
 
                     for (i in 0 until event.historySize) {
-                        currentStroke.addPoint(PenInfo.createFromHistoryEvent(event, i))
+                        currentStroke.addPoint(PenInfo.createFromHistoryEvent(event, i, timeOffset))
                     }
                     currentStroke.addPoint(penInfo)
                     penInputHandler.strokeUpdated(penInfo, currentStroke)

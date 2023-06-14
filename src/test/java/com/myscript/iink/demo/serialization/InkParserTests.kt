@@ -21,6 +21,7 @@ class InkParserTests {
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 1f,
             y = 1f,
+            timestamp = 0L,
             pressure = 0f,
             orientation = 0f,
             tilt = 0f,
@@ -31,6 +32,7 @@ class InkParserTests {
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 2f,
             y = 2f,
+            timestamp = 1000L,
             pressure = 0f,
             orientation = 0f,
             tilt = 0f,
@@ -41,6 +43,7 @@ class InkParserTests {
             pointerType = InputManager.PointerType.PEN_TIP,
             x = 3f,
             y = 3f,
+            timestamp = 2000L,
             pressure = 0f,
             orientation = 0f,
             tilt = 0f,
@@ -59,7 +62,8 @@ class InkParserTests {
 
         val serialized = listOf(brush).json()
 
-        val json = "{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[{\"timestamp\":\"-1\",\"X\":[1.0,2.0,3.0],\"Y\":[1.0,2.0,3.0],\"F\":[0.0,0.0,0.0],\"type\":\"stroke\",\"id\":\"1\"}]}"
+        val initialTimestamp = "1970-01-01 01:00:00.000"
+        val json = "{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[{\"timestamp\":\"$initialTimestamp\",\"X\":[1.0,2.0,3.0],\"Y\":[1.0,2.0,3.0],\"T\":[0,1000,2000],\"F\":[0.0,0.0,0.0],\"type\":\"stroke\",\"id\":\"1\"}]}"
         assertEquals(json, serialized)
     }
 
@@ -74,7 +78,8 @@ class InkParserTests {
 
     @Test
     fun deserializeStrokesTest() {
-        val json = "{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[{\"timestamp\":\"-1\",\"X\":[1.0,2.0,3.0],\"Y\":[1.0,2.0,3.0],\"F\":[0.0,0.0,0.0],\"type\":\"stroke\",\"id\":\"1\"}]}"
+        val initialTimestamp = "1970-01-01 01:00:00.000"
+        val json = "{\"version\":\"3\",\"type\":\"Drawing\",\"id\":\"MainBlock\",\"items\":[{\"timestamp\":\"$initialTimestamp\",\"X\":[1.0,2.0,3.0],\"Y\":[1.0,2.0,3.0],\"T\":[0,1000,2000],\"F\":[0.0,0.0,0.0],\"type\":\"stroke\",\"id\":\"1\"}]}"
 
         val brushes = parseJson(json)
 
@@ -86,17 +91,20 @@ class InkParserTests {
         assertTrue(points.isNotEmpty())
         assertTrue(points.size == 3)
 
-        val point1 = points.first()
-        assertTrue(point1.x == 1f)
-        assertTrue(point1.y == 1f)
+        val point1 = brush.stroke.getPenInfo(points.first())
+        assertTrue(point1?.x == 1f)
+        assertTrue(point1?.y == 1f)
+        assertTrue(point1?.timestamp == 0L)
 
-        val point2 = points[1]
-        assertTrue(point2.x == 2f)
-        assertTrue(point2.y == 2f)
+        val point2 = brush.stroke.getPenInfo(points[1])
+        assertTrue(point2?.x == 2f)
+        assertTrue(point2?.y == 2f)
+        assertTrue(point2?.timestamp == 1000L)
 
-        val point3 = points[2]
-        assertTrue(point3.x == 3f)
-        assertTrue(point3.y == 3f)
+        val point3 = brush.stroke.getPenInfo(points[2])
+        assertTrue(point3?.x == 3f)
+        assertTrue(point3?.y == 3f)
+        assertTrue(point3?.timestamp == 2000L)
     }
 
     @Test
