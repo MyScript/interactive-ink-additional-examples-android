@@ -17,9 +17,11 @@ import com.myscript.iink.ContentPart
 import com.myscript.iink.EditorError
 import com.myscript.iink.Engine
 import com.myscript.iink.IOffscreenEditorListener
+import com.myscript.iink.IOffscreenGestureHandler
 import com.myscript.iink.ItemIdHelper
 import com.myscript.iink.MimeType
 import com.myscript.iink.OffscreenEditor
+import com.myscript.iink.OffscreenGestureAction
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.Word
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
@@ -32,11 +34,14 @@ import com.myscript.iink.demo.inksample.data.InkRepository
 import com.myscript.iink.demo.inksample.data.InkRepositoryImpl
 import com.myscript.iink.demo.inksample.util.DisplayMetricsConverter
 import com.myscript.iink.demo.inksample.util.autoCloseable
-import com.myscript.iink.demo.inksample.util.iinkExportConfig
+import com.myscript.iink.demo.inksample.util.iinkConfig
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.Executors
 
 enum class ToolType {
     PEN
@@ -56,7 +61,8 @@ class InkViewModel(
     private val repository: InkRepository,
     private val engine: Engine,
     private val dataDir: File,
-    private val exportConfiguration: String
+    private val exportConfiguration: String,
+    private val workDispatcher: CoroutineDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 ) : ViewModel() {
 
     private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
@@ -97,6 +103,83 @@ class InkViewModel(
                 null
             }
         }
+
+    private var offScreenGestureHandler: IOffscreenGestureHandler? = object : IOffscreenGestureHandler {
+        override fun onUnderline(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            itemIds: Array<out String>
+        ): OffscreenGestureAction {
+            Log.d(TAG, "IOffscreenGestureHandler onUnderline gesture detected")
+            return OffscreenGestureAction.ADD_STROKE
+        }
+
+        override fun onSurround(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            itemIds: Array<out String>
+        ): OffscreenGestureAction {
+            Log.d(TAG, "IOffscreenGestureHandler onSurround gesture detected")
+            return OffscreenGestureAction.ADD_STROKE
+        }
+
+        override fun onJoin(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            before: Array<out String>,
+            after: Array<out String>
+        ): OffscreenGestureAction {
+            Log.d(TAG, "IOffscreenGestureHandler onJoin gesture detected")
+            return OffscreenGestureAction.ADD_STROKE
+        }
+
+        override fun onInsert(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            before: Array<out String>,
+            after: Array<out String>
+        ): OffscreenGestureAction {
+            Log.d(TAG, "IOffscreenGestureHandler onInsert gesture detected")
+            return OffscreenGestureAction.ADD_STROKE
+        }
+
+        override fun onStrikethrough(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            itemIds: Array<out String>
+        ): OffscreenGestureAction {
+            Log.d(TAG, "IOffscreenGestureHandler onStrikethrough gesture detected")
+            return OffscreenGestureAction.ADD_STROKE
+        }
+
+        override fun onScratch(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            itemIds: Array<out String>
+        ): OffscreenGestureAction {
+            val itemIdHelper = itemIdHelper ?: return OffscreenGestureAction.ADD_STROKE
+
+            viewModelScope.launch(Dispatchers.Main) {
+                val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
+
+                withContext(workDispatcher) {
+                    val fullStrokeIds = itemIds.map(itemIdHelper::getFullItemId) + gestureStrokeId
+
+                    fullStrokeIds.forEach { strokeId ->
+                        val appStrokeId = strokeIdsMapping[strokeId]
+                        strokeIdsMapping.remove(strokeId)
+                        val strokeBrush = remainingStrokes.firstOrNull { it.id == appStrokeId }
+                        remainingStrokes.remove(strokeBrush)
+                    }
+
+                    val strokeIdsToErase = (fullStrokeIds - gestureStrokeId).toTypedArray()
+                    editor.erase(strokeIdsToErase)
+                }
+                _strokes.value = remainingStrokes
+            }
+            return OffscreenGestureAction.IGNORE
+        }
+    }
 
     private val offScreenEditorListener: IOffscreenEditorListener = object : IOffscreenEditorListener {
         override fun partChanged(editor: OffscreenEditor) {
@@ -143,6 +226,7 @@ class InkViewModel(
             val configuration = editor.configuration
             configuration.inject(exportConfiguration)
             editor.addListener(offScreenEditorListener)
+            editor.setGestureHandler(offScreenGestureHandler)
         }
 
         viewModelScope.launch(Dispatchers.Main) {
@@ -247,7 +331,7 @@ class InkViewModel(
                 pointerEvent.convertPointerEvent(converter)
             }.toTypedArray()
 
-            offscreenEditor?.addStrokes(pointerEvents, false)?.firstNotNullOf { strokeId ->
+            offscreenEditor?.addStrokes(pointerEvents, true)?.firstNotNullOf { strokeId ->
                 strokeIdsMapping[strokeId] = brush.id
             }
         }
@@ -256,6 +340,7 @@ class InkViewModel(
     override fun onCleared() {
         super.onCleared()
         currentPart = null
+        offScreenGestureHandler = null
         offscreenEditor = null
         itemIdHelper = null
     }
@@ -275,7 +360,7 @@ class InkViewModel(
                 val application = checkNotNull(this[APPLICATION_KEY])
                 val engine = checkNotNull((application as InkApplication).engine)
                 val dataDir = File(application.filesDir, "data")
-                InkViewModel(InkRepositoryImpl(dataDir), engine, dataDir, iinkExportConfig)
+                InkViewModel(InkRepositoryImpl(dataDir), engine, dataDir, iinkConfig)
             }
         }
     }

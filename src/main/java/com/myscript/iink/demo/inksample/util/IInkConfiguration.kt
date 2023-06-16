@@ -2,7 +2,7 @@
 
 package com.myscript.iink.demo.inksample.util
 
-val iinkExportConfig = """{
+val iinkConfig = """{
   "export": {
     "jiix": {
       "text": {
@@ -22,7 +22,7 @@ val iinkExportConfig = """{
       "shape": false
     },
     "pen": {
-      "gestures": []
+      "gestures": ["scratch-out"]
     }
   }
 }
