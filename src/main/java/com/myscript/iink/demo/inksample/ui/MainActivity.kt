@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         inkViewModel.displayMetrics = resources.displayMetrics
 
         inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
-        inkViewModel.recognitionContent.observe(this, ::onRecognitionUpdate)
+        inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
     }
 

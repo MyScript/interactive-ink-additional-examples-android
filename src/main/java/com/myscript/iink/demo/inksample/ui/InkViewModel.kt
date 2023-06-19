@@ -64,7 +64,7 @@ class InkViewModel(
         get() = _strokes
 
     private val _recognitionFeedback: MutableLiveData<RecognitionFeedback> = MutableLiveData(RecognitionFeedback())
-    val recognitionContent: LiveData<RecognitionFeedback>
+    val recognitionFeedback: LiveData<RecognitionFeedback>
         get() = _recognitionFeedback
 
     private val _iinkModel: MutableLiveData<String> = MutableLiveData(EMPTY_HTML)
