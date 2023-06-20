@@ -18,13 +18,16 @@ import com.myscript.iink.EditorError
 import com.myscript.iink.Engine
 import com.myscript.iink.IOffscreenEditorListener
 import com.myscript.iink.IOffscreenGestureHandler
+import com.myscript.iink.ItemIdCombinationModifier
 import com.myscript.iink.ItemIdHelper
 import com.myscript.iink.MimeType
 import com.myscript.iink.OffscreenEditor
 import com.myscript.iink.OffscreenGestureAction
+import com.myscript.iink.PointerEvent
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.Word
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
+import com.myscript.iink.demo.ink.serialization.jiix.toBrush
 import com.myscript.iink.demo.ink.serialization.jiix.toPointerEvents
 import com.myscript.iink.demo.ink.serialization.jiix.toScreenCoordinates
 import com.myscript.iink.demo.ink.serialization.json
@@ -149,14 +152,6 @@ class InkViewModel(
             itemIds: Array<out String>
         ): OffscreenGestureAction {
             Log.d(TAG, "IOffscreenGestureHandler onStrikethrough gesture detected")
-            return OffscreenGestureAction.ADD_STROKE
-        }
-
-        override fun onScratch(
-            editor: OffscreenEditor,
-            gestureStrokeId: String,
-            itemIds: Array<out String>
-        ): OffscreenGestureAction {
             val itemIdHelper = itemIdHelper ?: return OffscreenGestureAction.ADD_STROKE
 
             viewModelScope.launch(Dispatchers.Main) {
@@ -175,6 +170,67 @@ class InkViewModel(
                     val strokeIdsToErase = (fullStrokeIds - gestureStrokeId).toTypedArray()
                     editor.erase(strokeIdsToErase)
                 }
+                _strokes.value = remainingStrokes
+            }
+            return OffscreenGestureAction.IGNORE
+        }
+
+        override fun onScratch(
+            editor: OffscreenEditor,
+            gestureStrokeId: String,
+            itemIds: Array<out String>
+        ): OffscreenGestureAction {
+            val itemIdHelper = itemIdHelper ?: return OffscreenGestureAction.ADD_STROKE
+
+            viewModelScope.launch(Dispatchers.Main) {
+                val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
+
+                withContext(workDispatcher) {
+                    // Retrieve the full stroke ids
+                    val fullItemIds = itemIds.map { itemId ->
+                        if (itemIdHelper.isPartialItem(itemId))
+                            itemIdHelper.getFullItemId(itemId)
+                        else
+                            itemId
+                    }.toTypedArray()
+
+                    // Compute the difference between full strokes and erased partial strokes to get remaining item ids
+                    val remainingItemIds = itemIdHelper.combine(fullItemIds, itemIds, ItemIdCombinationModifier.DIFFERENCE)
+
+                    // Retrieve the points for remaining item ids
+                    val remainingItemEvents = remainingItemIds.map { remainingItemId ->
+                        itemIdHelper.getPointsForItemId(remainingItemId).toList()
+                    }
+
+                    // If remaining items exist, replace strokes, else erase strokes
+                    val newItemIds = if (remainingItemEvents.isNotEmpty()) {
+                        offscreenEditor?.replaceStrokes(
+                            fullItemIds,
+                            remainingItemEvents.flatten().toTypedArray()
+                        )
+                    } else {
+                        offscreenEditor?.erase(fullItemIds)
+                        emptyArray()
+                    }
+
+                    // Erase the erased strokes and gesture strokes in your application
+                    (fullItemIds + gestureStrokeId).forEach { strokeId ->
+                        val appStrokeId = strokeIdsMapping[strokeId]
+                        strokeIdsMapping.remove(strokeId)
+                        val strokeBrush = remainingStrokes.firstOrNull { it.id == appStrokeId }
+                        remainingStrokes.remove(strokeBrush)
+                    }
+
+                    // Convert remaining events to brushes and map to remaining item ids
+                    val brushes = remainingItemEvents.map { pointerEvents -> pointerEvents.toBrush(converter) }
+                    newItemIds?.zip(brushes)?.forEach { (iinkStrokeId, brush) ->
+                        strokeIdsMapping[iinkStrokeId] = brush.id
+                    }
+
+                    // Add back the remaining strokes
+                    remainingStrokes.addAll(brushes)
+                }
+
                 _strokes.value = remainingStrokes
             }
             return OffscreenGestureAction.IGNORE

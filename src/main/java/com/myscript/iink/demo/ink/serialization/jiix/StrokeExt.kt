@@ -2,6 +2,7 @@
 
 package com.myscript.iink.demo.ink.serialization.jiix
 
+import com.microsoft.device.ink.InkView
 import com.microsoft.device.ink.InputManager
 import com.myscript.iink.PointerEvent
 import com.myscript.iink.PointerEventType
@@ -44,6 +45,28 @@ fun InputManager.ExtendedStroke.toPointerEvents(): List<PointerEvent> {
             pointerEventType = pointerEventType,
         )
     }
+}
+
+fun List<PointerEvent>.toBrush(converter: DisplayMetricsConverter?): InkView.Brush {
+    return InkView.Brush(
+        stroke = InputManager.ExtendedStroke().also { extendedStroke ->
+            map { pointerEvent ->
+                extendedStroke.addPoint(
+                    InputManager.PenInfo(
+                        pointerType = InputManager.PointerType.PEN_TIP,
+                        x = converter?.x_mm2px(pointerEvent.x) ?: pointerEvent.x,
+                        y = converter?.y_mm2px(pointerEvent.y) ?: pointerEvent.y,
+                        timestamp = pointerEvent.t,
+                        pressure = pointerEvent.f,
+                        orientation = 0f,
+                        tilt = 0f,
+                        primaryButtonState = false,
+                        secondaryButtonState = false
+                    )
+                )
+            }
+        }
+    )
 }
 
 fun PointerEvent.convertPointerEvent(converter: DisplayMetricsConverter?): PointerEvent {

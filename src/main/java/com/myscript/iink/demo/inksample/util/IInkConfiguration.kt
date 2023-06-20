@@ -22,7 +22,7 @@ val iinkConfig = """{
       "shape": false
     },
     "pen": {
-      "gestures": ["scratch-out"]
+      "gestures": ["scratch-out", "strike-through"]
     }
   }
 }
