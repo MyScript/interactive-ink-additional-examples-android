@@ -4,6 +4,7 @@ package com.myscript.iink.demo.inksample.ui
 
 import android.util.DisplayMetrics
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -62,10 +63,13 @@ data class RecognitionFeedback(
 
 class InkViewModel(
     private val repository: InkRepository,
-    private val engine: Engine,
+    private val engine: Engine?,
     private val dataDir: File,
     private val exportConfiguration: String,
-    private val workDispatcher: CoroutineDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val workDispatcher: CoroutineDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher(),
+    private val uiDispatcher: CoroutineDispatcher = Dispatchers.Main,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
@@ -182,7 +186,7 @@ class InkViewModel(
         ): OffscreenGestureAction {
             val itemIdHelper = itemIdHelper ?: return OffscreenGestureAction.ADD_STROKE
 
-            viewModelScope.launch(Dispatchers.Main) {
+            viewModelScope.launch(uiDispatcher) {
                 val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
 
                 withContext(workDispatcher) {
@@ -243,14 +247,14 @@ class InkViewModel(
         }
 
         override fun contentChanged(editor: OffscreenEditor, blockIds: Array<out String>) {
-            viewModelScope.launch(Dispatchers.Main) {
-                val htmlExport = withContext(Dispatchers.Default) {
+            viewModelScope.launch(uiDispatcher) {
+                val htmlExport = withContext(defaultDispatcher) {
                     offscreenEditor?.export_(emptyArray(), MimeType.HTML)
                 }
 
                 _iinkModel.value = htmlExport ?: EMPTY_HTML
 
-                val exportedData = withContext(Dispatchers.Default) {
+                val exportedData = withContext(defaultDispatcher) {
                     offscreenEditor?.export_(emptyArray(), MimeType.JIIX)
                 }
                 val adjustedWords = if (exportedData == null) {
@@ -276,25 +280,25 @@ class InkViewModel(
 
     init {
         dataDir.mkdirs()
-        offscreenEditor = engine.createOffscreenEditor(1f, 1f)
+        offscreenEditor = engine?.createOffscreenEditor(1f, 1f)
         offscreenEditor?.let { editor ->
-            itemIdHelper = engine.createItemIdHelper(editor)
+            itemIdHelper = engine?.createItemIdHelper(editor)
             val configuration = editor.configuration
             configuration.inject(exportConfiguration)
             editor.addListener(offScreenEditorListener)
             editor.setGestureHandler(offScreenGestureHandler)
         }
 
-        viewModelScope.launch(Dispatchers.Main) {
-            currentPart = withContext(Dispatchers.IO) {
+        viewModelScope.launch(uiDispatcher) {
+            currentPart = withContext(ioDispatcher) {
                 try {
                     if (contentFile.exists()) {
-                        engine.openPackage(contentFile).use { contentPackage ->
-                            contentPackage.getPart(0)
+                        engine?.openPackage(contentFile).use { contentPackage ->
+                            contentPackage?.getPart(0)
                         }
                     } else {
-                        engine.createPackage(contentFile).use { contentPackage ->
-                            contentPackage.createPart("Raw Content")
+                        engine?.createPackage(contentFile).use { contentPackage ->
+                            contentPackage?.createPart("Raw Content")
                         }
                     }
                 } catch (e: Exception) {
@@ -307,7 +311,7 @@ class InkViewModel(
     }
 
     fun clearInk() {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(uiDispatcher) {
             offscreenEditor?.clear()
             strokeIdsMapping.clear()
             _strokes.value = emptyList()
@@ -315,8 +319,8 @@ class InkViewModel(
     }
 
     fun loadInk() {
-        viewModelScope.launch(Dispatchers.Main) {
-            val jsonString = withContext(Dispatchers.IO) {
+        viewModelScope.launch(uiDispatcher) {
+            val jsonString = withContext(ioDispatcher) {
                 repository.readInkFromFile()
             }
 
@@ -325,7 +329,7 @@ class InkViewModel(
                 offscreenEditor?.clear()
                 strokeIdsMapping.clear()
 
-                val pointerEvents = withContext(Dispatchers.Default) {
+                val pointerEvents = withContext(defaultDispatcher) {
                     brushes.flatMap { brush ->
                         brush.stroke.toPointerEvents().map { pointerEvent ->
                             pointerEvent.convertPointerEvent(converter)
@@ -353,13 +357,13 @@ class InkViewModel(
     }
 
     fun saveInk(callback: () -> Unit) {
-        viewModelScope.launch(Dispatchers.Main) {
-            withContext(Dispatchers.IO) {
+        viewModelScope.launch(uiDispatcher) {
+            withContext(ioDispatcher) {
                 _strokes.value?.json()?.let { jsonString ->
                     repository.saveInkToFile(jsonString)
                 }
-                engine.openPackage(contentFile).use { contentPackage ->
-                    contentPackage.save()
+                engine?.openPackage(contentFile).use { contentPackage ->
+                    contentPackage?.save()
                 }
             }
             callback.invoke()
@@ -367,7 +371,7 @@ class InkViewModel(
     }
 
     fun selectTool(toolType: ToolType) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(uiDispatcher) {
             _availableTools.value = _availableTools.value?.map {
                 it.copy(isSelected = it.type == toolType)
             } ?: emptyList()
@@ -375,13 +379,13 @@ class InkViewModel(
     }
 
     fun toggleRecognition(isVisible: Boolean) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(uiDispatcher) {
             _recognitionFeedback.value = _recognitionFeedback.value?.copy(isVisible = isVisible)
         }
     }
 
     fun addStroke(brush: InkView.Brush) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(uiDispatcher) {
             _strokes.also { it.value = it.value?.plus(brush) }
             val pointerEvents = brush.stroke.toPointerEvents().map { pointerEvent ->
                 pointerEvent.convertPointerEvent(converter)
@@ -393,7 +397,8 @@ class InkViewModel(
         }
     }
 
-    override fun onCleared() {
+    @VisibleForTesting
+    public override fun onCleared() {
         super.onCleared()
         currentPart = null
         offScreenGestureHandler = null
