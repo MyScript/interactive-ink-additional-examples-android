@@ -426,6 +426,7 @@ class InkView constructor(
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
         if (width > 0 && height > 0) {
             this.surface = Surface(surface)
+            redrawTexture()
         } else {
             this.surface?.release()
             this.surface = null

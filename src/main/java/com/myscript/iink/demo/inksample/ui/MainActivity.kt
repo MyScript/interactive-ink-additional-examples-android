@@ -9,6 +9,7 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import com.microsoft.device.ink.InkView
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
@@ -34,7 +35,11 @@ class MainActivity : AppCompatActivity() {
 
         inkViewModel.displayMetrics = resources.displayMetrics
 
-        inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
+        binding.inkView.doOnLayout {
+            // The code in InkView from the Microsoft sample can take a bit of time to get ready after rotation
+            // if we don't do that the viewmodel sends the strokes too early while the canvas is not available yet
+            inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
+        }
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
     }
