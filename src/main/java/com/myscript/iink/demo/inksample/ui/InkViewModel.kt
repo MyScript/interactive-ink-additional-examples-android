@@ -24,7 +24,6 @@ import com.myscript.iink.ItemIdHelper
 import com.myscript.iink.MimeType
 import com.myscript.iink.OffscreenEditor
 import com.myscript.iink.OffscreenGestureAction
-import com.myscript.iink.PointerEvent
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.Word
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
@@ -47,20 +46,17 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.Executors
 
-enum class ToolType {
-    PEN
-}
-
-data class ToolState(
-    val type: ToolType,
-    val isSelected: Boolean = false
-)
-
 data class RecognitionFeedback(
     val isVisible: Boolean = false,
     val words: List<Word> = emptyList()
 )
 
+/**
+ * ViewModel responsible for maintaining the state of the OffScreenInteractivity demo application.
+ *
+ * This ViewModel is designed to interact with the iink engine, manage offscreen editing, process ink gestures,
+ * handle ink recognition, and keep the link & mapping between the application ink model and iink's model
+ */
 class InkViewModel(
     private val repository: InkRepository,
     private val engine: Engine?,
@@ -76,6 +72,8 @@ class InkViewModel(
     val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
 
+    // The iinkModel and recognitionFeedback are straightforward methods for debugging and showcasing, providing visual representation for easier understanding.
+    // While this is not the method your app should use to display recognition, it can provide a starting point or guide on how to accomplish this.
     private val _recognitionFeedback: MutableLiveData<RecognitionFeedback> = MutableLiveData(RecognitionFeedback())
     val recognitionFeedback: LiveData<RecognitionFeedback>
         get() = _recognitionFeedback
@@ -84,19 +82,19 @@ class InkViewModel(
     val iinkModel: LiveData<String>
         get() = _iinkModel
 
-    private val _availableTools: MutableLiveData<List<ToolState>> = MutableLiveData(listOf(
-        ToolState(type = ToolType.PEN, isSelected = true)
-    ))
-    val availableTools: LiveData<List<ToolState>>
-        get() = _availableTools
-
     private var offscreenEditor by autoCloseable<OffscreenEditor>()
     private var currentPart by autoCloseable<ContentPart>()
+
+    // Through the use of itemIdHelper and strokeIdsMapping, we aim to underscore the importance of maintaining a connection between your application's stroke model and the one used by iink.
+    // ItemIdHelper facilitates the handling of item ids such as strokes & partial strokes that are associated with the offscreen editor.
+    // If you wish to reflect updates from the editor's strokes in your application's strokes, maintaining a mapping will facilitate this process.
     private var itemIdHelper by autoCloseable<ItemIdHelper>()
 
+    // This function converts stroke points from pixels, which are used in device coordinates,
+    // to millimeters, which are used in offscreen editor coordinates, and it can perform this conversion in reverse as well.
     private var converter: DisplayMetricsConverter? = null
-    // maps iink offScreen editor's data model ids to app's data model ids
-    private val strokeIdsMapping: MutableMap<String /*id of iink stroke*/, String /* id of app's stroke*/> = mutableMapOf()
+    // Maps the data model IDs of the iink offscreen editor to the data model IDs of the application.
+    private val strokeIdsMapping: MutableMap<String /* id of iink stroke*/, String /* id of app's stroke*/> = mutableMapOf()
 
     private val contentFile: File
         get() = File(dataDir, "OffscreenEditor.iink")
@@ -161,9 +159,14 @@ class InkViewModel(
             viewModelScope.launch(Dispatchers.Main) {
                 val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
 
+                // With workDispatcher, this snippet below will not be processed in parallel but rather one at a time.
+                // This is especially useful when you want to ensure that tasks are executed in a specific order,
+                // or when tasks have side-effects that must be isolated to a single thread.
                 withContext(workDispatcher) {
+                    // ItemIds may refer to partial strokes, retrieve the corresponding full strokes ids
                     val fullStrokeIds = itemIds.map(itemIdHelper::getFullItemId) + gestureStrokeId
 
+                    // Erase the gesture stroke (gestureStrokeId) and the erased strokes (fullItemIds) in your application
                     fullStrokeIds.forEach { strokeId ->
                         val appStrokeId = strokeIdsMapping[strokeId]
                         strokeIdsMapping.remove(strokeId)
@@ -171,11 +174,13 @@ class InkViewModel(
                         remainingStrokes.remove(strokeBrush)
                     }
 
+                    // Erase the scratched strokes (fullItemIds) in offscreen editor
                     val strokeIdsToErase = (fullStrokeIds - gestureStrokeId).toTypedArray()
                     editor.erase(strokeIdsToErase)
                 }
                 _strokes.value = remainingStrokes
             }
+            // Discard the gesture stroke (gestureStrokeId) in offscreen editor
             return OffscreenGestureAction.IGNORE
         }
 
@@ -246,6 +251,9 @@ class InkViewModel(
             // no-op
         }
 
+        // This method is triggered when the content in the editor changes.
+        // It could be due to new strokes added, existing strokes updated or deleted etc.
+        // The blockIds parameter contains the ids of the blocks that were changed.
         override fun contentChanged(editor: OffscreenEditor, blockIds: Array<out String>) {
             viewModelScope.launch(uiDispatcher) {
                 val htmlExport = withContext(defaultDispatcher) {
@@ -254,15 +262,19 @@ class InkViewModel(
 
                 _iinkModel.value = htmlExport ?: EMPTY_HTML
 
+                // Export the content as JIIX (JSON format that describes the recognition result).
+                // The computation is offloaded to a CPU bounded dispatcher as it may be a potentially long-running operation.
                 val exportedData = withContext(defaultDispatcher) {
                     offscreenEditor?.export_(emptyArray(), MimeType.JIIX)
                 }
+                // Parse the exported JIIX content and map it to a list of words that are displayed on the screen.
+                // If the exportedData is null, an empty list is used instead.
                 val adjustedWords = if (exportedData == null) {
                     emptyList()
                 } else {
                     val recognitionRoot = Gson().fromJson(exportedData, RecognitionRoot::class.java)
 
-                    // filter out elements that are null or contains any null list of words
+                    // Filter out elements that are null or contain any null list of words
                     recognitionRoot.elements?.flatMap { element ->
                         element.words?.map { word ->
                             word.toScreenCoordinates(converter)
@@ -283,12 +295,14 @@ class InkViewModel(
         offscreenEditor = engine?.createOffscreenEditor(1f, 1f)
         offscreenEditor?.let { editor ->
             itemIdHelper = engine?.createItemIdHelper(editor)
+            // Enable text and gestures recognition
             val configuration = editor.configuration
             configuration.inject(exportConfiguration)
             editor.addListener(offScreenEditorListener)
             editor.setGestureHandler(offScreenGestureHandler)
         }
 
+        // Create a package with a new part
         viewModelScope.launch(uiDispatcher) {
             currentPart = withContext(ioDispatcher) {
                 try {
@@ -337,7 +351,8 @@ class InkViewModel(
                     }.toTypedArray()
                 }
 
-                if (brushes.isNotEmpty()) { // offscreenEditor will refuse an empty list and crash
+                // OffscreenEditor requires a non empty array
+                if (pointerEvents.isNotEmpty()) {
                     val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
                     if (addedStrokes != null) {
                         brushes.forEachIndexed { index, brush ->
@@ -367,14 +382,6 @@ class InkViewModel(
                 }
             }
             callback.invoke()
-        }
-    }
-
-    fun selectTool(toolType: ToolType) {
-        viewModelScope.launch(uiDispatcher) {
-            _availableTools.value = _availableTools.value?.map {
-                it.copy(isSelected = it.type == toolType)
-            } ?: emptyList()
         }
     }
 

@@ -35,9 +35,13 @@ class MainActivity : AppCompatActivity() {
 
         inkViewModel.displayMetrics = resources.displayMetrics
 
+        // In the Microsoft surface Duo sample (which serves as basis for this demo), the code in InkView may require some time to prepare after a rotation.
+        // If we do not account for this delay, the ViewModel may transmit the strokes prematurely,
+        // at a time when the canvas is not yet available.
         binding.inkView.doOnLayout {
-            // The code in InkView from the Microsoft sample can take a bit of time to get ready after rotation
-            // if we don't do that the viewmodel sends the strokes too early while the canvas is not available yet
+            // Be aware that calling drawStrokes in this context may not be optimal for performance,
+            // as it triggers a complete redraw with each LiveData update.
+            // While this method serves as a quick demonstration of how strokes are drawn, your application should be designed to handle this more efficiently
             inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
         }
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
