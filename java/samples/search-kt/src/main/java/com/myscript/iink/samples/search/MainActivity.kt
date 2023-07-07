@@ -84,9 +84,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         if (MyIInkApplication.getEngine() == null) {
             /* the certificate provided in `BatchModule.provideEngine` is most likely incorrect */
             AlertDialog.Builder(this)
-                .setTitle( getString(R.string.app_error_invalid_certificate_title))
-                .setMessage( getString(R.string.app_error_invalid_certificate_message))
-                .setPositiveButton(R.string.dialog_ok
+                .setTitle( getString(com.myscript.iink.app.common.R.string.app_error_invalid_certificate_title))
+                .setMessage( getString(com.myscript.iink.app.common.R.string.app_error_invalid_certificate_message))
+                .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok
                 ) { _,
                     _ ->
                     finishAffinity()
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
-        editorView = findViewById<View>(R.id.back_frame).findViewById(R.id.editor_view)
+        editorView = findViewById<View>(R.id.back_frame).findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
         searchView = findViewById<SearchView>(R.id.search_view)
         searchView?.visibility = View.INVISIBLE
 

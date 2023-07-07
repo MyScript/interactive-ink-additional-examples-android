@@ -10,11 +10,13 @@ plugins {
 }
 
 android {
-    compileSdk project.ext.compileSdkVersion
+    namespace 'com.myscript.iink.app.common'
+
+    compileSdk project.ext.compileSdk
 
     defaultConfig {
-        minSdkVersion project.ext.minSdkVersion
-        targetSdkVersion project.ext.targetSdkVersion
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
         versionCode project.ext.iinkVersionCode
         versionName project.ext.iinkVersionName
     }
@@ -38,10 +40,6 @@ dependencies {
     implementation "androidx.core:core-ktx:${project.ext.kotlinCoreVersion}"
     implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
     implementation "com.google.android.material:material:${project.ext.materialLibraryVersion}"
-
-    // iink SDK.
-    // once iink wil be published we will use this
-    api "com.myscript:iink:${project.ext.iinkVersionName}"
 }
 
 clean.doFirst {

@@ -8,7 +8,7 @@ This repository comes in addition with further advanced Android examples that de
 
 ## Installation
 
-1. Clone the examples repository  `git clone https://github.com/MyScript/iink_sdk-additional-examples-android.git`.
+1. Clone the examples repository `git clone https://github.com/MyScript/iink_sdk-additional-examples-android.git`.
 
 2. If you already have a certificate go to next step, else claim to receive the free license to start develop your application by following the first steps of [Getting Started](https://developer.myscript.com/getting-started).
 
@@ -31,14 +31,14 @@ This repository provides you with an additional set of ready-to-use examples bas
  <img src="batch.gif" alt="batch sample" width="302">
 </div>
 
-NB: you will retrieve data converted in your device internal storage : Android\data\com.myscript.iink.samples.batchmode\files
+NB: you will retrieve data converted in your device internal storage: `Android/data/com.myscript.iink.samples.batchmode/files`
 
 2. The exercise assessment illustrates the case when you want to use several writing areas each one for a specific purpose in your application. It is thus using multiple editors, one per writing area, as each one has a different purpose:
 - First one is dedicated to "Math" content types
-- Second one  is dedicated to "Math" content types but with user defined gramar which is dynamically loaded at start.
+- Second one is dedicated to "Math" content types but with a user defined grammar which is dynamically loaded at start.
 - Third one is dedicated to "Text" content types
-- Fourth one  is dedicated to "Diagram" content types
-- Fifth one  is dedicated to "Draw" content types
+- Fourth one is dedicated to "Diagram" content types
+- Fifth one is dedicated to "Draw" content types
 
 <div align="center">
  <img src="assessment.gif" alt="assessment sample" width="302">
@@ -52,7 +52,7 @@ NB: you will retrieve data converted in your device internal storage : Android\d
             val partType = "Raw Content" // change to "Text Document" if you want to test
 ~~~
 <div align="center">
- <img src="search-sample.gif" alt="search sample"  width="302">
+ <img src="search-sample.gif" alt="search sample" width="302">
 </div>
 
 ## Documentation

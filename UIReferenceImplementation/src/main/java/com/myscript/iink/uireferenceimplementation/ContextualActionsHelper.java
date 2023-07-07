@@ -5,7 +5,6 @@ package com.myscript.iink.uireferenceimplementation;
 import com.myscript.iink.ContentBlock;
 import com.myscript.iink.ContentPart;
 import com.myscript.iink.ContentSelection;
-import com.myscript.iink.ContextualActions;
 import com.myscript.iink.Editor;
 
 import java.util.EnumSet;
@@ -32,7 +31,7 @@ public final class ContextualActionsHelper
             boolean onTextDocument = "Text Document".equals(part != null ? part.getType() : null);
             boolean blockIsEmpty = editor.isEmpty(block);
 
-            boolean displayAddBlock = editor.getSupportedAddBlockTypes().length > 0 && isRootBlock;
+            boolean displayAddBlock = editor.getSupportedAddBlockTypes().length > 0 && (!onTextDocument || isRootBlock);
             boolean displayRemove = !isRootBlock;
             boolean displayCopy = !isRootBlock || !onTextDocument;
             boolean displayConvert = !blockIsEmpty && editor.getSupportedTargetConversionStates(block).length > 0;

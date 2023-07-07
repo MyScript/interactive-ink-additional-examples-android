@@ -39,9 +39,9 @@ class MainActivity : AppCompatActivity(), IEditorListener {
         if (MyIInkApplication.getEngine() == null) {
             // the certificate provided in `BatchModule.provideEngine` is most likely incorrect
             AlertDialog.Builder(this)
-                    .setTitle( getString(R.string.app_error_invalid_certificate_title))
-                    .setMessage( getString(R.string.app_error_invalid_certificate_message))
-                    .setPositiveButton(R.string.dialog_ok,
+                    .setTitle( getString(com.myscript.iink.app.common.R.string.app_error_invalid_certificate_title))
+                    .setMessage( getString(com.myscript.iink.app.common.R.string.app_error_invalid_certificate_message))
+                    .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok,
                         DialogInterface.OnClickListener {
                             _,
                             _ ->
@@ -59,19 +59,19 @@ class MainActivity : AppCompatActivity(), IEditorListener {
 
 
         // TODO: try different part types: Diagram, Drawing, Math, Text, Text Document.
-        answerEditorView1 =findViewById<View>(R.id.problemSolver1).findViewById(R.id.editor_view)
+        answerEditorView1 =findViewById<View>(R.id.problemSolver1).findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
         initWith(answerEditorView1, contentPackage!!,"Math","standard")
 
-        answerEditorView2 =findViewById<View>(R.id.problemSolver2).findViewById(R.id.editor_view)
+        answerEditorView2 =findViewById<View>(R.id.problemSolver2).findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
         initWith(answerEditorView2, contentPackage!!,"Math","standardK8")
 
-        answerEditorView3 =findViewById<View>(R.id.problemSolver3).findViewById(R.id.editor_view)
+        answerEditorView3 =findViewById<View>(R.id.problemSolver3).findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
         initWith(answerEditorView3, contentPackage!!,"Text")
 
-        answerEditorView4 =findViewById<View>(R.id.problemSolver4).findViewById(R.id.editor_view)
+        answerEditorView4 =findViewById<View>(R.id.problemSolver4).findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
         initWith(answerEditorView4, contentPackage!!,"Diagram")
 
-        answerEditorView5 =findViewById<View>(R.id.problemSolver5).findViewById(R.id.editor_view)
+        answerEditorView5 =findViewById<View>(R.id.problemSolver5).findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
         initWith(answerEditorView5, contentPackage!!,"Drawing")
     }
 
