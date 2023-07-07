@@ -3,10 +3,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion = project.ext.compileSdkVersion
+    namespace 'com.myscript.certificate'
+
+    compileSdk = project.ext.compileSdk
     defaultConfig {
-        minSdkVersion project.ext.minSdkVersion
-        targetSdkVersion project.ext.targetSdkVersion
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
         versionCode 1
         versionName '1.0'
     }

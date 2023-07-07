@@ -4,15 +4,17 @@ plugins {
 }
 
 android {
-    compileSdkVersion project.ext.compileSdkVersion
+    namespace 'com.myscript.iink.samples.batchmode'
+
+    compileSdk project.ext.compileSdk
 
     buildFeatures {
         viewBinding true
     }
 
     defaultConfig {
-        minSdkVersion project.ext.minSdkVersion
-        targetSdkVersion project.ext.targetSdkVersion
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
 
         applicationId 'com.myscript.iink.samples.batchmode'
         versionCode project.ext.iinkVersionCode

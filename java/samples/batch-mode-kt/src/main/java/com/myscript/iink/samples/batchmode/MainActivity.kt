@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle( getString(R.string.app_error_invalid_certificate_title))
                 .setMessage( getString(R.string.app_error_invalid_certificate_message))
-                .setPositiveButton(R.string.dialog_ok, null)
+                .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
                 .show()
             finishAndRemoveTask() // be sure to end the application
             return
@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle( "Package Creation IllegalArgumentException")
                 .setMessage( "Failed to open package \"$iinkPackageName\"")
-                .setPositiveButton(R.string.dialog_ok, null)
+                .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
                 .show()
             return;
 
@@ -127,7 +127,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle( "Part Creation IllegalArgumentException")
                 .setMessage( "Failed to open type of part \"$partType\"")
-                .setPositiveButton(R.string.dialog_ok, null)
+                .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
                 .show()
             return;
         }
@@ -275,7 +275,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                     .setTitle( "file not found")
                     .setMessage( "no file to parse found : $pointerEventsPath")
-                    .setPositiveButton(R.string.dialog_ok, null)
+                    .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
                     .show()
             e.printStackTrace()
         } catch (e: IOException) {
