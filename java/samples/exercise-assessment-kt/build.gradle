@@ -8,13 +8,15 @@ plugins {
 }
 
 android {
-    compileSdk project.ext.compileSdkVersion
+    namespace 'com.myscript.iink.samples.assessment'
+
+    compileSdk project.ext.compileSdk
 
     defaultConfig {
         applicationId "com.myscript.iink.samples.assessment"
 
-        minSdkVersion project.ext.minSdkVersion
-        targetSdkVersion project.ext.targetSdkVersion
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
         versionCode project.ext.iinkVersionCode
         versionName project.ext.iinkVersionName
     }
