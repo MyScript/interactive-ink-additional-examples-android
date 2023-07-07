@@ -4,6 +4,6 @@
 
 <resources>
     <dimen name="text_view_drawable_padding">16dp</dimen>
-    <dimen name="editor_vertical_margin">64dp</dimen>
+    <dimen name="editor_vertical_margin">0dp</dimen>
     <dimen name="editor_horizontal_margin">24dp</dimen>
 </resources>
