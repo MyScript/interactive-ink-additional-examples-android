@@ -151,6 +151,7 @@ class MainActivity : AppCompatActivity(), IEditorListener {
             val horizontalMargin = resources.getDimension(horizontalMarginRes)
             val verticalMarginMM =  25.4f * verticalMargin / displayMetrics.ydpi
             val horizontalMarginMM = 25.4f * horizontalMargin / displayMetrics.xdpi
+            setNumber("text.margin.top", verticalMarginMM)
             setNumber("text.margin.left", horizontalMarginMM)
             setNumber("text.margin.right", horizontalMarginMM)
             setNumber("math.margin.top", verticalMarginMM)
