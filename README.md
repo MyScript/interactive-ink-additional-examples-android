@@ -55,6 +55,26 @@ NB: you will retrieve data converted in your device internal storage: `Android/d
  <img src="search-sample.gif" alt="search sample" width="302">
 </div>
 
+4. The write to type example gives you a hint how to implement Scribble like feature relying on the Recognizer API of iink SDK. It is based on a contextless gesture recognition combined with a text recognition.
+To run both recognitions simultaneously, two instances of Recognizer are created - one for Gesture recognition and the other one for Text recognition:
+~~~#!java
+    static final float INCH_IN_MILLIMETER = 25.4f;
+
+    float scaleX = INCH_IN_MILLIMETER / displayMetrics.xdpi;
+    float scaleY = INCH_IN_MILLIMETER / displayMetrics.ydpi;
+
+    Recognizer textRecognizer = engine.createRecognizer(scaleX, scaleY, "Text");
+    Recognizer gestureRecognizer = engine.createRecognizer(scaleX, scaleY, "Gesture");
+~~~
+
+<div align="center">
+ <img src="write-to-type.gif" alt="write to type sample" width="302">
+</div>
+
+NB: the Recognizer API is available from iink SDK 2.1.
+
+For more details on the sample, read more [here](https://github.com/MyScript/interactive-ink-additional-examples-android/blob/master/java/samples/write-to-type/ReadMe.pdf). 
+
 ## Documentation
 
 A complete guide is available on [MyScript Developer Portal](https://developer.myscript.com/docs/interactive-ink/latest/android/).

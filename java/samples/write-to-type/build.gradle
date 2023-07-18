@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.myscript.iink.samples.writetotype'
+    compileSdk project.ext.compileSdk
+    defaultConfig {
+        applicationId "com.myscript.iink.samples.writetotype"
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+    }
+}
+
+dependencies {
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+    implementation project(':common-kotlin')
+
+    implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
+
+    // Google Gson
+    implementation "com.google.code.gson:gson:${project.ext.gsonVersion}"
+}
