@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) MyScript. All rights reserved.
+  -->
+
+<resources>
+    <string name="app_name">Write To Type sample</string>
+    <string name="log_view_title">[LOG VIEW]</string>
+
+    <string name="menu_reset">Reset</string>
+    <string name="menu_debug">Debug</string>
+
+    <string name="sample_empty" />
+    <string name="sample_single_line">Hello, how are you!</string>
+    <string name="sample_multi_line">Sticky Memo\n- It\'s good for a short memo.\n- Great!!</string>
+
+    <string-array name="default_edittext">
+        <item>@string/sample_empty</item>
+        <item>@string/sample_single_line</item>
+        <item>@string/sample_multi_line</item>
+    </string-array>
+</resources>
