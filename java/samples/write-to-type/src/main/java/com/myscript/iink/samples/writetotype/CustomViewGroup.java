@@ -381,7 +381,15 @@ public class CustomViewGroup extends LinearLayout
       else if (start > 0)
       {
         editText.setSelection(start);
-        editable.delete(start - 1, start);
+
+        if (isLowSurrogate(editable.charAt(start - 1)))
+        {
+          editable.delete(start - 2, start);
+        }
+        else
+        {
+          editable.delete(start - 1, start);
+        }
       }
     }
   }
@@ -434,5 +442,10 @@ public class CustomViewGroup extends LinearLayout
         || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C        // 2A700..2B73F
         || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D        // 2B740..2B81F
         || Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT;  // 2F800..2FA1F
+  }
+
+  private boolean isLowSurrogate(final char c)
+  {
+    return Character.UnicodeBlock.of(c) == Character.UnicodeBlock.LOW_SURROGATES;
   }
 }
