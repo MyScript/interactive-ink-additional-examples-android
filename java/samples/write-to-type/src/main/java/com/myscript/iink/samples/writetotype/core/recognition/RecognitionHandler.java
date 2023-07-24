@@ -69,6 +69,7 @@ public class RecognitionHandler
   private boolean mShouldCommit;
   private boolean mShouldClear;
 
+  private int mCurrentPointerId = -1;
   private StrokePoint.EventType mCurrentPointerEvent;
 
   // Variables to control feeding strokes to Gesture/Text recognizer
@@ -138,18 +139,23 @@ public class RecognitionHandler
   {
     try
     {
-      mStrokeCount++;
-      mPath.moveTo(point.x, point.y);
-
-      mTextRecognizer.pointerDown(point.x, point.y, point.t, point.p);
-      if (mStrokeCount < 2 || mLastGestureType.equals(JiixGesture.GESTURE_TYPE_TAP))
+      if (mCurrentPointerId == -1 && !mShouldClear)
       {
-        mGestureRecognizer.pointerDown(point.x, point.y, point.t, point.p);
+        mStrokeCount++;
+        mPath.moveTo(point.x, point.y);
+
+        mTextRecognizer.pointerDown(point.x, point.y, point.t, point.p);
+        if (mStrokeCount < 2 || mLastGestureType.equals(JiixGesture.GESTURE_TYPE_TAP))
+        {
+          mGestureRecognizer.pointerDown(point.x, point.y, point.t, point.p);
+        }
+
+        mIsResultAvailable = true;
+
+        mCurrentPointerEvent = point.eventType;
+
+        mCurrentPointerId = pointerId;
       }
-
-      mIsResultAvailable = true;
-
-      mCurrentPointerEvent = point.eventType;
     }
     catch (Exception e)
     {
@@ -162,15 +168,18 @@ public class RecognitionHandler
   {
     try
     {
-      mPath.lineTo(point.x, point.y);
-
-      mTextRecognizer.pointerMove(point.x, point.y, point.t, point.p);
-      if (mStrokeCount < 2 || mLastGestureType.equals(JiixGesture.GESTURE_TYPE_TAP))
+      if (mCurrentPointerId == pointerId)
       {
-        mGestureRecognizer.pointerMove(point.x, point.y, point.t, point.p);
-      }
+        mPath.lineTo(point.x, point.y);
 
-      mCurrentPointerEvent = point.eventType;
+        mTextRecognizer.pointerMove(point.x, point.y, point.t, point.p);
+        if (mStrokeCount < 2 || mLastGestureType.equals(JiixGesture.GESTURE_TYPE_TAP))
+        {
+          mGestureRecognizer.pointerMove(point.x, point.y, point.t, point.p);
+        }
+
+        mCurrentPointerEvent = point.eventType;
+      }
     }
     catch (Exception e)
     {
@@ -183,15 +192,20 @@ public class RecognitionHandler
   {
     try
     {
-      mPath.lineTo(point.x, point.y);
-
-      mTextRecognizer.pointerUp(point.x, point.y, point.t, point.p);
-      if (mStrokeCount < 2 || mLastGestureType.equals(JiixGesture.GESTURE_TYPE_TAP))
+      if (mCurrentPointerId == pointerId)
       {
-        mGestureRecognizer.pointerUp(point.x, point.y, point.t, point.p);
-      }
+        mPath.lineTo(point.x, point.y);
 
-      mCurrentPointerEvent = point.eventType;
+        mTextRecognizer.pointerUp(point.x, point.y, point.t, point.p);
+        if (mStrokeCount < 2 || mLastGestureType.equals(JiixGesture.GESTURE_TYPE_TAP))
+        {
+          mGestureRecognizer.pointerUp(point.x, point.y, point.t, point.p);
+        }
+
+        mCurrentPointerEvent = point.eventType;
+
+        mCurrentPointerId = -1;
+      }
     }
     catch (Exception e)
     {
@@ -503,6 +517,7 @@ public class RecognitionHandler
     mPath.reset();
     mStrokeCount = 0;
     mLastGestureType = JiixGesture.GESTURE_TYPE_EMPTY;
+    mCurrentPointerId = -1;
 
     try
     {
