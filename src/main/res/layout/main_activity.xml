@@ -32,24 +32,6 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/outline_delete_forever_24"
                     android:contentDescription="Clear" />
-
-                <ImageView
-                    android:id="@+id/save_ink_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:padding="12dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/outline_file_download_24"
-                    android:contentDescription="Save" />
-
-                <ImageView
-                    android:id="@+id/load_ink_btn"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:padding="12dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/outline_file_upload_24"
-                    android:contentDescription="Load" />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>

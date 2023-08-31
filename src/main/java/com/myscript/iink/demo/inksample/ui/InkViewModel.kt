@@ -307,6 +307,7 @@ class InkViewModel(
             currentPart = withContext(ioDispatcher) {
                 try {
                     if (contentFile.exists()) {
+                        loadInk()
                         engine?.openPackage(contentFile).use { contentPackage ->
                             contentPackage?.getPart(0)
                         }

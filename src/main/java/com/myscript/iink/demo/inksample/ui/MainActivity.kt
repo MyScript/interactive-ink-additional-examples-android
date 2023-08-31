@@ -54,12 +54,6 @@ class MainActivity : AppCompatActivity() {
         with(binding) {
             inkView.strokesListener = StrokesListener()
             clearInkBtn.setOnClickListener { inkViewModel.clearInk() }
-            saveInkBtn.setOnClickListener {
-                inkViewModel.saveInk {
-                    Toast.makeText(this@MainActivity, "Ink saved", Toast.LENGTH_SHORT).show()
-                }
-            }
-            loadInkBtn.setOnClickListener { inkViewModel.loadInk() }
             recognitionSwitch.setOnCheckedChangeListener { _, isChecked ->
                 inkViewModel.toggleRecognition(isVisible = isChecked)
             }
@@ -70,11 +64,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
+        inkViewModel.saveInk {
+            // no op
+        }
         with(binding) {
             inkView.strokesListener = null
             clearInkBtn.setOnClickListener(null)
-            saveInkBtn.setOnClickListener(null)
-            loadInkBtn.setOnClickListener(null)
             recognitionSwitch.setOnCheckedChangeListener(null)
         }
 
