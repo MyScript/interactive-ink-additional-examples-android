@@ -1,49 +1,43 @@
 package com.myscript.iink.samples.batchmode
 
-import android.content.DialogInterface
 import android.graphics.Typeface
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
-import com.myscript.iink.*
-import com.myscript.iink.app.common.utils.autoCloseable
+import com.myscript.iink.ContentPackage
+import com.myscript.iink.ContentPart
+import com.myscript.iink.Editor
+import com.myscript.iink.MimeType
+import com.myscript.iink.PointerEvent
+import com.myscript.iink.PointerEventType
+import com.myscript.iink.Renderer
 import com.myscript.iink.app.common.utils.launchSingleChoiceDialog
 import com.myscript.iink.uireferenceimplementation.FontMetricsProvider
 import com.myscript.iink.uireferenceimplementation.FontUtils
 import com.myscript.iink.uireferenceimplementation.ImageLoader
 import com.myscript.iink.uireferenceimplementation.ImagePainter
-import java.io.*
-
+import java.io.File
+import java.io.IOException
+import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
-    private val TAG = "MainActivity"
 
-    /**/
-    private var renderer by autoCloseable<Renderer>(null)
-    private var editor by autoCloseable<Editor>(null)
-    private var contentPackage : ContentPackage? =null
+    private lateinit var renderer : Renderer
+    private lateinit var editor: Editor
+
+    private var contentPackage : ContentPackage? = null
     private var contentPart : ContentPart? = null
-
-    /**/
-    //warning use the real myscript name of part as this string will be use for part creation
-    private val typeOfPart = listOf("Text", "Math", "Diagram", "Raw Content")
-    private val iinkPackageName = "package.iink"
-    private val exportFileName = "export"
-    private val language = "en_US"
-    private val incremental = false
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Note: could be managed by domain layer and handled through observable error channel
-        // but kept simple as is to avoid adding too much complexity for this special (unrecoverable) error case
-        if (IInkApplication.getEngine() == null) {
-            // the certificate provided in `BatchModule.provideEngine` is most likely incorrect
+        val engine = IInkApplication.getEngine()
+
+        if (engine == null) {
+            // The certificate provided is incorrect, you need to use the one provided by MyScript
             AlertDialog.Builder(this)
                 .setTitle( getString(R.string.app_error_invalid_certificate_title))
                 .setMessage( getString(R.string.app_error_invalid_certificate_message))
@@ -53,66 +47,61 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // at creation we have to pre initialise the editor with dpi and screen size
-        intialConfiguration()
-
-        //Small dialog to ask user which type of Part he/she wants to proceed
-        launchSingleChoiceDialog(R.string.dialog_Part_choice_Title,
-                typeOfPart,
-                0,
-           {
-                // this is the function where we process exteranl output and export it
-                // add true if you want to export in png
-                offScreenProcess(typeOfPart[it])
-
-                //close the application
-                Thread(Runnable {
-                    Thread.sleep(2000)// just ot let time to display the toast (2sec)
-                    finishAndRemoveTask() // be sure to end the application
-                }).start()
-            },
-            DialogInterface.OnClickListener { _, _ -> finishAndRemoveTask() })
-    }
-
-    private fun intialConfiguration(){
-        val displayMetrics = resources.displayMetrics
-
-        // configure recognition
-        IInkApplication.getEngine()?.apply {
-            configuration.let { conf ->
+        // Configure recognition
+        engine.apply {
+            configuration.apply {
                 val confDir = "zip://${application.packageCodePath}!/assets/conf"
-                conf.setStringArray("configuration-manager.search-path", arrayOf(confDir))
-                val tempDir = File(application.cacheDir, "tmp")
-                conf.setString("content-package.temp-folder", tempDir.absolutePath)
-
+                setStringArray("configuration-manager.search-path", arrayOf(confDir))
+                setString("content-package.temp-folder", application.cacheDir.absolutePath)
                 // To enable text recognition for a specific language,
-                conf.setString("lang", language);
+                setString("lang", language);
                 // Configure the engine to disable guides (recommended in batch mode)
-                conf.setBoolean("text.guides.enable", false);
+                setBoolean("text.guides.enable", false);
             }
         }
 
+        // At creation we have to pre initialise the editor with dpi and screen size
+
         // Create a renderer with a null render target
-        renderer = IInkApplication.getEngine()?.createRenderer(displayMetrics.xdpi, displayMetrics.ydpi, null)
-        renderer?.setViewOffset(0.0f, 0.0f)
-        renderer?.viewScale = 1.0f
+        val displayMetrics = resources.displayMetrics
+        renderer = engine.createRenderer(displayMetrics.xdpi, displayMetrics.ydpi, null).apply {
+            setViewOffset(0.0f, 0.0f)
+            viewScale = 1.0f
+        }
 
         // Create the editor
-        editor = IInkApplication.getEngine()?.createEditor(renderer!!, IInkApplication.getEngine()!!.createToolController())
-
-        // The editor requires a font metrics provider and a view size *before* calling setPart()
-        val typefaceMap: Map<String, Typeface> = HashMap()
-        editor!!.setFontMetricsProvider(FontMetricsProvider(displayMetrics, typefaceMap))
-        editor!!.setViewSize(displayMetrics.widthPixels, displayMetrics.heightPixels);
+        editor = engine.createEditor(renderer, IInkApplication.getEngine()!!.createToolController()).apply {
+            // The editor requires a font metrics provider and a view size *before* calling setPart()
+            val typefaceMap: Map<String, Typeface> = HashMap()
+            setFontMetricsProvider(FontMetricsProvider(displayMetrics, typefaceMap))
+            setViewSize(displayMetrics.widthPixels, displayMetrics.heightPixels)
+        }
     }
 
-    private fun offScreenProcess(partType: String, renderToPNG : Boolean = false){
-        try {
-            // Create a new package
-            contentPackage = IInkApplication.getEngine()?.createPackage(iinkPackageName)!!
+    override fun onStart() {
+        super.onStart()
+        // Dialog to ask user which part type to process
+        launchSingleChoiceDialog(R.string.dialog_Part_choice_Title,
+            typeOfPart,
+            0,
+            { choiceIndex ->
+                // this is the function where we process exteranl output and export it
+                // add true if you want to export in png
+                process(typeOfPart[choiceIndex])
 
-            // Create a new part
-            contentPart = contentPackage!!.createPart(partType)
+                // Close the application
+                Thread {
+                    Thread.sleep(2000)// just ot let time to display the toast (2sec)
+                    finishAndRemoveTask() // be sure to end the application
+                }.start()
+            },
+            { _, _ -> finishAndRemoveTask() })
+    }
+
+    private fun process(partType: String, renderToPNG : Boolean = false) {
+        // Create a new package
+        contentPackage = try {
+             IInkApplication.getEngine()?.createPackage(iinkPackageName)!!
         } catch (e: IOException) {
             Log.e(TAG, "Failed to open package \"$iinkPackageName\"", e)
             AlertDialog.Builder(this)
@@ -120,8 +109,12 @@ class MainActivity : AppCompatActivity() {
                 .setMessage( "Failed to open package \"$iinkPackageName\"")
                 .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
                 .show()
-            return;
+            return
+        }
 
+        // Create a new part
+        contentPart = try {
+            contentPackage?.createPart(partType)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to open type of part \"$partType\"", e)
             AlertDialog.Builder(this)
@@ -129,157 +122,120 @@ class MainActivity : AppCompatActivity() {
                 .setMessage( "Failed to open type of part \"$partType\"")
                 .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
                 .show()
-            return;
+            return
         }
 
         // Associate editor with the new part
-        editor!!.part = contentPart
+        editor.part = contentPart
 
-        // now we can process pointer events
-        // and we feed the editor with an array of Pointer Events loaded for the right json file
-        // incremntal way or not
-        loadAndFeedPointerEvents(incremental, editor!!, partType, resources.displayMetrics)
+        // Now we can process pointer events and feed the editor with an array of Pointer Events loaded from the json file
+        loadAndFeedPointerEvents(partType)
 
-
-        // choose the right mimeType to export according to the partType we choose
+        // Choose the right mimeType to export according to the partType chosen
         var mimeType = MimeType.PNG
         if(!renderToPNG) {
             when (partType) {
                 typeOfPart[0] -> mimeType = MimeType.TEXT  // Text
                 typeOfPart[1] -> mimeType = MimeType.LATEX // Math
                 typeOfPart[2] -> mimeType = MimeType.SVG   // Diagram
-                typeOfPart[3] -> mimeType = MimeType.JIIX  //Raw Content
+                typeOfPart[3] -> mimeType = MimeType.JIIX  // Raw Content
                 else -> {}
             }
         }
 
-        // Exported file is stored in the Virtual SD Card : "Android/data/com.myscript.iink.samples.batchmode/files"
-        val file = File(
-            getExternalFilesDir(null),
-            File.separator + exportFileName.toString() + mimeType.fileExtensions
-        )
-        editor!!.waitForIdle()
-        try {
-            var imagePainter : ImagePainter? = null
-            if(mimeType.isImage) {
-                //we have to create a image painter to render in png
-                imagePainter = ImagePainter().apply {
-                    setImageLoader(ImageLoader(editor!!))
-                    // load fonts
+        // Exported file will be stored in your app's private files directory
+        val file = File(applicationContext.filesDir, "$exportFileName.${mimeType.fileExtensions}")
 
-                    // load fonts
-                    val assetManager = applicationContext.assets
-                    val typefaceMap = FontUtils.loadFontsFromAssets(assetManager)
-                    setTypefaceMap(typefaceMap)
-                }
+        editor.waitForIdle()
+
+        val imagePainter = if (mimeType.isImage) {
+            //we have to create a image painter to render in png
+             ImagePainter().apply {
+                setImageLoader(ImageLoader(editor))
+                // load fonts
+                val assetManager = applicationContext.assets
+                val typefaceMap = FontUtils.loadFontsFromAssets(assetManager)
+                setTypefaceMap(typefaceMap)
             }
-            editor!!.export_(null, file.getAbsolutePath(), mimeType, imagePainter)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        } else null
 
-        //quick reminder display of where the data has been exported
-        Toast.makeText(applicationContext, "File exported in : ${file.path}", Toast.LENGTH_SHORT).show()
+        editor.export_(null, file.absolutePath, mimeType, imagePainter)
 
-        //clean the elements
-        editor!!.part = null
-        contentPart?.close()
-        contentPackage?.close()
-        try {
-            IInkApplication.getEngine()?.deletePackage(packageName)
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        editor!!.close()
-        renderer!!.close()
-
+        // Quick display of the path where the data has been exported
+        Toast.makeText(applicationContext, "File exported in : ${file.path}", Toast.LENGTH_LONG).show()
     }
 
-    private fun loadAndFeedPointerEvents(incremental : Boolean, editor: Editor, partType: String, displayMetrics: DisplayMetrics){
-        var pointerEventsPath =
-                "conf/pointerEvents/${partType.lowercase()}/pointerEvents.json"
-        if (partType.lowercase().equals("text")) {
-            pointerEventsPath = "conf/pointerEvents/${partType.lowercase()}/$language/pointerEvents.json"
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Close everything
+        editor.part = null
+        contentPart?.close()
+        contentPackage?.close()
+        IInkApplication.getEngine()?.deletePackage(packageName)
+        editor.close()
+        renderer.close()
+    }
+
+    private fun loadAndFeedPointerEvents(partType: String) {
+        val partTypeLowercase = partType.lowercase()
+        val pointerEventsPath = if (partTypeLowercase == "text") {
+            "conf/pointerEvents/$partTypeLowercase/$language/pointerEvents.json"
+        } else {
+            "conf/pointerEvents/$partTypeLowercase/pointerEvents.json"
         }
 
-        try {
-            // Loading the content of the pointerEvents JSON file
-            val inputStream: InputStream = resources.assets.open(pointerEventsPath)
+        // Loading the content of the pointerEvents JSON file
+        val inputStream = resources.assets.open(pointerEventsPath)
 
-            // Mapping the content into a JsonResult class
-            val jsonResult: JsonResult =
-                    Gson().fromJson(InputStreamReader(inputStream), JsonResult::class.java)
+        // Mapping the content into a JsonResult class
+        val jsonResult = Gson().fromJson(InputStreamReader(inputStream), JsonResult::class.java)
 
-            // add each element to a list
-            var pointerEventsList = mutableListOf<PointerEvent>()
+        // Add each element to a list
+        val pointerEventsList = mutableListOf<PointerEvent>()
 
-            for (stroke in jsonResult.getStrokes()!!) {
-                val strokeX: FloatArray = stroke.x
-                val strokeY: FloatArray = stroke.y
-                val strokeT: LongArray = stroke.t
-                val strokeP: FloatArray = stroke.p
-                val length: Int = stroke.x.size
-                for (j in 0 until length) {
-                    if(incremental){
-                        //in incremental mode we send data direct to the editor
-                        if (j == 0) {
-                            editor.pointerDown(strokeX[j] / 25.4f * displayMetrics.xdpi,
-                                strokeY[j] / 25.4f * displayMetrics.ydpi,
-                                strokeT[j],
-                                strokeP[j],
-                                PointerType.PEN,
-                                1)
-                        } else if (j == length - 1) {
-                            editor.pointerUp(strokeX[j] / 25.4f * displayMetrics.xdpi,
-                                strokeY[j] / 25.4f * displayMetrics.ydpi,
-                                strokeT[j],
-                                strokeP[j],
-                                PointerType.PEN,
-                                1)
-                        } else {
-                            editor.pointerMove(strokeX[j] / 25.4f * displayMetrics.xdpi,
-                                strokeY[j] / 25.4f * displayMetrics.ydpi,
-                                strokeT[j],
-                                strokeP[j],
-                                PointerType.PEN,
-                                stroke.pointerId)
-                        }
-                    }else {
-                        //in batch mode we keep data in a array
-                        val pointerEvent = PointerEvent()
-                        pointerEvent.pointerType = stroke.pointerType!!
-                        pointerEvent.pointerId = stroke.pointerId
-                        if (j == 0) {
-                            pointerEvent.eventType = PointerEventType.DOWN
-                        } else if (j == length - 1) {
-                            pointerEvent.eventType = PointerEventType.UP
-                        } else {
-                            pointerEvent.eventType = PointerEventType.MOVE
-                        }
+        val xdpi = resources.displayMetrics.xdpi
+        val ydpi = resources.displayMetrics.ydpi
 
-                        // Transform the x and y coordinates of the stroke from mm to px
-                        // This is needed to be adaptive for each device
-                        pointerEvent.x = strokeX[j] / 25.4f * displayMetrics.xdpi
-                        pointerEvent.y = strokeY[j] / 25.4f * displayMetrics.ydpi
-                        pointerEvent.t = strokeT[j]
-                        pointerEvent.f = strokeP[j]
-                        //add it to the list
-                        pointerEventsList += pointerEvent
-                    }
+        jsonResult.getStrokes()?.forEach { stroke ->
+
+            val strokeX: FloatArray = stroke.x
+            val strokeY: FloatArray = stroke.y
+            val strokeT: LongArray = stroke.t
+            val strokeP: FloatArray = stroke.p
+            val length: Int = stroke.x.size
+
+            for (index in 0 until length) {
+                // In batch mode we keep data in a array
+                val pointerEvent = PointerEvent()
+                pointerEvent.pointerType = stroke.pointerType!!
+                pointerEvent.pointerId = stroke.pointerId
+                when (index) {
+                    0 -> pointerEvent.eventType = PointerEventType.DOWN
+                    length - 1 -> pointerEvent.eventType = PointerEventType.UP
+                    else -> pointerEvent.eventType = PointerEventType.MOVE
                 }
+
+                // Transform the x and y coordinates of the stroke from mm to px
+                // This is needed to be adaptive for each device
+                pointerEvent.x = strokeX[index] / 25.4f * xdpi
+                pointerEvent.y = strokeY[index] / 25.4f * ydpi
+                pointerEvent.t = strokeT[index]
+                pointerEvent.f = strokeP[index]
+                // Add it to the list
+                pointerEventsList += pointerEvent
             }
-            if(!incremental){
-                editor.pointerEvents(pointerEventsList.toTypedArray(), false)
-            }
-        } catch (e: FileNotFoundException) {
-            AlertDialog.Builder(this)
-                    .setTitle( "file not found")
-                    .setMessage( "no file to parse found : $pointerEventsPath")
-                    .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
-                    .show()
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
         }
+        editor.pointerEvents(pointerEventsList.toTypedArray(), false)
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
+
+        // /!\ Warning use the real MyScript name of part as this string will be used for part creation
+        private val typeOfPart = listOf("Text", "Math", "Diagram", "Raw Content")
+        private const val iinkPackageName = "package.iink"
+        private const val exportFileName = "export"
+        private const val language = "en_US"
     }
 }
