@@ -8,10 +8,6 @@ class JsonResult {
     @SerializedName("events")
     private var strokes: ArrayList<Stroke>? = null
 
-    fun JsonResult(strokes: ArrayList<Stroke>?) {
-        this.strokes = strokes
-    }
-
     fun getStrokes(): ArrayList<Stroke>? {
         return strokes
     }
