@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Create the editor
-        editor = engine.createEditor(renderer, IInkApplication.getEngine()!!.createToolController()).apply {
+        editor = engine.createEditor(renderer, engine.createToolController()).apply {
             // The editor requires a font metrics provider and a view size *before* calling setPart()
             val typefaceMap: Map<String, Typeface> = HashMap()
             setFontMetricsProvider(FontMetricsProvider(displayMetrics, typefaceMap))
@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Exported file will be stored in your app's private files directory
-        val file = File(applicationContext.filesDir, "$exportFileName.${mimeType.fileExtensions}")
+        val file = File(applicationContext.filesDir, "$exportFileName${mimeType.fileExtensions}")
 
         editor.waitForIdle()
 
