@@ -1,5 +1,6 @@
 package com.myscript.iink.samples.batchmode
 
+import android.app.Application
 import android.content.DialogInterface
 import android.graphics.Typeface
 import android.os.Bundle
@@ -8,6 +9,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import com.google.gson.Gson
 import com.myscript.iink.*
 import com.myscript.iink.app.common.utils.autoCloseable
@@ -63,7 +65,7 @@ class MainActivity : AppCompatActivity() {
            {
                 // this is the function where we process exteranl output and export it
                 // add true if you want to export in png
-                offScreenProcess(typeOfPart[it])
+                offScreenProcess(typeOfPart[it], true)
 
                 //close the application
                 Thread(Runnable {
@@ -155,8 +157,8 @@ class MainActivity : AppCompatActivity() {
 
         // Exported file is stored in the Virtual SD Card : "Android/data/com.myscript.iink.samples.batchmode/files"
         val file = File(
-            getExternalFilesDir(null),
-            File.separator + exportFileName.toString() + mimeType.fileExtensions
+            applicationContext.filesDir,
+            exportFileName + mimeType.fileExtensions
         )
         editor!!.waitForIdle()
         try {
@@ -166,14 +168,15 @@ class MainActivity : AppCompatActivity() {
                 imagePainter = ImagePainter().apply {
                     setImageLoader(ImageLoader(editor!!))
                     // load fonts
-
-                    // load fonts
                     val assetManager = applicationContext.assets
-                    val typefaceMap = FontUtils.loadFontsFromAssets(assetManager)
+                    val typefaceMap = provideTypefaces(application)
                     setTypefaceMap(typefaceMap)
+                    editor!!.setFontMetricsProvider(FontMetricsProvider(applicationContext.resources.displayMetrics, typefaceMap))
+                    editor!!.theme = (".math {font-family: STIX;}")
                 }
             }
-            editor!!.export_(null, file.getAbsolutePath(), mimeType, imagePainter)
+            editor!!.convert(editor!!.rootBlock, ConversionState.DIGITAL_EDIT)
+            editor!!.export_(editor!!.rootBlock, file.absolutePath, mimeType, imagePainter)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -193,6 +196,20 @@ class MainActivity : AppCompatActivity() {
         editor!!.close()
         renderer!!.close()
 
+    }
+
+    private fun provideTypefaces(application: Application): Map<String, Typeface> {
+        val typefaces = FontUtils.loadFontsFromAssets(application.assets) ?: mutableMapOf()
+        // Map key must be aligned with the font-family used in theme.css
+        val myscriptInterFont = ResourcesCompat.getFont(application, R.font.myscriptinter)
+        if (myscriptInterFont != null) {
+            typefaces["MyScriptInter"] = myscriptInterFont
+        }
+        val stixFont = ResourcesCompat.getFont(application, R.font.stix)
+        if (stixFont != null) {
+            typefaces["STIX"] = stixFont
+        }
+        return typefaces
     }
 
     private fun loadAndFeedPointerEvents(incremental : Boolean, editor: Editor, partType: String, displayMetrics: DisplayMetrics){
