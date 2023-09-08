@@ -13,6 +13,7 @@ import com.myscript.iink.Editor
 import com.myscript.iink.MimeType
 import com.myscript.iink.PointerEvent
 import com.myscript.iink.PointerEventType
+import com.myscript.iink.PointerType
 import com.myscript.iink.Renderer
 import com.myscript.iink.app.common.utils.launchSingleChoiceDialog
 import com.myscript.iink.uireferenceimplementation.FontMetricsProvider
@@ -72,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         // Create the editor
         editor = engine.createEditor(renderer, engine.createToolController()).apply {
             // The editor requires a font metrics provider and a view size *before* calling setPart()
-            val typefaceMap: Map<String, Typeface> = HashMap()
+            val typefaceMap = mutableMapOf<String, Typeface>()
             setFontMetricsProvider(FontMetricsProvider(displayMetrics, typefaceMap))
             setViewSize(displayMetrics.widthPixels, displayMetrics.heightPixels)
         }
@@ -177,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         renderer.close()
     }
 
-    private fun loadAndFeedPointerEvents(partType: String) {
+    private fun loadAndFeedPointerEvents(partType: String, incremental: Boolean = false) {
         val partTypeLowercase = partType.lowercase()
         val pointerEventsPath = if (partTypeLowercase == "text") {
             "conf/pointerEvents/$partTypeLowercase/$language/pointerEvents.json"
@@ -198,35 +199,46 @@ class MainActivity : AppCompatActivity() {
         val ydpi = resources.displayMetrics.ydpi
 
         jsonResult.getStrokes()?.forEach { stroke ->
-
-            val strokeX: FloatArray = stroke.x
-            val strokeY: FloatArray = stroke.y
-            val strokeT: LongArray = stroke.t
-            val strokeP: FloatArray = stroke.p
-            val length: Int = stroke.x.size
+            val strokeX = stroke.x
+            val strokeY = stroke.y
+            val strokeT = stroke.t
+            val strokeP = stroke.p
+            val length = stroke.x.size
 
             for (index in 0 until length) {
-                // In batch mode we keep data in a array
-                val pointerEvent = PointerEvent()
-                pointerEvent.pointerType = stroke.pointerType!!
-                pointerEvent.pointerId = stroke.pointerId
-                when (index) {
-                    0 -> pointerEvent.eventType = PointerEventType.DOWN
-                    length - 1 -> pointerEvent.eventType = PointerEventType.UP
-                    else -> pointerEvent.eventType = PointerEventType.MOVE
-                }
-
                 // Transform the x and y coordinates of the stroke from mm to px
                 // This is needed to be adaptive for each device
-                pointerEvent.x = strokeX[index] / 25.4f * xdpi
-                pointerEvent.y = strokeY[index] / 25.4f * ydpi
-                pointerEvent.t = strokeT[index]
-                pointerEvent.f = strokeP[index]
-                // Add it to the list
-                pointerEventsList += pointerEvent
+                val x = strokeX[index] / 25.4f * xdpi
+                val y = strokeY[index] / 25.4f * ydpi
+
+                if (incremental) {
+                    // In incremental mode we send data direct to the editor
+                    when (index) {
+                        0 -> editor.pointerDown(x, y, strokeT[index], strokeP[index], PointerType.PEN, 1)
+                        length - 1 -> editor.pointerUp(x, y, strokeT[index], strokeP[index], PointerType.PEN, 1)
+                        else -> editor.pointerMove(x, y, strokeT[index], strokeP[index], PointerType.PEN, stroke.pointerId)
+                    }
+                } else {
+                    // In batch mode we keep data in a array
+                    pointerEventsList += PointerEvent().apply {
+                        pointerType = stroke.pointerType
+                        pointerId = stroke.pointerId
+                        eventType = when (index) {
+                            0 -> PointerEventType.DOWN
+                            length - 1 -> PointerEventType.UP
+                            else -> PointerEventType.MOVE
+                        }
+                        this.x = x
+                        this.y = y
+                        t = strokeT[index]
+                        f = strokeP[index]
+                    }
+                }
             }
         }
-        editor.pointerEvents(pointerEventsList.toTypedArray(), false)
+        if (!incremental) {
+            editor.pointerEvents(pointerEventsList.toTypedArray(), false)
+        }
     }
 
     companion object {

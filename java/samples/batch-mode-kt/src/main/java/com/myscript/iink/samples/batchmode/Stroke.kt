@@ -7,12 +7,12 @@ import com.myscript.iink.PointerType
 import java.util.*
 
 data class Stroke(
-    var pointerType: PointerType? = null,
-    var pointerId: Int = 0,
-    var x: FloatArray,
-    var y: FloatArray,
-    var t: LongArray,
-    var p: FloatArray
+    val pointerType: PointerType,
+    val pointerId: Int = 0,
+    val x: FloatArray,
+    val y: FloatArray,
+    val t: LongArray,
+    val p: FloatArray
 ) {
     override fun toString(): String = "{" +
             "\"pointerType\":\"$pointerType\"," +
