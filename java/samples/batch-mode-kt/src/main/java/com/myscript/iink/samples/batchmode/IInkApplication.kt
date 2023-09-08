@@ -6,13 +6,11 @@ import com.myscript.iink.Engine
 
 class IInkApplication : Application() {
 
-
     companion object {
-
         private var engine: Engine? = null
 
         fun getEngine(): Engine? {
-            if (IInkApplication.engine == null) {
+            if (engine == null) {
                 engine = Engine.create(MyCertificate.getBytes())
             }
             return engine
