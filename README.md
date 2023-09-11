@@ -12,26 +12,15 @@ This repository comes in addition with further advanced Android examples that de
 
 2. If you already have a certificate go to next step, else claim to receive the free license to start develop your application by following the first steps of [Getting Started](https://developer.myscript.com/getting-started).
 
-3. Copy this certificate to `certificate/src/main/java/com/myscript/certificate/MyCertificate.java`
+3. Copy this certificate to `samples/certificate/src/main/java/com/myscript/certificate/MyCertificate.java`
 
-4. Open `java` folder in Android Studio.
+4. Open `samples` folder in Android Studio.
 
 ## Various examples
 
 This repository provides you with an additional set of ready-to-use examples based on Android:
 
-1. The batch mode sample is an example of how to integrate iink SDK off-screen, without any user interface. It consists in batch processing content, i.e. processing a series of pointer events corresponding to already collected ink strokes and exporting the recognition result. It comes with four pointer events samples that correspond to four different content types "Text", "Math", "Diagram", "Raw Content". When starting the app a dialog will be displayed to choose which type of part you want to proceed. By default those content types are exported in respectively .txt, LaTeX, svg and JIIX formats, but you can choose to export in png by modifying the following line in the MainActivity class:
-
-~~~#!java
-    // this is the function where we process exteranl output and export it
-    // add true if you want to export in png
-    offScreenProcess(typeOfPart[it])
-~~~
-<div align="center">
- <img src="batch.gif" alt="batch sample" width="302">
-</div>
-
-NB: you will retrieve data converted in your device internal storage: `Android/data/com.myscript.iink.samples.batchmode/files`
+1. The batch mode sample is an example of how to integrate iink SDK without any user interface. It consists in batch processing content, i.e. processing a series of pointer events corresponding to already collected ink strokes and exporting the recognition result. It comes with four pointer events samples that correspond to four different content types "Text", "Math", "Diagram", "Raw Content". When starting the app a dialog will be displayed to choose which type of part you want to proceed. By default those content types are exported in respectively .txt, LaTeX, svg and JIIX formats, but you can choose to export in png depending on your choice in the configuration window.
 
 2. The exercise assessment illustrates the case when you want to use several writing areas each one for a specific purpose in your application. It is thus using multiple editors, one per writing area, as each one has a different purpose:
 - First one is dedicated to "Math" content types

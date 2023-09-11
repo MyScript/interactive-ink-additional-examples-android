@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.myscript.iink.samples.writetotype'
+    compileSdk Versions.compileSdk
+    defaultConfig {
+        applicationId "com.myscript.iink.samples.writetotype"
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:${Versions.androidx_core}"
+
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+
+    implementation "androidx.appcompat:appcompat:${Versions.appcompat}"
+    implementation "com.google.code.gson:gson:${Versions.gson}"
+}
