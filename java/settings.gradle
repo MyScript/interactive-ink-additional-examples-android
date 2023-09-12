@@ -11,6 +11,7 @@ def myProjects = [
         ':exercise-assessment-kotlin' : file("$settingsDir/samples/exercise-assessment-kt"),
         ':search-sample-kotlin'       : file("$settingsDir/samples/search-kt"),
         ':write-to-type'              : file("$settingsDir/samples/write-to-type"),
+        ':offscreen-interactivity'    : file("$settingsDir/samples/offscreen-interactivity"),
         // MyScript certificate -> this should be empty
         ':myscript-certificate'       : file("${settingsDir.parent}/certificate"),
         // common libraries
