@@ -1,39 +1,53 @@
 package com.myscript.iink.samples.batchmode
 
+import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.RadioGroup
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
+import androidx.core.content.res.ResourcesCompat
 import com.google.gson.Gson
-import com.myscript.iink.ContentPackage
-import com.myscript.iink.ContentPart
+import com.myscript.iink.ConversionState
 import com.myscript.iink.Editor
 import com.myscript.iink.MimeType
 import com.myscript.iink.PointerEvent
 import com.myscript.iink.PointerEventType
 import com.myscript.iink.PointerType
 import com.myscript.iink.Renderer
-import com.myscript.iink.app.common.utils.launchSingleChoiceDialog
 import com.myscript.iink.uireferenceimplementation.FontMetricsProvider
 import com.myscript.iink.uireferenceimplementation.FontUtils
 import com.myscript.iink.uireferenceimplementation.ImageLoader
 import com.myscript.iink.uireferenceimplementation.ImagePainter
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
+import java.io.FileInputStream
 import java.io.InputStreamReader
+import java.nio.file.Files
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var renderer : Renderer
     private lateinit var editor: Editor
+    private lateinit var imagePainter: ImagePainter
 
-    private var contentPackage : ContentPackage? = null
-    private var contentPart : ContentPart? = null
+    private var useCustomInputFile = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        setContentView(R.layout.activity_main)
 
         val engine = IInkApplication.getEngine()
 
@@ -77,60 +91,175 @@ class MainActivity : AppCompatActivity() {
             setFontMetricsProvider(FontMetricsProvider(displayMetrics, typefaceMap))
             setViewSize(displayMetrics.widthPixels, displayMetrics.heightPixels)
         }
+
+        // Create a image painter to render in png
+        imagePainter = ImagePainter().apply {
+            setImageLoader(ImageLoader(editor))
+            // load fonts
+            val typefaceMap = provideTypefaces()
+            setTypefaceMap(typefaceMap)
+            editor.setFontMetricsProvider(FontMetricsProvider(applicationContext.resources.displayMetrics, typefaceMap))
+            editor.theme = (".math {font-family: STIX;}")
+        }
+
+        useCustomInputFile = false
+
+        findViewById<AppCompatButton>(R.id.batch_sample_pick_file).setOnClickListener { _ -> pickFile() }
+
+        findViewById<AppCompatButton>(R.id.batch_sample_remove_file).setOnClickListener(this::removeFile)
+
+        findViewById<AppCompatButton>(R.id.batch_sample_execute).setOnClickListener(this::execute)
     }
 
-    override fun onStart() {
-        super.onStart()
-        // Dialog to ask user which part type to process
-        launchSingleChoiceDialog(R.string.dialog_Part_choice_Title,
-            typeOfPart,
-            0,
-            { choiceIndex ->
-                // this is the function where we process exteranl output and export it
-                // add true if you want to export in png
-                process(typeOfPart[choiceIndex])
-
-                // Close the application
-                Thread {
-                    Thread.sleep(2000)// just ot let time to display the toast (2sec)
-                    finishAndRemoveTask() // be sure to end the application
-                }.start()
-            },
-            { _, _ -> finishAndRemoveTask() })
+    private fun provideTypefaces(): Map<String, Typeface> {
+        val typefaces = FontUtils.loadFontsFromAssets(application.assets) ?: mutableMapOf()
+        // Map key must be aligned with the font-family used in theme.css
+        val myscriptInterFont = ResourcesCompat.getFont(application, R.font.myscriptinter)
+        if (myscriptInterFont != null) {
+            typefaces["MyScriptInter"] = myscriptInterFont
+        }
+        val stixFont = ResourcesCompat.getFont(application, R.font.stix)
+        if (stixFont != null) {
+            typefaces["STIX"] = stixFont
+        }
+        return typefaces
     }
 
-    private fun process(partType: String, renderToPNG : Boolean = false) {
+    private fun pickFile() {
+        pickFileLauncher.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            type = "application/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        })
+    }
+
+    private fun removeFile(removeButton : View) {
+        useCustomInputFile = false
+        removeButton.visibility = View.GONE
+        findViewById<AppCompatButton>(R.id.batch_sample_pick_file).visibility = View.VISIBLE
+        findViewById<TextView>(R.id.batch_sample_file_description).visibility = View.VISIBLE
+    }
+
+    private val pickFileLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            it.data?.data?.also { uri ->
+                val contentResolver = applicationContext.contentResolver
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val workingFile = File(applicationContext.cacheDir, customInputFileName)
+                    workingFile.delete()
+                    Files.copy(inputStream, workingFile.toPath())
+                }
+
+                useCustomInputFile = true
+                findViewById<AppCompatButton>(R.id.batch_sample_remove_file).visibility = View.VISIBLE
+                findViewById<AppCompatButton>(R.id.batch_sample_pick_file).visibility = View.GONE
+                findViewById<TextView>(R.id.batch_sample_file_description).visibility = View.GONE
+            }
+        }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun execute(executeButton: View) {
+        val partTypeGroup = findViewById<RadioGroup>(R.id.batch_sample_part_type_group)
+        val partType = when(partTypeGroup.checkedRadioButtonId) {
+            R.id.batch_sample_part_type_math -> "Math"
+            R.id.batch_sample_part_type_diagram -> "Diagram"
+            R.id.batch_sample_part_type_raw -> "Raw Content"
+            else -> "Text"
+        }
+
+        val modeGroup = findViewById<RadioGroup>(R.id.batch_sample_mode_group)
+        val incremental = when(modeGroup.checkedRadioButtonId) {
+            R.id.batch_sample_mode_incremental -> true
+            else -> false
+        }
+
+        val outputGroup = findViewById<RadioGroup>(R.id.batch_sample_output_group)
+        val pngOutput = when(outputGroup.checkedRadioButtonId) {
+            R.id.batch_sample_output_png -> true
+            else -> false
+        }
+
+        val outputStyleGroup = findViewById<RadioGroup>(R.id.batch_sample_output_style_group)
+        val convert = when(outputStyleGroup.checkedRadioButtonId) {
+            R.id.batch_sample_output_style_converted -> true
+            else -> false
+        }
+
+        val progress = findViewById<ProgressBar>(R.id.batch_sample_progress)
+
+        progress.visibility = View.VISIBLE
+        executeButton.isEnabled = false
+        partTypeGroup.isEnabled = false
+        modeGroup.isEnabled = false
+        outputGroup.isEnabled = false
+        outputStyleGroup.isEnabled = false
+
+        GlobalScope.launch(Dispatchers.Main) {
+            val outputFile = withContext(Dispatchers.IO) {
+                process(partType, incremental, pngOutput, convert)
+            }
+
+            progress.visibility = View.GONE
+            executeButton.isEnabled = true
+            partTypeGroup.isEnabled = true
+            modeGroup.isEnabled = true
+            outputGroup.isEnabled = true
+            outputStyleGroup.isEnabled = true
+
+            if (!outputFile.exists()) {
+                Toast.makeText(applicationContext, "An error occurred when exporting", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+
+            exportedFilePath = outputFile.absolutePath
+
+            saveFileLauncher.launch(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                type = "application/*"
+                addCategory(Intent.CATEGORY_OPENABLE)
+                putExtra(Intent.EXTRA_TITLE, outputFile.name)
+            })
+        }
+    }
+
+    private var exportedFilePath: String? = null
+    private val saveFileLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            exportedFilePath?.let { exportedFilePath ->
+                val exportedFile = File(exportedFilePath)
+                if (exportedFile.exists()) {
+                    it.data?.data?.also { uri ->
+                        val contentResolver = applicationContext.contentResolver
+                        contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            Files.copy(exportedFile.toPath(), outputStream)
+                            this.exportedFilePath = null
+                        }
+                    }
+                }
+            }
+        }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        editor.close()
+        renderer.close()
+    }
+
+    private fun process(partType: String, incremental: Boolean, renderToPNG: Boolean, convert: Boolean): File {
+        val engine = requireNotNull(IInkApplication.getEngine())
+
         // Create a new package
-        contentPackage = try {
-             IInkApplication.getEngine()?.createPackage(iinkPackageName)!!
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to open package \"$iinkPackageName\"", e)
-            AlertDialog.Builder(this)
-                .setTitle( "Package Creation IllegalArgumentException")
-                .setMessage( "Failed to open package \"$iinkPackageName\"")
-                .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
-                .show()
-            return
-        }
-
+        val contentPackage =  engine.createPackage(iinkPackageName)
         // Create a new part
-        contentPart = try {
-            contentPackage?.createPart(partType)
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to open type of part \"$partType\"", e)
-            AlertDialog.Builder(this)
-                .setTitle( "Part Creation IllegalArgumentException")
-                .setMessage( "Failed to open type of part \"$partType\"")
-                .setPositiveButton(com.myscript.iink.app.common.R.string.dialog_ok, null)
-                .show()
-            return
-        }
-
+        val contentPart = contentPackage.createPart(partType)
         // Associate editor with the new part
         editor.part = contentPart
 
         // Now we can process pointer events and feed the editor with an array of Pointer Events loaded from the json file
-        loadAndFeedPointerEvents(partType)
+        loadAndFeedPointerEvents(partType, incremental)
 
         // Choose the right mimeType to export according to the partType chosen
         var mimeType = MimeType.PNG
@@ -144,50 +273,38 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Exported file will be stored in your app's private files directory
-        val file = File(applicationContext.filesDir, "$exportFileName${mimeType.fileExtensions}")
-
         editor.waitForIdle()
 
-        val imagePainter = if (mimeType.isImage) {
-            //we have to create a image painter to render in png
-             ImagePainter().apply {
-                setImageLoader(ImageLoader(editor))
-                // load fonts
-                val assetManager = applicationContext.assets
-                val typefaceMap = FontUtils.loadFontsFromAssets(assetManager)
-                setTypefaceMap(typefaceMap)
-            }
-        } else null
+        if (convert) {
+            editor.convert(editor.rootBlock, ConversionState.DIGITAL_EDIT)
+        }
+        val outputFile = File(applicationContext.filesDir, "$exportFileName${mimeType.fileExtensions}")
+        editor.export_(editor.rootBlock, outputFile.absolutePath, mimeType, if (mimeType.isImage) imagePainter else null)
 
-        editor.export_(null, file.absolutePath, mimeType, imagePainter)
-
-        // Quick display of the path where the data has been exported
-        Toast.makeText(applicationContext, "File exported in : ${file.path}", Toast.LENGTH_LONG).show()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        // Close everything
+        // Closing after using
         editor.part = null
-        contentPart?.close()
-        contentPackage?.close()
-        IInkApplication.getEngine()?.deletePackage(packageName)
-        editor.close()
-        renderer.close()
+        contentPart.close()
+        contentPackage.close()
+        engine.deletePackage(packageName)
+
+        return outputFile
     }
 
     private fun loadAndFeedPointerEvents(partType: String, incremental: Boolean = false) {
-        val partTypeLowercase = partType.lowercase()
-        val pointerEventsPath = if (partTypeLowercase == "text") {
-            "conf/pointerEvents/$partTypeLowercase/$language/pointerEvents.json"
-        } else {
-            "conf/pointerEvents/$partTypeLowercase/pointerEvents.json"
-        }
-
         // Loading the content of the pointerEvents JSON file
-        val inputStream = resources.assets.open(pointerEventsPath)
+        val customInputFile = File(applicationContext.cacheDir, customInputFileName)
+        val inputStream =  if (useCustomInputFile && customInputFile.exists()) {
+            FileInputStream(customInputFile)
+        } else {
+            val partTypeLowercase = partType.lowercase()
+            val pointerEventsPath = if (partTypeLowercase == "text") {
+                "conf/pointerEvents/$partTypeLowercase/$language/pointerEvents.json"
+            } else {
+                "conf/pointerEvents/$partTypeLowercase/pointerEvents.json"
+            }
+
+            resources.assets.open(pointerEventsPath)
+        }
 
         // Mapping the content into a JsonResult class
         val jsonResult = Gson().fromJson(InputStreamReader(inputStream), JsonResult::class.java)
@@ -243,6 +360,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+
+        private const val customInputFileName = "customInputFile"
 
         // /!\ Warning use the real MyScript name of part as this string will be used for part creation
         private val typeOfPart = listOf("Text", "Math", "Diagram", "Raw Content")

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) MyScript. All rights reserved.
+  -->
+
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_pick_file_title"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/batch_sample_pick_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_pick_file_button"/>
+
+    <TextView
+        android:id="@+id/batch_sample_file_description"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_pick_file_description" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/batch_sample_remove_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_remove_file_button"
+        android:visibility="gone"/>
+
+    <TextView
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_select_part_type_title"
+        android:layout_marginTop="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/batch_sample_part_type_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_part_type_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/batch_mode_select_part_type_text"/>
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_part_type_math"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/batch_mode_select_part_type_math"/>
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_part_type_diagram"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/batch_mode_select_part_type_diagram"/>
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_part_type_raw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/batch_mode_select_part_type_rawcontent"/>
+    </RadioGroup>
+
+    <TextView
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_mode_title"
+        android:layout_marginTop="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/batch_sample_mode_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_mode_batch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/batch_mode_mode_batch"/>
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_mode_incremental"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/batch_mode_mode_incremental"/>
+    </RadioGroup>
+
+    <TextView
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_output_title"
+        android:layout_marginTop="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/batch_sample_output_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_output_auto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/batch_mode_output_auto"/>
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_output_png"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/batch_mode_output_png"/>
+    </RadioGroup>
+
+    <TextView
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_output_description" />
+
+    <TextView
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_output_style_title"
+        android:layout_marginTop="8dp"/>
+
+    <RadioGroup
+        android:id="@+id/batch_sample_output_style_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_output_style_ink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/batch_mode_output_style_ink"/>
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/batch_sample_output_style_converted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/batch_mode_output_style_converted"/>
+    </RadioGroup>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/batch_sample_execute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/batch_mode_execute"
+        android:layout_marginTop="8dp"/>
+
+    <ProgressBar
+        android:id="@+id/batch_sample_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>
