@@ -1,0 +1,26 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.myscript.iink.uireferenceimplementation'
+
+    compileSdk project.ext.compileSdk
+
+    defaultConfig {
+        minSdk project.ext.minSdk
+        targetSdk project.ext.targetSdk
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+
+        vectorDrawables.useSupportLibrary true
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:${project.ext.appcompatVersion}"
+    implementation "com.google.code.gson:gson:${project.ext.gsonVersion}"
+    // iink SDK.
+    // once iink wil be published we will use this
+    api "com.myscript:iink:${project.ext.iinkVersionName}"
+}

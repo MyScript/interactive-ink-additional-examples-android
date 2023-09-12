@@ -1,0 +1,15 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.myscript.certificate'
+
+    compileSdk = Versions.compileSdk
+    defaultConfig {
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+        versionCode 1
+        versionName '1.0'
+    }
+}
