@@ -49,6 +49,8 @@ allprojects {
         appcompatVersion = '1.6.1'
         materialLibraryVersion = '1.9.0'
         gsonVersion = '2.10.1'
+        lifecycleVersion = '2.6.1'
+        fragmentsKtx = '1.5.7'
 
         // iink version
         iinkVersionCode = 2110
