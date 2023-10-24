@@ -114,8 +114,9 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeWidget
 
     if (item.getItemId() == R.id.action_debug_view)
     {
-      item.setChecked(!item.isChecked());
-      mInputMethod.setDebug(item.isChecked());
+      boolean isDebug = !mInputMethod.isDebug();
+      item.setTitle(isDebug ? R.string.menu_debug_on : R.string.menu_debug_off);
+      mInputMethod.setDebug(isDebug);
     }
 
     return super.onOptionsItemSelected(item);
