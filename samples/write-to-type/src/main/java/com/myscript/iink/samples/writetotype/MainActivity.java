@@ -51,7 +51,8 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
     // configure recognition
     Configuration conf = mEngine.getConfiguration();
     String confDir = "zip://" + getPackageCodePath() + "!/assets/conf";
-    conf.setStringArray("configuration-manager.search-path", new String[]{ confDir });
+    conf.setStringArray("recognizer.configuration-manager.search-path", new String[]{ confDir });
+    setSuperimposed(true);
     String tempDir = getFilesDir().getPath() + File.separator + "tmp";
     conf.setString("content-package.temp-folder", tempDir);
 
@@ -78,6 +79,20 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
       mInputMethod.setDebugView((DebugView) findViewById(R.id.debug_view));  // DEBUG ONLY
       mInputMethod.setDefaultEditText(0);
     });
+  }
+
+  private void setSuperimposed(boolean enable)
+  {
+    mEngine.getConfiguration().setString("recognizer.text.configuration.name", enable ? "text-superimposed" : "text");
+    if (mWriteToTypeManager != null)
+    {
+      mWriteToTypeManager.resetTextRecognizer();
+    }
+  }
+
+  private boolean isSuperimposed()
+  {
+    return "text-superimposed".equals(mEngine.getConfiguration().getString("recognizer.text.configuration.name"));
   }
 
   @Override
@@ -113,6 +128,12 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
       boolean isDebug = !mInputMethod.isDebug();
       item.setTitle(isDebug ? R.string.menu_debug_on : R.string.menu_debug_off);
       mInputMethod.setDebug(isDebug);
+    }
+    else if (item.getItemId() == R.id.action_toggle_recognizer)
+    {
+      boolean isSuperimposed = !isSuperimposed();
+      item.setTitle(isSuperimposed ? R.string.menu_recognizer_superimposed_on : R.string.menu_recognizer_superimposed_off);
+      setSuperimposed(isSuperimposed);
     }
 
     return super.onOptionsItemSelected(item);

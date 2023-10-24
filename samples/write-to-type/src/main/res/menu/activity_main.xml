@@ -16,4 +16,9 @@
         android:orderInCategory="100"
         android:title="@string/menu_debug_off"/>
 
+    <item
+        android:id="@+id/action_toggle_recognizer"
+        android:orderInCategory="100"
+        android:title="@string/menu_recognizer_superimposed_on"/>
+
 </menu>

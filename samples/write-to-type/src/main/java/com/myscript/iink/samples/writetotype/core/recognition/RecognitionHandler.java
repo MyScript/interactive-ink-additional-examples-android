@@ -92,6 +92,17 @@ public class RecognitionHandler
     startRecognitionThread();
   }
 
+  public void resetTextRecognizer()
+  {
+    if (mTextRecognizer != null)
+    {
+      mTextRecognizer.close();
+      mTextRecognizer = null;
+    }
+
+    mTextRecognizer = mEngine.createRecognizer(mScaleX, mScaleY, RECOGNIZER_TYPE_TEXT);
+  }
+
   // --------------------------------------------------------------------------
   // Public methods
 
