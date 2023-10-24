@@ -1,0 +1,33 @@
+
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+rootProject.name = 'myscript.iink.samples.android.java'
+
+gradle.ext.iinkVersionCode = 2110
+gradle.ext.iinkVersionName = "2.1.1"
+gradle.ext.iinkResourcesURL = "https://download.myscript.com/iink/recognitionAssets_iink_2.1"
+
+def projects = [
+        // samples
+        ':batch-mode-kotlin'          : file("$settingsDir/batch-mode"),
+        ':exercise-assessment-kotlin' : file("$settingsDir/exercise-assessment"),
+        ':search-sample-kotlin'       : file("$settingsDir/search"),
+        ':write-to-type'              : file("$settingsDir/write-to-type"),
+        ':offscreen-interactivity'    : file("$settingsDir/offscreen-interactivity"),
+        // MyScript certificate -> this should be empty
+        ':myscript-certificate'       : file("$settingsDir/certificate"),
+        // MyScript iink UI reference implementation.
+        // Copy from: https://github.com/MyScript/interactive-ink-examples-android/tree/master/UIReferenceImplementation
+        ':UIReferenceImplementation'  : file("$settingsDir/UIReferenceImplementation"),
+]
+
+projects.each { proj, dir ->
+    logger.info("Including $proj")
+    include proj
+    if (dir != null)
+        project(proj).projectDir = dir
+    if(proj==':myscript-certificate')
+        project(proj).buildFileName = 'build_android.gradle'
+}

@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace 'com.myscript.iink.offscreen.demo'
+
+    compileSdk Versions.compileSdk
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    defaultConfig {
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+
+        applicationId 'com.myscript.iink.offscreen.demo'
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:${Versions.appcompat}"
+    implementation "androidx.activity:activity-ktx:${Versions.androidx_activity}"
+    implementation "androidx.core:core-ktx:${Versions.androidx_core}"
+    implementation "com.google.android.material:material:${Versions.material}"
+    implementation "com.google.code.gson:gson:${Versions.gson}"
+
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:${Versions.androidx_lifecycle}"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${Versions.androidx_lifecycle}"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:${Versions.androidx_lifecycle}"
+
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
+}
+

@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) MyScript. All rights reserved.
+ */
+
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.myscript.iink.samples.assessment'
+
+    compileSdk Versions.compileSdk
+
+    defaultConfig {
+        applicationId "com.myscript.iink.samples.assessment"
+
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:${Versions.androidx_core}"
+    implementation "androidx.appcompat:appcompat:${Versions.appcompat}"
+    implementation "com.google.android.material:material:${Versions.material}"
+
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+}
+
+tasks.register('copyCustomMathConfigRecognitionAssets', Copy) {
+    from "${projectDir}/custom_res"
+    into "${projectDir}/src/main/assets"
+}
+
+preBuild.dependsOn(copyCustomMathConfigRecognitionAssets)
