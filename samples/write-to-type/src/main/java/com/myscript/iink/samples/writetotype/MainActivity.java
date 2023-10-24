@@ -22,8 +22,6 @@ import com.myscript.iink.samples.writetotype.core.inkcapture.InkCaptureView;
 import com.myscript.iink.samples.writetotype.im.InputMethodEmulator;
 import com.myscript.iink.samples.writetotype.utils.ErrorActivity;
 
-import java.io.File;
-
 public class MainActivity extends AppCompatActivity implements WriteToTypeManager.OnDebugListener
 {
   private static final float INCH_IN_MILLIMETER = 25.4f;
@@ -53,8 +51,6 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
     String confDir = "zip://" + getPackageCodePath() + "!/assets/conf";
     conf.setStringArray("recognizer.configuration-manager.search-path", new String[]{ confDir });
     setSuperimposed(true);
-    String tempDir = getFilesDir().getPath() + File.separator + "tmp";
-    conf.setString("content-package.temp-folder", tempDir);
 
     mLogView = findViewById(R.id.text_view_log);
     mLogView.setMovementMethod(new ScrollingMovementMethod());
