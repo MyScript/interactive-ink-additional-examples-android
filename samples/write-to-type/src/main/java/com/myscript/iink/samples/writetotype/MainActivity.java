@@ -4,9 +4,6 @@
 
 package com.myscript.iink.samples.writetotype;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -16,20 +13,21 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.myscript.iink.Configuration;
 import com.myscript.iink.Engine;
-import com.myscript.iink.samples.writetotype.core.WriteToTypeWidget;
+import com.myscript.iink.samples.writetotype.core.inkcapture.InkCaptureView;
 import com.myscript.iink.samples.writetotype.im.InputMethodEmulator;
 import com.myscript.iink.samples.writetotype.utils.ErrorActivity;
 
-import java.io.File;
-
-public class MainActivity extends AppCompatActivity implements WriteToTypeWidget.OnDebugListener
+public class MainActivity extends AppCompatActivity implements WriteToTypeManager.OnDebugListener
 {
   private static final float INCH_IN_MILLIMETER = 25.4f;
 
   private CustomViewGroup mViewGroup;
-  private WriteToTypeWidget mWriteToTypeWidget;
+  private WriteToTypeManager mWriteToTypeManager;
   private InputMethodEmulator mInputMethod;
   private TextView mLogView;
 
@@ -51,43 +49,52 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeWidget
     // configure recognition
     Configuration conf = mEngine.getConfiguration();
     String confDir = "zip://" + getPackageCodePath() + "!/assets/conf";
-    conf.setStringArray("configuration-manager.search-path", new String[]{ confDir });
-    String tempDir = getFilesDir().getPath() + File.separator + "tmp";
-    conf.setString("content-package.temp-folder", tempDir);
+    conf.setStringArray("recognizer.configuration-manager.search-path", new String[]{ confDir });
+    setSuperimposed(true);
 
     mLogView = findViewById(R.id.text_view_log);
     mLogView.setMovementMethod(new ScrollingMovementMethod());
 
     mViewGroup = findViewById(R.id.custom_view_group);
-    mWriteToTypeWidget = findViewById(R.id.writetotype);
-    mWriteToTypeWidget.setOnDebugListener(this);
-    mWriteToTypeWidget.setActiveStylusOnly(false);
+    InkCaptureView inkCaptureView = findViewById(R.id.ink_capture_view);
+    mWriteToTypeManager = new WriteToTypeManager(inkCaptureView);
+    mWriteToTypeManager.setOnDebugListener(this);
+    mWriteToTypeManager.setActiveStylusOnly(false);
 
     // Configuring iink in post runnable may not need.
     // It will be replaced by just calling of 'setIInkEngine()' and 'setLanguage' later on.
-    mWriteToTypeWidget.post(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        mWriteToTypeWidget.setIInkEngine(mEngine);
-        mWriteToTypeWidget.setLanguage("en_US");
-        mWriteToTypeWidget.setCommitTimeout(500);
+    inkCaptureView.post(() -> {
+      mWriteToTypeManager.setIInkEngine(mEngine);
+      mWriteToTypeManager.setLanguage("en_US");
+      mWriteToTypeManager.setCommitTimeout(500);
 
-        final float scaleY = INCH_IN_MILLIMETER / getResources().getDisplayMetrics().ydpi;
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        mInputMethod = new InputMethodEmulator(mWriteToTypeWidget, mViewGroup, scaleY, vibrator);
+      final float scaleY = INCH_IN_MILLIMETER / getResources().getDisplayMetrics().ydpi;
+      Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+      mInputMethod = new InputMethodEmulator(mWriteToTypeManager, mViewGroup, scaleY, vibrator);
 
-        mInputMethod.setDebugView((DebugView) findViewById(R.id.debug_view));  // DEBUG ONLY
-        mInputMethod.setDefaultEditText(0);
-      }
+      mInputMethod.setDebugView((DebugView) findViewById(R.id.debug_view));  // DEBUG ONLY
+      mInputMethod.setDefaultEditText(0);
     });
+  }
+
+  private void setSuperimposed(boolean enable)
+  {
+    mEngine.getConfiguration().setString("recognizer.text.configuration.name", enable ? "text-superimposed" : "text");
+    if (mWriteToTypeManager != null)
+    {
+      mWriteToTypeManager.resetTextRecognizer();
+    }
+  }
+
+  private boolean isSuperimposed()
+  {
+    return "text-superimposed".equals(mEngine.getConfiguration().getString("recognizer.text.configuration.name"));
   }
 
   @Override
   protected void onDestroy()
   {
-    mWriteToTypeWidget.destroy();
+    mWriteToTypeManager.destroy();
 
     // IInkApplication has the ownership, do not close here
     mEngine = null;
@@ -114,8 +121,15 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeWidget
 
     if (item.getItemId() == R.id.action_debug_view)
     {
-      item.setChecked(!item.isChecked());
-      mInputMethod.setDebug(item.isChecked());
+      boolean isDebug = !mInputMethod.isDebug();
+      item.setTitle(isDebug ? R.string.menu_debug_on : R.string.menu_debug_off);
+      mInputMethod.setDebug(isDebug);
+    }
+    else if (item.getItemId() == R.id.action_toggle_recognizer)
+    {
+      boolean isSuperimposed = !isSuperimposed();
+      item.setTitle(isSuperimposed ? R.string.menu_recognizer_superimposed_on : R.string.menu_recognizer_superimposed_off);
+      setSuperimposed(isSuperimposed);
     }
 
     return super.onOptionsItemSelected(item);

@@ -14,7 +14,7 @@ import android.widget.EditText;
 
 import com.myscript.iink.samples.writetotype.CustomViewGroup;
 import com.myscript.iink.samples.writetotype.DebugView;
-import com.myscript.iink.samples.writetotype.core.WriteToTypeWidget;
+import com.myscript.iink.samples.writetotype.WriteToTypeManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListener, CustomViewGroup.OnChangedListener
+public class InputMethodEmulator implements WriteToTypeManager.OnWriteToTypeListener, CustomViewGroup.OnChangedListener
 {
   private static final float OVERLAP_RATIO = 0.4f;
   private static final float BIGGER_HEIGHT_FACTOR = 3.0f;
@@ -34,7 +34,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
     LINE_TYPE_HORIZONTAL
   }
 
-  private final WriteToTypeWidget mWriteToTypeWidget;
+  private final WriteToTypeManager mWriteToTypeManager;
   private final CustomViewGroup mViewGroup;
   private DebugView mDebugView = null;
 
@@ -54,10 +54,10 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
   // Constructor
 
   /** Constructor. */
-  public InputMethodEmulator(@NonNull final WriteToTypeWidget writeToTypeWidget, @NonNull final CustomViewGroup viewGroup, final float scaleY, @NonNull final Vibrator vibrator)
+  public InputMethodEmulator(@NonNull final WriteToTypeManager writeToTypeManager, @NonNull final CustomViewGroup viewGroup, final float scaleY, @NonNull final Vibrator vibrator)
   {
-    mWriteToTypeWidget = writeToTypeWidget;
-    mWriteToTypeWidget.setOnWriteToTypeListener(this);
+    mWriteToTypeManager = writeToTypeManager;
+    mWriteToTypeManager.setOnWriteToTypeListener(this);
 
     mViewGroup = viewGroup;
     mViewGroup.initIndexForEditText();
@@ -78,6 +78,11 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
   {
     mDebug = debug;
     mDebugView.setDebug(mDebug);
+  }
+
+  public boolean isDebug()
+  {
+    return mDebug;
   }
 
   public void setDefaultEditText(final int index)
@@ -106,12 +111,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     Currently, a behavior of onText is the exactly same as <code>onScratch</code>,
    *     but the action is postponed to pointer-up as "NONE" most probably mean Text input.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onText(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onText(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     if (recognitionResult.isPointerUp)
     {
@@ -129,11 +134,11 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *       (multiple spaces are not available),
    *     - otherwise, it adds recognized text in current cursor location.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
-  public boolean onTopBottom(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onTopBottom(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     boolean overlapped = false;
 
@@ -153,7 +158,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
         if (textBounds != null && mEditText.getText().length() != 0 &&
             ((intersect.intersect(textBounds) && isPassedThrough(strokeRect, textBounds)) || (isInDistanceOf(strokeRect, textBounds, LineType.LINE_TYPE_VERTICAL) && isCommitted)))
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
           final PointF center = getCenterOfLine(recognitionResult.points, textBounds);
           if (center.x != -1 && center.y != -1)
           {
@@ -187,12 +192,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - if "bottom to top" stroke pass through a space over text of EditText, it deletes the space of the stroke location,
    *     - otherwise, nothing happens.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onBottomTop(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onBottomTop(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     boolean overlapped = false;
 
@@ -211,7 +216,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
 
         if (textBounds != null && ((intersect.intersect(textBounds) && isPassedThrough(strokeRect, textBounds)) || isInDistanceOf(strokeRect, textBounds, LineType.LINE_TYPE_VERTICAL)))
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
           final PointF center = getCenterOfLine(recognitionResult.points, textBounds);
           if (center.x != -1 && center.y != -1)
           {
@@ -241,12 +246,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - if "left to right" stroke over an existing text of EditText, it selects characters of stroke area,
    *     - otherwise, it moves one character forward cursor from current cursor location.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onLeftRight(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onLeftRight(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     final RectF strokeRect = recognitionResult.strokeRect;
     checkFocusChangedWithExtraDistance(strokeRect, LineType.LINE_TYPE_HORIZONTAL);
@@ -265,7 +270,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       {
         if (recognitionResult.isPointerUp)
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
         }
         mViewGroup.setSelection(mEditText, intersect, mDefaultHighlightColor);
 
@@ -275,7 +280,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       {
         if (recognitionResult.isRecognizerIdle)
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
           mViewGroup.forwardCursor(mEditText);
         }
       }
@@ -293,12 +298,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - if "right to left" stroke over an existing text of EditText, it selects characters of stroke area,
    *     - otherwise, it deletes one character backward from current cursor location.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onRightLeft(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onRightLeft(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     final RectF strokeRect = recognitionResult.strokeRect;
     checkFocusChanged(strokeRect);
@@ -317,7 +322,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       {
         if (recognitionResult.isPointerUp)
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
         }
         mViewGroup.setSelection(mEditText, intersect, mDefaultHighlightColor);
 
@@ -327,7 +332,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       {
         if (recognitionResult.isRecognizerIdle)
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
           mViewGroup.backwardDelete(mEditText);
         }
       }
@@ -345,12 +350,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - otherwise, it adds recognized text in current cursor location.
    *     Note that, real text writing could be recognized as "SCRATCH" by Gesture Recognizer.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onScratch(@NonNull WriteToTypeWidget.RecognitionResult recognitionResult, boolean isCommitted)
+  public boolean onScratch(@NonNull WriteToTypeManager.RecognitionResult recognitionResult, boolean isCommitted)
   {
     final RectF strokeRect = recognitionResult.strokeRect;
     checkFocusChanged(strokeRect);
@@ -370,7 +375,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
         if (recognitionResult.isPointerUp)
         {
           mViewGroup.backwardDelete(mEditText);
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
         }
         else
         {
@@ -397,12 +402,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - if "surround" are drawn over an existing text of EditText, it selects surrounded area,
    *     - otherwise, it adds recognized text in current cursor location.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onSurround(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onSurround(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     final RectF strokeRect = recognitionResult.strokeRect;
     checkFocusChanged(strokeRect);
@@ -421,7 +426,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       {
         if (recognitionResult.isPointerUp)
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
         }
         mViewGroup.setSelection(mEditText, strokeRect, mDefaultHighlightColor);
 
@@ -447,12 +452,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *         - if "single tap" over empty area of other EditText than current focus, it changes a focus of EditText,
    *         - if "single tap" over empty area of current focus EditText, it adds recognized text in current cursor location.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onSingleTap(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onSingleTap(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     boolean overlapped = false;
 
@@ -469,7 +474,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
 
         if (editText != mEditText)
         {
-          mWriteToTypeWidget.cancelRecognition();
+          mWriteToTypeManager.cancelRecognition();
 
           mEditText = editText;
 
@@ -487,7 +492,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
             int cursor = mViewGroup.findCursorByPosition(editText, x, y);
             if ((mSelectionStart != mSelectionEnd) || (mSelectionStart != cursor))
             {
-              mWriteToTypeWidget.cancelRecognition();
+              mWriteToTypeManager.cancelRecognition();
 
               mViewGroup.setSelection(editText, x, y, false, mDefaultHighlightColor);
             }
@@ -519,12 +524,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - if "double tap" over an existing text of EditText, it selects a word of the double tapped location,
    *     - otherwise, nothing happens.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onDoubleTap(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onDoubleTap(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     final RectF strokeRect = recognitionResult.strokeRect;
     checkFocusChanged(strokeRect);
@@ -548,7 +553,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       debugMethod(x, y, textBounds, mEditText, null);
     }
 
-    mWriteToTypeWidget.cancelRecognition();
+    mWriteToTypeManager.cancelRecognition();
 
     return overlapped;
   }
@@ -559,12 +564,12 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
    *     - if "long press" over an existing text of EditText, it selects a word of the long pressed location,
    *     - otherwise, nothing happens.
    *
-   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeWidget.RecognitionResult}
+   * @param recognitionResult A structure of recognition result, see {@link WriteToTypeManager.RecognitionResult}
    * @param isCommitted <code>true</code> when a commit has been taken into account to current recognition result.
    * @return <code>true</code> if Stroke bounding box is overlapped on existing text of EditText, <code>false</code> otherwise.
    */
   @Override
-  public boolean onLongPress(@NonNull final WriteToTypeWidget.RecognitionResult recognitionResult, final boolean isCommitted)
+  public boolean onLongPress(@NonNull final WriteToTypeManager.RecognitionResult recognitionResult, final boolean isCommitted)
   {
     final RectF strokeRect = recognitionResult.strokeRect;
     checkFocusChanged(strokeRect);
@@ -581,7 +586,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
 
       if (recognitionResult.isPointerUp)
       {
-        mWriteToTypeWidget.cancelRecognition();
+        mWriteToTypeManager.cancelRecognition();
         mIsVibrating = false;
 
         if (textBounds != null && intersect.intersect(textBounds) && textBounds.contains(x, y))
@@ -621,7 +626,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
       mSelectionStart = -1;
       mSelectionEnd = -1;
 
-      mWriteToTypeWidget.clearSession();
+      mWriteToTypeManager.clearSession();
     }
   }
 
@@ -636,7 +641,7 @@ public class InputMethodEmulator implements WriteToTypeWidget.OnWriteToTypeListe
   // --------------------------------------------------------------------------
   // Internal methods of InputMethodEmulator class
 
-  private void setText(@NonNull WriteToTypeWidget.RecognitionResult recognitionResult, boolean isCommitted)
+  private void setText(@NonNull WriteToTypeManager.RecognitionResult recognitionResult, boolean isCommitted)
   {
     if (isCommitted && !recognitionResult.textResult.label.isEmpty())
     {

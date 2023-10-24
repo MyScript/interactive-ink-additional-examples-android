@@ -2,13 +2,13 @@
  * Copyright (c) MyScript. All rights reserved.
  */
 
-package com.myscript.iink.samples.writetotype.core;
+package com.myscript.iink.samples.writetotype;
 
-import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.RectF;
-import android.util.AttributeSet;
-import android.widget.FrameLayout;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.myscript.iink.Engine;
 import com.myscript.iink.samples.writetotype.core.inkcapture.InkCaptureView;
@@ -21,10 +21,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnStrokeListener, RecognitionHandler.OnRecognizedListener
+public class WriteToTypeManager implements InkCaptureView.OnStrokeListener, RecognitionHandler.OnRecognizedListener
 {
   private static final int COMMIT_TIMEOUT = 500;
 
@@ -95,7 +92,8 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
   private OnWriteToTypeListener mOnWriteToTypeListener = null;
   private OnDebugListener mOnDebugListener = null;
 
-  private InkCaptureView mInkCaptureView = null;
+  @NonNull
+  private final InkCaptureView mInkCaptureView;
   private RecognitionHandler mRecognitionHandler = null;
 
   private Timer mCommitTimer = null;
@@ -105,31 +103,9 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
   // Constructor
 
   /** Constructor */
-  public WriteToTypeWidget(@NonNull Context context)
-  {
-    this(context, null);
-  }
-
-  /** Constructor */
-  public WriteToTypeWidget(@NonNull Context context, @Nullable AttributeSet attrs)
-  {
-    super(context, attrs);
-    init();
-  }
-
-  /** Constructor */
-  public WriteToTypeWidget(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr)
-  {
-    super(context, attrs, defStyleAttr);
-    init();
-  }
-
-  /** Initialize this view */
-  private void init()
-  {
-    mInkCaptureView = new InkCaptureView(getContext());
+  public WriteToTypeManager(@NonNull InkCaptureView inkCaptureView) {
+    mInkCaptureView = inkCaptureView;
     mInkCaptureView.setOnStrokeListener(this);
-    addView(mInkCaptureView);
   }
 
   // --------------------------------------------------------------------------
@@ -149,8 +125,13 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
 
   public void setIInkEngine(@NonNull final Engine engine)
   {
-    mRecognitionHandler = new RecognitionHandler(getContext(), engine);
+    mRecognitionHandler = new RecognitionHandler(engine, mInkCaptureView.getResources().getDisplayMetrics());
     mRecognitionHandler.setOnRecognizedListener(this);
+  }
+
+  public void resetTextRecognizer()
+  {
+    mRecognitionHandler.resetTextRecognizer();
   }
 
   public void setLanguage(@NonNull final String language)
@@ -176,10 +157,7 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
    */
   public void setActiveStylusOnly(final boolean activeStylusOnly)
   {
-    if (mInkCaptureView != null)
-    {
-      mInkCaptureView.setActiveStylusOnly(activeStylusOnly);
-    }
+    mInkCaptureView.setActiveStylusOnly(activeStylusOnly);
   }
 
   public void clearSession()
@@ -235,6 +213,7 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
   @Override
   public void onStrokeCancel(@NonNull InkCaptureView inkCaptureView)
   {
+    mRecognitionHandler.pointerCancel();
     cancelRecognition();
   }
 
@@ -253,65 +232,60 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
   {
     if (mOnWriteToTypeListener != null)
     {
-      post(new Runnable()
-      {
-        @Override
-        public void run()
+      mInkCaptureView.post(() -> {
+        boolean overlapped = false;
+        boolean isError = false;
+
+        switch (recognitionResult.gestureType)
         {
-          boolean overlapped = false;
-          boolean isError = false;
+          case JiixGesture.GESTURE_TYPE_EMPTY:
+          case JiixGesture.GESTURE_TYPE_NONE:
+            overlapped = mOnWriteToTypeListener.onText(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_TOP_BOTTOM:
+            overlapped = mOnWriteToTypeListener.onTopBottom(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_BOTTOM_TOP:
+            overlapped = mOnWriteToTypeListener.onBottomTop(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_LEFT_RIGHT:
+            overlapped = mOnWriteToTypeListener.onLeftRight(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_RIGHT_LEFT:
+            overlapped = mOnWriteToTypeListener.onRightLeft(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_SCRATCH:
+            overlapped = mOnWriteToTypeListener.onScratch(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_SURROUND:
+            overlapped = mOnWriteToTypeListener.onSurround(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_TAP:
+            overlapped = mOnWriteToTypeListener.onSingleTap(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_DOUBLE_TAP:
+            overlapped = mOnWriteToTypeListener.onDoubleTap(recognitionResult, isCommitted);
+            break;
+          case JiixGesture.GESTURE_TYPE_LONG_PRESS:
+            overlapped = mOnWriteToTypeListener.onLongPress(recognitionResult, isCommitted);
+            break;
+          default:
+            isError = true;
+            if (mOnDebugListener != null)
+            {
+              mOnDebugListener.onError("Invalid gesture type\n\n" + debug);
+            }
+            break;
+        }
 
-          switch (recognitionResult.gestureType)
-          {
-            case JiixGesture.GESTURE_TYPE_EMPTY:
-            case JiixGesture.GESTURE_TYPE_NONE:
-              overlapped = mOnWriteToTypeListener.onText(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_TOP_BOTTOM:
-              overlapped = mOnWriteToTypeListener.onTopBottom(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_BOTTOM_TOP:
-              overlapped = mOnWriteToTypeListener.onBottomTop(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_LEFT_RIGHT:
-              overlapped = mOnWriteToTypeListener.onLeftRight(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_RIGHT_LEFT:
-              overlapped = mOnWriteToTypeListener.onRightLeft(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_SCRATCH:
-              overlapped = mOnWriteToTypeListener.onScratch(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_SURROUND:
-              overlapped = mOnWriteToTypeListener.onSurround(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_TAP:
-              overlapped = mOnWriteToTypeListener.onSingleTap(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_DOUBLE_TAP:
-              overlapped = mOnWriteToTypeListener.onDoubleTap(recognitionResult, isCommitted);
-              break;
-            case JiixGesture.GESTURE_TYPE_LONG_PRESS:
-              overlapped = mOnWriteToTypeListener.onLongPress(recognitionResult, isCommitted);
-              break;
-            default:
-              isError = true;
-              if (mOnDebugListener != null)
-              {
-                mOnDebugListener.onError("Invalid gesture type\n\n" + debug);
-              }
-              break;
-          }
-
-          if (!isError)
-          {
-            debugMessage(("Event State: " + (isCommitted ? "COMMITTED" : (recognitionResult.isRecognizerIdle ? "IDLE" : "BUSY"))) + "\n" +
-                    ("Overlapped: " + (overlapped ? "YES" : "NO"))  + "\n" +
-                    ("Gesture Type: " + recognitionResult.gestureType) + "\n" +
-                    ("Text result: " + recognitionResult.textResult.label + ((recognitionResult.textResult.candidates == null || recognitionResult.textResult.candidates.isEmpty()) ? "" : "  " + recognitionResult.textResult.candidates)) + "\n" +
-                    ("Stroke rect: " + recognitionResult.strokeRect.toShortString()) + "\n\n" +
-                    debug);
-          }
+        if (!isError)
+        {
+          debugMessage(("Event State: " + (isCommitted ? "COMMITTED" : (recognitionResult.isRecognizerIdle ? "IDLE" : "BUSY"))) + "\n" +
+                  ("Overlapped: " + (overlapped ? "YES" : "NO"))  + "\n" +
+                  ("Gesture Type: " + recognitionResult.gestureType) + "\n" +
+                  ("Text result: " + recognitionResult.textResult.label + ((recognitionResult.textResult.candidates == null || recognitionResult.textResult.candidates.isEmpty()) ? "" : "  " + recognitionResult.textResult.candidates)) + "\n" +
+                  ("Stroke rect: " + recognitionResult.strokeRect.toShortString()) + "\n\n" +
+                  debug);
         }
       });
     }
@@ -327,14 +301,7 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
   {
     if (mOnDebugListener != null)
     {
-      post(new Runnable()
-      {
-        @Override
-        public void run()
-        {
-          mOnDebugListener.onError(message);
-        }
-      });
+      mInkCaptureView.post(() -> mOnDebugListener.onError(message));
     }
   }
 
@@ -398,14 +365,7 @@ public class WriteToTypeWidget extends FrameLayout implements InkCaptureView.OnS
 
   private void clearInkCaptureView(final boolean animate)
   {
-    post(new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        mInkCaptureView.clearStrokes(animate);
-      }
-    });
+    mInkCaptureView.post(() -> mInkCaptureView.clearStrokes(animate));
   }
 
   private void debugMessage(@NonNull final String message)

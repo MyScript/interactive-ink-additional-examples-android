@@ -8,7 +8,10 @@
     <string name="log_view_title">[LOG VIEW]</string>
 
     <string name="menu_reset">Reset</string>
-    <string name="menu_debug">Debug</string>
+    <string name="menu_debug_off">Enable Debug</string>
+    <string name="menu_debug_on">Disable Debug</string>
+    <string name="menu_recognizer_superimposed_off">Enable superimposed</string>
+    <string name="menu_recognizer_superimposed_on">Disable superimposed</string>
 
     <string name="sample_empty" />
     <string name="sample_single_line">Hello, how are you!</string>

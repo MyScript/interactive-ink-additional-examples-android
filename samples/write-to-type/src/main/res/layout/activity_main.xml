@@ -104,8 +104,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-        <com.myscript.iink.samples.writetotype.core.WriteToTypeWidget
-            android:id="@+id/writetotype"
+        <com.myscript.iink.samples.writetotype.core.inkcapture.InkCaptureView
+            android:id="@+id/ink_capture_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
