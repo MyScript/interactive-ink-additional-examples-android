@@ -14,15 +14,15 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import androidx.annotation.NonNull;
 
 public class CustomViewGroup extends LinearLayout
 {
   private static final String PUNCTUATIONS = ".,?!'\"(){}-:;«»„¡¿”•_;·჻՛՜՞՝՚。、~〈〉《》「」〖〗・·…๏๚๛ฯๆ";
-  private static final String SPACE = "\u0020";
+  private static final String SPACE = " ";
   private static final String NEW_LINE = "\n";
 
   /** Interface definition for callbacks invoked when EditText status changed. */
@@ -34,13 +34,13 @@ public class CustomViewGroup extends LinearLayout
 
   private OnChangedListener mOnChangedListener = null;
 
-  private EditText mEditText = null;
+  private EditText mFocusedEditText = null;
   private final Map<Integer, Integer> mIndexMap = new HashMap<>();
 
   /** Event Listener for selection changed and focus changed of EditText. */
   final private View.AccessibilityDelegate mViewDelegate = new View.AccessibilityDelegate() {
     @Override
-    public void sendAccessibilityEvent(View host, int eventType)
+    public void sendAccessibilityEvent(@NonNull View host, int eventType)
     {
       super.sendAccessibilityEvent(host, eventType);
 
@@ -55,7 +55,7 @@ public class CustomViewGroup extends LinearLayout
 
       if (eventType == AccessibilityEvent.TYPE_VIEW_FOCUSED)
       {
-        if ((mOnChangedListener != null) && (host == mEditText))
+        if ((mOnChangedListener != null) && (host == mFocusedEditText))
         {
           mOnChangedListener.onFocusChanged((EditText) host);
         }
@@ -175,9 +175,9 @@ public class CustomViewGroup extends LinearLayout
 
   public void setFocus(EditText editText)
   {
-    if (editText != mEditText)
+    if (editText != mFocusedEditText)
     {
-      mEditText = editText;
+      mFocusedEditText = editText;
       editText.setAccessibilityDelegate(mViewDelegate);
       editText.requestFocus();
     }
@@ -185,7 +185,7 @@ public class CustomViewGroup extends LinearLayout
 
   public void setSelection(EditText editText, final float x, final float y, final boolean range, final int color)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       int position = findCursorByPosition(editText, x, y);
       String text = editText.getText().toString();
@@ -235,7 +235,7 @@ public class CustomViewGroup extends LinearLayout
 
   public void setSelection(EditText editText, @NonNull final RectF selectionRect, final int color)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       editText.setHighlightColor(color);
 
@@ -248,7 +248,7 @@ public class CustomViewGroup extends LinearLayout
 
   public void setText(EditText editText, @NonNull final String label)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       int start = editText.getSelectionStart();
       int end = editText.getSelectionEnd();
@@ -277,23 +277,9 @@ public class CustomViewGroup extends LinearLayout
     }
   }
 
-  public void eraseText(EditText editText, @NonNull final RectF eraseRect)
-  {
-    if (editText == mEditText)
-    {
-      int start = findCursorByPosition(editText, eraseRect.left, eraseRect.centerY());
-      int end = findCursorByPosition(editText, eraseRect.right, eraseRect.centerY());
-
-      editText.setSelection(start);
-
-      Editable editable = editText.getEditableText();
-      editable.delete(start, end);
-    }
-  }
-
   public void setSpace(EditText editText, final float x, final float y)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       int position = findCursorByPosition(editText, x, y);
 
@@ -321,7 +307,7 @@ public class CustomViewGroup extends LinearLayout
 
   public void eraseSpace(EditText editText, final float x, final float y)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       int position = findCursorByPosition(editText, x, y);
 
@@ -346,7 +332,7 @@ public class CustomViewGroup extends LinearLayout
 
   public void forwardCursor(EditText editText)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       int start = editText.getSelectionStart();
       int end = editText.getSelectionEnd();
@@ -366,7 +352,7 @@ public class CustomViewGroup extends LinearLayout
 
   public void backwardDelete(EditText editText)
   {
-    if (editText == mEditText)
+    if (editText == mFocusedEditText)
     {
       int start = editText.getSelectionStart();
       int end = editText.getSelectionEnd();

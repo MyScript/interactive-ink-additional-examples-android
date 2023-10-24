@@ -4,7 +4,6 @@
 
 package com.myscript.iink.samples.writetotype.core.recognition;
 
-import android.content.Context;
 import android.graphics.RectF;
 import android.util.DisplayMetrics;
 
@@ -14,8 +13,8 @@ import com.myscript.iink.Engine;
 import com.myscript.iink.MimeType;
 import com.myscript.iink.Recognizer;
 import com.myscript.iink.graphics.Point;
-import com.myscript.iink.samples.writetotype.core.WriteToTypeWidget.RecognitionResult;
-import com.myscript.iink.samples.writetotype.core.WriteToTypeWidget.TextResult;
+import com.myscript.iink.samples.writetotype.core.WriteToTypeManager.RecognitionResult;
+import com.myscript.iink.samples.writetotype.core.WriteToTypeManager.TextResult;
 import com.myscript.iink.samples.writetotype.core.inkcapture.StrokePoint;
 import com.myscript.iink.samples.writetotype.core.recognition.jiixmodel.JiixGesture;
 import com.myscript.iink.samples.writetotype.core.recognition.jiixmodel.item.JiixBoundingBox;
@@ -80,11 +79,10 @@ public class RecognitionHandler
   // Constructor
 
   /** Constructor */
-  public RecognitionHandler(@NonNull Context context, @NonNull final Engine engine)
+  public RecognitionHandler(@NonNull final Engine engine, @NonNull DisplayMetrics displayMetrics)
   {
     mEngine = engine;
 
-    DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
     mScaleX = INCH_IN_MILLIMETER / displayMetrics.xdpi;
     mScaleY = INCH_IN_MILLIMETER / displayMetrics.ydpi;
 
@@ -109,8 +107,6 @@ public class RecognitionHandler
     if (mEngine != null)
     {
       Configuration conf = mEngine.getConfiguration();
-      assert (conf != null) : "Not able to retrieve configuration from mEngine.";
-
       conf.setString("lang", language);
 
       destroy();
