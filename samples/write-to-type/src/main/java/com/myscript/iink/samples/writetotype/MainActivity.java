@@ -18,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.myscript.iink.Configuration;
 import com.myscript.iink.Engine;
-import com.myscript.iink.samples.writetotype.core.WriteToTypeManager;
 import com.myscript.iink.samples.writetotype.core.inkcapture.InkCaptureView;
 import com.myscript.iink.samples.writetotype.im.InputMethodEmulator;
 import com.myscript.iink.samples.writetotype.utils.ErrorActivity;

@@ -14,7 +14,7 @@ import android.widget.EditText;
 
 import com.myscript.iink.samples.writetotype.CustomViewGroup;
 import com.myscript.iink.samples.writetotype.DebugView;
-import com.myscript.iink.samples.writetotype.core.WriteToTypeManager;
+import com.myscript.iink.samples.writetotype.WriteToTypeManager;
 
 import java.util.ArrayList;
 import java.util.List;
