@@ -2,7 +2,7 @@
  * Copyright (c) MyScript. All rights reserved.
  */
 
-package com.myscript.iink.samples.writetotype.core;
+package com.myscript.iink.samples.writetotype;
 
 import android.graphics.PointF;
 import android.graphics.RectF;
