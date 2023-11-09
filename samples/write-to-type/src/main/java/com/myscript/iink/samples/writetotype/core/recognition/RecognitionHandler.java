@@ -118,7 +118,7 @@ public class RecognitionHandler
     if (mEngine != null)
     {
       Configuration conf = mEngine.getConfiguration();
-      conf.setString("lang", language);
+      conf.setString("recognizer.lang", language);
 
       destroy();
       mTextRecognizer = mEngine.createRecognizer(mScaleX, mScaleY, RECOGNIZER_TYPE_TEXT);
