@@ -209,6 +209,12 @@ public class RecognitionHandler
     }
   }
 
+  public void pointerCancel()
+  {
+    mTextRecognizer.pointerCancel();
+    mGestureRecognizer.pointerCancel();
+  }
+
   /** Commit timeout expired, so that, make recognition result to take it into account. */
   public void commitRecognition()
   {

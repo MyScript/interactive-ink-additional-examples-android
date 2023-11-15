@@ -208,6 +208,7 @@ public class WriteToTypeManager implements InkCaptureView.OnStrokeListener, Reco
   @Override
   public void onStrokeCancel(@NonNull InkCaptureView inkCaptureView)
   {
+    mRecognitionHandler.pointerCancel();
     cancelRecognition();
   }
 
