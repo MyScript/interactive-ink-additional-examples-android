@@ -22,8 +22,6 @@ import com.myscript.iink.samples.writetotype.core.inkcapture.InkCaptureView;
 import com.myscript.iink.samples.writetotype.im.InputMethodEmulator;
 import com.myscript.iink.samples.writetotype.utils.ErrorActivity;
 
-import java.io.File;
-
 public class MainActivity extends AppCompatActivity implements WriteToTypeManager.OnDebugListener
 {
   private static final float INCH_IN_MILLIMETER = 25.4f;
@@ -51,9 +49,8 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
     // configure recognition
     Configuration conf = mEngine.getConfiguration();
     String confDir = "zip://" + getPackageCodePath() + "!/assets/conf";
-    conf.setStringArray("configuration-manager.search-path", new String[]{ confDir });
-    String tempDir = getFilesDir().getPath() + File.separator + "tmp";
-    conf.setString("content-package.temp-folder", tempDir);
+    conf.setStringArray("recognizer.configuration-manager.search-path", new String[]{ confDir });
+    setSuperimposed(true);
 
     mLogView = findViewById(R.id.text_view_log);
     mLogView.setMovementMethod(new ScrollingMovementMethod());
@@ -78,6 +75,20 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
       mInputMethod.setDebugView((DebugView) findViewById(R.id.debug_view));  // DEBUG ONLY
       mInputMethod.setDefaultEditText(0);
     });
+  }
+
+  private void setSuperimposed(boolean enable)
+  {
+    mEngine.getConfiguration().setString("recognizer.text.configuration.name", enable ? "text-superimposed" : "text");
+    if (mWriteToTypeManager != null)
+    {
+      mWriteToTypeManager.resetTextRecognizer();
+    }
+  }
+
+  private boolean isSuperimposed()
+  {
+    return "text-superimposed".equals(mEngine.getConfiguration().getString("recognizer.text.configuration.name"));
   }
 
   @Override
@@ -113,6 +124,12 @@ public class MainActivity extends AppCompatActivity implements WriteToTypeManage
       boolean isDebug = !mInputMethod.isDebug();
       item.setTitle(isDebug ? R.string.menu_debug_on : R.string.menu_debug_off);
       mInputMethod.setDebug(isDebug);
+    }
+    else if (item.getItemId() == R.id.action_toggle_recognizer)
+    {
+      boolean isSuperimposed = !isSuperimposed();
+      item.setTitle(isSuperimposed ? R.string.menu_recognizer_superimposed_on : R.string.menu_recognizer_superimposed_off);
+      setSuperimposed(isSuperimposed);
     }
 
     return super.onOptionsItemSelected(item);

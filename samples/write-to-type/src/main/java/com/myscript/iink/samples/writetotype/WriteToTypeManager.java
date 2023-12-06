@@ -129,6 +129,11 @@ public class WriteToTypeManager implements InkCaptureView.OnStrokeListener, Reco
     mRecognitionHandler.setOnRecognizedListener(this);
   }
 
+  public void resetTextRecognizer()
+  {
+    mRecognitionHandler.resetTextRecognizer();
+  }
+
   public void setLanguage(@NonNull final String language)
   {
     if (mRecognitionHandler != null)
