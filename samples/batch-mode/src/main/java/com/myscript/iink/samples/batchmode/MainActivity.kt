@@ -73,6 +73,15 @@ class MainActivity : AppCompatActivity() {
                 setString("lang", language);
                 // Configure the engine to disable guides (recommended in batch mode)
                 setBoolean("text.guides.enable", false);
+
+                // Activate handwriting recognition for text and shapes
+                setBoolean("raw-content.recognition.text", true)
+                setBoolean("raw-content.recognition.shape", true)
+
+                // Allow conversion of text and shapes
+                setBoolean("raw-content.convert.text", true)
+                setBoolean("raw-content.convert.node", true)
+                setBoolean("raw-content.convert.edge", true)
             }
         }
 
