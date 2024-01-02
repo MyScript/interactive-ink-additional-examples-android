@@ -62,7 +62,7 @@ To run both recognitions simultaneously, two instances of Recognizer are created
 
 NB: the Recognizer API is available from iink SDK 2.1.
 
-For more details on the sample, read more [here](https://github.com/MyScript/interactive-ink-additional-examples-android/blob/master/java/samples/write-to-type/ReadMe.pdf). 
+For more details on the sample, read more [here](samples/write-to-type/ReadMe.pdf). 
 
 5. The offscreen-interactivity samples shows how to integrate MyScript iink SDK interactivity with your own rendering.
 It drives the content model by sending the captured strokes to iink SDK and keeps the incremental recognition principle and gesture notifications.
