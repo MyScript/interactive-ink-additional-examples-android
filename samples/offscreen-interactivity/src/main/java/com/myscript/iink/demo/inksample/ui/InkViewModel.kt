@@ -51,6 +51,21 @@ data class RecognitionFeedback(
     val words: List<Word> = emptyList()
 )
 
+enum class UndoRedoAction {
+    ADD,
+    REMOVE
+}
+
+data class UndoRedoItem(
+        val undoRedoAction: UndoRedoAction,
+        val strokes: List<InkView.Brush>
+)
+
+data class UndoRedoState(
+        val canUndo: Boolean = false,
+        val canRedo: Boolean = false
+)
+
 /**
  * ViewModel responsible for maintaining the state of the OffScreenInteractivity demo application.
  *
@@ -71,6 +86,12 @@ class InkViewModel(
     private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
     val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
+
+    private val undoRedoStack = mutableListOf<UndoRedoItem>()
+    private var undoRedoIndex = 0
+    private val _undoRedoState: MutableLiveData<UndoRedoState> = MutableLiveData(UndoRedoState())
+    val undoRedoState: LiveData<UndoRedoState>
+        get() = _undoRedoState
 
     // The iinkModel and recognitionFeedback are straightforward methods for debugging and showcasing, providing visual representation for easier understanding.
     // While this is not the method your app should use to display recognition, it can provide a starting point or guide on how to accomplish this.
@@ -325,10 +346,110 @@ class InkViewModel(
         }
     }
 
+    private fun addToUndoRedoStack(action: UndoRedoAction, strokes: List<InkView.Brush>) {
+        viewModelScope.launch(uiDispatcher) {
+            if (undoRedoStack.isNotEmpty()) {
+                for (i in (undoRedoStack.size - 1).downTo(undoRedoIndex)) {
+                    undoRedoStack.removeAt(i)
+                }
+            }
+            undoRedoStack.add(undoRedoIndex++, UndoRedoItem(action, strokes))
+
+            _undoRedoState.value = UndoRedoState(
+                canUndo = undoRedoIndex > 0,
+                canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
+    private fun addStrokesForUndoRedo(strokesToAdd: List<InkView.Brush>) {
+        viewModelScope.launch(uiDispatcher) {
+            val strokes = _strokes.value?.toMutableList() ?: mutableListOf()
+            strokes.addAll(strokesToAdd)
+
+            val pointerEvents = strokesToAdd.flatMap { brush ->
+                brush.stroke.toPointerEvents().map { pointerEvent ->
+                    pointerEvent.convertPointerEvent(converter)
+                }
+            }.toTypedArray()
+
+            if (pointerEvents.isNotEmpty()) {
+                val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
+
+                if (addedStrokes != null) {
+                    strokesToAdd.forEachIndexed { index, brush ->
+                        if (index in addedStrokes.indices) {
+                            strokeIdsMapping[addedStrokes[index]] = brush.id
+                        }
+                    }
+                }
+            }
+            _strokes.value = strokes
+        }
+    }
+
+    private fun removeStrokesForUndoRedo(strokesToRemove: List<InkView.Brush>) {
+        viewModelScope.launch(uiDispatcher) {
+            val strokes = _strokes.value?.toMutableList() ?: mutableListOf()
+            if (strokes.isEmpty()) return@launch
+
+            val updatedStrokes = strokes.filter {
+                it.id !in strokesToRemove.map { strokeToRemove -> strokeToRemove.id }
+            }
+
+            val strokeToUndoMapping = strokeIdsMapping.filter { (_, appStrokeId) ->
+                appStrokeId in strokesToRemove.map { strokeToRemove -> strokeToRemove.id }
+            }
+            offscreenEditor?.erase(strokeToUndoMapping.keys.toTypedArray())
+            strokeToUndoMapping.forEach {
+                strokeIdsMapping.remove(it.key)
+            }
+
+            _strokes.value = updatedStrokes
+        }
+    }
+
+    fun undo() {
+        viewModelScope.launch(uiDispatcher) {
+            if (undoRedoIndex == 0 || undoRedoStack.isEmpty()) return@launch
+
+            val itemToUndo = undoRedoStack[--undoRedoIndex]
+            when (itemToUndo.undoRedoAction) {
+                UndoRedoAction.ADD -> removeStrokesForUndoRedo(itemToUndo.strokes)
+                UndoRedoAction.REMOVE -> addStrokesForUndoRedo(itemToUndo.strokes)
+            }
+
+            _undoRedoState.value = UndoRedoState(
+                    canUndo = undoRedoIndex > 0,
+                    canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
+    fun redo() {
+        viewModelScope.launch(uiDispatcher) {
+            if (undoRedoIndex == undoRedoStack.size || undoRedoStack.isEmpty()) return@launch
+
+            val itemToRedo = undoRedoStack[undoRedoIndex++]
+            when (itemToRedo.undoRedoAction) {
+                UndoRedoAction.ADD -> addStrokesForUndoRedo(itemToRedo.strokes)
+                UndoRedoAction.REMOVE -> removeStrokesForUndoRedo(itemToRedo.strokes)
+            }
+
+            _undoRedoState.value = UndoRedoState(
+                    canUndo = undoRedoIndex > 0,
+                    canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
     fun clearInk() {
         viewModelScope.launch(uiDispatcher) {
             offscreenEditor?.clear()
             strokeIdsMapping.clear()
+
+            addToUndoRedoStack(UndoRedoAction.REMOVE, _strokes.value ?: emptyList())
+
             _strokes.value = emptyList()
         }
     }
@@ -402,6 +523,8 @@ class InkViewModel(
             offscreenEditor?.addStrokes(pointerEvents, true)?.firstNotNullOf { strokeId ->
                 strokeIdsMapping[strokeId] = brush.id
             }
+
+            addToUndoRedoStack(UndoRedoAction.ADD, listOf(brush))
         }
     }
 

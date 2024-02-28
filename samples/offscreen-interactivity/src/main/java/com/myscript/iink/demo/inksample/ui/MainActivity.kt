@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
+        inkViewModel.undoRedoState.observe(this, ::onUndoRedoStateUpdate)
     }
 
     override fun onStart() {
@@ -53,6 +54,8 @@ class MainActivity : AppCompatActivity() {
 
         with(binding) {
             inkView.strokesListener = StrokesListener()
+            undoBtn.setOnClickListener { inkViewModel.undo() }
+            redoBtn.setOnClickListener { inkViewModel.redo() }
             clearInkBtn.setOnClickListener { inkViewModel.clearInk() }
             recognitionSwitch.setOnCheckedChangeListener { _, isChecked ->
                 inkViewModel.toggleRecognition(isVisible = isChecked)
@@ -98,6 +101,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun onIInkModelUpdate(htmlExport: String) {
         binding.iinkModelPreview.loadData(htmlExport, "text/html", Charsets.UTF_8.toString())
+    }
+
+    private fun onUndoRedoStateUpdate(undoRedoState: UndoRedoState) {
+        with(binding) {
+            undoBtn.isEnabled = undoRedoState.canUndo
+            redoBtn.isEnabled = undoRedoState.canRedo
+        }
     }
 
     /**
