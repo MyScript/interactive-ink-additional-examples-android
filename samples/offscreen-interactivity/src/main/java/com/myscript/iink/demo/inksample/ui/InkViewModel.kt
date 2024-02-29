@@ -178,6 +178,8 @@ class InkViewModel(
             val itemIdHelper = itemIdHelper ?: return OffscreenGestureAction.ADD_STROKE
 
             viewModelScope.launch(Dispatchers.Main) {
+                undoRedoStack.removeAt(--undoRedoIndex)
+
                 val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
 
                 // With workDispatcher, this snippet below will not be processed in parallel but rather one at a time.
@@ -185,10 +187,19 @@ class InkViewModel(
                 // or when tasks have side-effects that must be isolated to a single thread.
                 withContext(workDispatcher) {
                     // ItemIds may refer to partial strokes, retrieve the corresponding full strokes ids
-                    val fullStrokeIds = itemIds.map(itemIdHelper::getFullItemId) + gestureStrokeId
+                    val fullStrokeIds = itemIds.map(itemIdHelper::getFullItemId)
+
+                    val strokesToRemove = mutableListOf<InkView.Brush>()
+                    fullStrokeIds.forEach { strokeId ->
+                        val appStrokeId = strokeIdsMapping[strokeId]
+                        remainingStrokes.firstOrNull { it.id == appStrokeId }?.let { strokeBrush ->
+                            strokesToRemove.add(strokeBrush)
+                        }
+                    }
+                    addToUndoRedoStack(UndoRedoAction.REMOVE, strokesToRemove)
 
                     // Erase the gesture stroke (gestureStrokeId) and the erased strokes (fullItemIds) in your application
-                    fullStrokeIds.forEach { strokeId ->
+                    (fullStrokeIds + gestureStrokeId).forEach { strokeId ->
                         val appStrokeId = strokeIdsMapping[strokeId]
                         strokeIdsMapping.remove(strokeId)
                         val strokeBrush = remainingStrokes.firstOrNull { it.id == appStrokeId }
@@ -216,6 +227,8 @@ class InkViewModel(
                 val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
 
                 withContext(workDispatcher) {
+                    undoRedoStack.removeAt(--undoRedoIndex)
+
                     // Retrieve the full stroke ids
                     val fullItemIds = itemIds.map { itemId ->
                         if (itemIdHelper.isPartialItem(itemId))
@@ -242,6 +255,15 @@ class InkViewModel(
                         offscreenEditor?.erase(fullItemIds)
                         emptyArray()
                     }
+
+                    val strokesToRemove = mutableListOf<InkView.Brush>()
+                    fullItemIds.forEach { strokeId ->
+                        val appStrokeId = strokeIdsMapping[strokeId]
+                        remainingStrokes.firstOrNull { it.id == appStrokeId }?.let {
+                            strokesToRemove.add(it)
+                        }
+                    }
+                    addToUndoRedoStack(UndoRedoAction.REMOVE, strokesToRemove)
 
                     // Erase the erased strokes and gesture strokes in your application
                     (fullItemIds + gestureStrokeId).forEach { strokeId ->
