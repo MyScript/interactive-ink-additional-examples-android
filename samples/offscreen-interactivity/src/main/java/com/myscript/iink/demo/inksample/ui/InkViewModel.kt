@@ -435,7 +435,7 @@ class InkViewModel(
         }
     }
 
-    private fun clearUndoReoStack() {
+    private fun clearUndoRedoStack() {
         viewModelScope.launch(uiDispatcher) {
             undoRedoStack.clear()
             undoRedoIndex = 0
@@ -493,6 +493,8 @@ class InkViewModel(
     }
 
     fun loadInk() {
+        clearUndoRedoStack()
+
         viewModelScope.launch(uiDispatcher) {
             val jsonString = withContext(ioDispatcher) {
                 repository.readInkFromFile()
