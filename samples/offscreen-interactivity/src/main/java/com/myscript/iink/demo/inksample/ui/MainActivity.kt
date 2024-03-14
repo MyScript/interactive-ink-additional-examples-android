@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
-        inkViewModel.undoRedoState.observe(this, ::onUndoRedoStateUpdate)
+        inkViewModel.editorHistoryState.observe(this, ::onUndoRedoStateUpdate)
     }
 
     override fun onStart() {
@@ -105,10 +105,10 @@ class MainActivity : AppCompatActivity() {
         binding.iinkModelPreview.loadData(htmlExport, "text/html", Charsets.UTF_8.toString())
     }
 
-    private fun onUndoRedoStateUpdate(undoRedoState: UndoRedoState) {
+    private fun onUndoRedoStateUpdate(editorHistoryState: EditorHistoryState) {
         with(binding) {
-            undoBtn.isEnabled = undoRedoState.canUndo
-            redoBtn.isEnabled = undoRedoState.canRedo
+            undoBtn.isEnabled = editorHistoryState.canUndo
+            redoBtn.isEnabled = editorHistoryState.canRedo
         }
     }
 
