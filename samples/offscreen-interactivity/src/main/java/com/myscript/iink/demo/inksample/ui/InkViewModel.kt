@@ -87,7 +87,7 @@ class InkViewModel(
     val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
 
-    private val undoRedoStack = mutableListOf<UndoRedoItem>()
+    private val undoRedoStack = mutableListOf<List<UndoRedoItem>>()
     private var undoRedoIndex = 0
     private val _undoRedoState: MutableLiveData<UndoRedoState> = MutableLiveData(UndoRedoState())
     val undoRedoState: LiveData<UndoRedoState>
@@ -369,13 +369,17 @@ class InkViewModel(
     }
 
     private fun addToUndoRedoStack(action: UndoRedoAction, strokes: List<InkView.Brush>) {
+        addToUndoRedoStack(listOf(UndoRedoItem(action, strokes)))
+    }
+
+    private fun addToUndoRedoStack(undoRedoItems: List<UndoRedoItem>) {//} action: UndoRedoAction, strokes: List<InkView.Brush>) {
         viewModelScope.launch(uiDispatcher) {
             if (undoRedoStack.isNotEmpty()) {
                 for (i in (undoRedoStack.size - 1).downTo(undoRedoIndex)) {
                     undoRedoStack.removeAt(i)
                 }
             }
-            undoRedoStack.add(undoRedoIndex++, UndoRedoItem(action, strokes))
+            undoRedoStack.add(undoRedoIndex++, undoRedoItems)
 
             _undoRedoState.value = UndoRedoState(
                 canUndo = undoRedoIndex > 0,
@@ -431,14 +435,24 @@ class InkViewModel(
         }
     }
 
+    private fun clearUndoReoStack() {
+        viewModelScope.launch(uiDispatcher) {
+            undoRedoStack.clear()
+            undoRedoIndex = 0
+            _undoRedoState.value = UndoRedoState()
+        }
+    }
+
     fun undo() {
         viewModelScope.launch(uiDispatcher) {
             if (undoRedoIndex == 0 || undoRedoStack.isEmpty()) return@launch
 
-            val itemToUndo = undoRedoStack[--undoRedoIndex]
-            when (itemToUndo.undoRedoAction) {
-                UndoRedoAction.ADD -> removeStrokesForUndoRedo(itemToUndo.strokes)
-                UndoRedoAction.REMOVE -> addStrokesForUndoRedo(itemToUndo.strokes)
+            val undoItems = undoRedoStack[--undoRedoIndex]
+            undoItems.forEach { item ->
+                when (item.undoRedoAction) {
+                    UndoRedoAction.ADD -> removeStrokesForUndoRedo(item.strokes)
+                    UndoRedoAction.REMOVE -> addStrokesForUndoRedo(item.strokes)
+                }
             }
 
             _undoRedoState.value = UndoRedoState(
@@ -452,10 +466,12 @@ class InkViewModel(
         viewModelScope.launch(uiDispatcher) {
             if (undoRedoIndex == undoRedoStack.size || undoRedoStack.isEmpty()) return@launch
 
-            val itemToRedo = undoRedoStack[undoRedoIndex++]
-            when (itemToRedo.undoRedoAction) {
-                UndoRedoAction.ADD -> addStrokesForUndoRedo(itemToRedo.strokes)
-                UndoRedoAction.REMOVE -> removeStrokesForUndoRedo(itemToRedo.strokes)
+            val redoItems = undoRedoStack[undoRedoIndex++]
+            redoItems.forEach { item ->
+                when (item.undoRedoAction) {
+                    UndoRedoAction.ADD -> addStrokesForUndoRedo(item.strokes)
+                    UndoRedoAction.REMOVE -> removeStrokesForUndoRedo(item.strokes)
+                }
             }
 
             _undoRedoState.value = UndoRedoState(
