@@ -72,6 +72,8 @@ class MainActivity : AppCompatActivity() {
         }
         with(binding) {
             inkView.strokesListener = null
+            undoBtn.setOnClickListener(null)
+            redoBtn.setOnClickListener(null)
             clearInkBtn.setOnClickListener(null)
             recognitionSwitch.setOnCheckedChangeListener(null)
         }
