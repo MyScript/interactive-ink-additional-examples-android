@@ -372,7 +372,7 @@ class InkViewModel(
         addToUndoRedoStack(listOf(UndoRedoItem(action, strokes)))
     }
 
-    private fun addToUndoRedoStack(undoRedoItems: List<UndoRedoItem>) {//} action: UndoRedoAction, strokes: List<InkView.Brush>) {
+    private fun addToUndoRedoStack(undoRedoItems: List<UndoRedoItem>) {
         viewModelScope.launch(uiDispatcher) {
             if (undoRedoStack.isNotEmpty()) {
                 for (i in (undoRedoStack.size - 1).downTo(undoRedoIndex)) {
