@@ -3,16 +3,20 @@
 package com.myscript.iink.demo.inksample.ui
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
+import android.text.method.ScrollingMovementMethod
+import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebViewClient
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnLayout
-import androidx.core.view.isVisible
 import com.microsoft.device.ink.InkView
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
         inkViewModel.editorHistoryState.observe(this, ::onUndoRedoStateUpdate)
+        inkViewModel.iinkJIIX.observe(this, ::onIInkJIIXUpdate)
     }
 
     override fun onStart() {
@@ -57,11 +62,47 @@ class MainActivity : AppCompatActivity() {
             undoBtn.setOnClickListener { inkViewModel.undo() }
             redoBtn.setOnClickListener { inkViewModel.redo() }
             clearInkBtn.setOnClickListener { inkViewModel.clearInk() }
+            exportBtn.setOnClickListener {
+                inkViewModel.saveInk {
+                    val iinkFile = inkViewModel.contentFile
+                    val exportedFile = File(cacheDir, iinkFile.name)
+                    iinkFile.copyTo(exportedFile, true)
+
+                    val jiixFile = File(cacheDir, "export.jiix").apply {
+                        delete()
+                        printWriter().use { out ->
+                            out.print(iinkJiix.text)
+                        }
+                    }
+
+                    val authority = "com.myscript.iink.offscreen.demo.export"
+                    val iinkUri = FileProvider.getUriForFile(this@MainActivity, authority, exportedFile)
+                    val jiixUri = FileProvider.getUriForFile(this@MainActivity, authority, jiixFile)
+
+                    ShareCompat.IntentBuilder(this@MainActivity)
+                            .setType("*/*")
+                            .addStream(iinkUri)
+                            .addStream(jiixUri)
+                            .startChooser()
+                }
+            }
+
             recognitionSwitch.setOnCheckedChangeListener { _, isChecked ->
                 inkViewModel.toggleRecognition(isVisible = isChecked)
             }
             iinkModelPreviewSwitch.setOnCheckedChangeListener { _, isChecked ->
-                iinkModelPreviewLayout.isVisible = isChecked
+                iinkModelPreviewLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+            }
+            iinkJiixSwitch.setOnCheckedChangeListener { _, isChecked ->
+                iinkJiixLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+            }
+            iinkJiix.movementMethod = ScrollingMovementMethod()
+            iinkJiix.setOnLongClickListener {
+                // Copy the text to the clipboard
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("jiix", iinkJiix.text)
+                clipboard.setPrimaryClip(clip)
+                true
             }
         }
     }
@@ -110,6 +151,11 @@ class MainActivity : AppCompatActivity() {
             undoBtn.isEnabled = editorHistoryState.canUndo
             redoBtn.isEnabled = editorHistoryState.canRedo
         }
+    }
+
+    private fun onIInkJIIXUpdate(jiixExport: String) {
+        binding.iinkJiix.text = jiixExport
+        binding.iinkJiix.scrollTo(0, 0)
     }
 
     /**
