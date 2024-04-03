@@ -13,6 +13,8 @@ import android.webkit.WebSettings
 import android.webkit.WebViewClient
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ShareCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.doOnLayout
 import com.microsoft.device.ink.InkView
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding

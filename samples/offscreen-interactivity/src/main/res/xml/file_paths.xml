@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+  <cache-path name="exports" path="exports/"/>
+
+  <!-- We give access to Context. getCacheDir() directory
+    Used when we need to store a file for intermediate result.
+    Once our calculations are done it's best to remove the files,
+    but if we don't the system will remove them when running low.
+    /data/data/com.myscript.nebo.debug/cache/-->
+  <cache-path name="tempAppDir" path="/"/>
+</paths>

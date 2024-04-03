@@ -123,7 +123,7 @@ class InkViewModel(
     // Maps the data model IDs of the iink offscreen editor to the data model IDs of the application.
     private val strokeIdsMapping: MutableMap<String /* id of iink stroke */, String /* id of app stroke */> = mutableMapOf()
 
-    private val contentFile: File
+    val contentFile: File
         get() = File(dataDir, "OffscreenEditor.iink")
 
     var displayMetrics: DisplayMetrics? = null
