@@ -210,7 +210,7 @@ class InkViewModel(
                     val strokeIdsToErase = (fullStrokeIds - gestureStrokeId).toTypedArray()
                     offscreenEditor?.erase(strokeIdsToErase)
                 }
-                removeLastFromUndoRedoStack()
+                removeGestureFromUndoRedoStack(gestureStrokeId)
                 val newHistory = addToUndoRedoStack(EditorHistoryAction.REMOVE, strokesToRemove, iinkHistoryId())
                 _editorHistoryState.value = newHistory
 
@@ -259,7 +259,6 @@ class InkViewModel(
                         emptyArray()
                     }
 
-
                     fullItemIds.forEach { strokeId ->
                         val appStrokeId = strokeIdsMapping[strokeId]
                         remainingStrokes.firstOrNull { it.id == appStrokeId }?.let {
@@ -285,7 +284,7 @@ class InkViewModel(
                     // Add back the remaining strokes
                     remainingStrokes.addAll(brushes)
                 }
-                removeLastFromUndoRedoStack()
+                removeGestureFromUndoRedoStack(gestureStrokeId)
                 val newHistory = addToUndoRedoStack(EditorHistoryAction.REMOVE, strokesToRemove, iinkHistoryId())
                 withContext(uiDispatcher) {
                     _editorHistoryState.value = newHistory
@@ -437,10 +436,20 @@ class InkViewModel(
         }
     }
 
-    private fun removeLastFromUndoRedoStack(): EditorHistoryState {
+    private fun removeGestureFromUndoRedoStack(gestureId: String): EditorHistoryState {
         synchronized(undoRedoStack) {
-            undoRedoStack.removeAt(--undoRedoIndex)
+            run gestureFinder@{
+                undoRedoStack.asReversed().forEach { historyItems ->
+                    historyItems.forEach { item ->
+                        if (item.strokes.any { it.id == gestureId }) {
+                            undoRedoStack.remove(historyItems)
+                            return@gestureFinder
+                        }
+                    }
+                }
+            }
 
+            --undoRedoIndex
             return EditorHistoryState(
                     canUndo = undoRedoIndex > 0,
                     canRedo = undoRedoIndex < undoRedoStack.size
