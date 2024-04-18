@@ -5,9 +5,9 @@
 
 rootProject.name = 'myscript.iink.samples.android.java'
 
-gradle.ext.iinkVersionCode = 2310
-gradle.ext.iinkVersionName = "2.3.1"
-gradle.ext.iinkResourcesURL = "https://download.myscript.com/iink/recognitionAssets_iink_2.3"
+gradle.ext.iinkVersionCode = 3020
+gradle.ext.iinkVersionName = "3.0.2"
+gradle.ext.iinkResourcesURL = "https://download.myscript.com/iink/recognitionAssets_iink_3.0"
 
 def projects = [
         // samples

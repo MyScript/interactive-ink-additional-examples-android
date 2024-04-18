@@ -27,4 +27,5 @@ object Versions {
 
     // 3rd party
     const val gson = "2.10.1"
+    const val okhttp = "4.11.0"
 }
