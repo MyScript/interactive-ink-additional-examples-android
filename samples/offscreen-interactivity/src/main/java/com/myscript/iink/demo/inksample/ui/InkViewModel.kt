@@ -51,6 +51,21 @@ data class RecognitionFeedback(
     val words: List<Word> = emptyList()
 )
 
+enum class EditorHistoryAction {
+    ADD,
+    REMOVE
+}
+
+data class EditorHistoryItem(
+        val editorHistoryAction: EditorHistoryAction,
+        val strokes: List<InkView.Brush>
+)
+
+data class EditorHistoryState(
+        val canUndo: Boolean = false,
+        val canRedo: Boolean = false
+)
+
 /**
  * ViewModel responsible for maintaining the state of the OffScreenInteractivity demo application.
  *
@@ -71,6 +86,12 @@ class InkViewModel(
     private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
     val strokes: LiveData<List<InkView.Brush>>
         get() = _strokes
+
+    private val undoRedoStack = mutableListOf<List<EditorHistoryItem>>()
+    private var undoRedoIndex = 0
+    private val _editorHistoryState: MutableLiveData<EditorHistoryState> = MutableLiveData(EditorHistoryState())
+    val editorHistoryState: LiveData<EditorHistoryState>
+        get() = _editorHistoryState
 
     // The iinkModel and recognitionFeedback are straightforward methods for debugging and showcasing, providing visual representation for easier understanding.
     // While this is not the method your app should use to display recognition, it can provide a starting point or guide on how to accomplish this.
@@ -164,10 +185,24 @@ class InkViewModel(
                 // or when tasks have side-effects that must be isolated to a single thread.
                 withContext(workDispatcher) {
                     // ItemIds may refer to partial strokes, retrieve the corresponding full strokes ids
-                    val fullStrokeIds = itemIds.map(itemIdHelper::getFullItemId) + gestureStrokeId
+                    val fullStrokeIds = itemIds.map(itemIdHelper::getFullItemId)
+
+                    val strokesToRemove = mutableListOf<InkView.Brush>()
+                    fullStrokeIds.forEach { strokeId ->
+                        val appStrokeId = strokeIdsMapping[strokeId]
+                        remainingStrokes.firstOrNull { it.id == appStrokeId }?.let { strokeBrush ->
+                            strokesToRemove.add(strokeBrush)
+                        }
+                    }
+
+                    removeLastFromUndoRedoStack()
+                    val newHistory = addToUndoRedoStack(EditorHistoryAction.REMOVE, strokesToRemove)
+                    withContext(uiDispatcher) {
+                        _editorHistoryState.value = newHistory
+                    }
 
                     // Erase the gesture stroke (gestureStrokeId) and the erased strokes (fullItemIds) in your application
-                    fullStrokeIds.forEach { strokeId ->
+                    (fullStrokeIds + gestureStrokeId).forEach { strokeId ->
                         val appStrokeId = strokeIdsMapping[strokeId]
                         strokeIdsMapping.remove(strokeId)
                         val strokeBrush = remainingStrokes.firstOrNull { it.id == appStrokeId }
@@ -220,6 +255,19 @@ class InkViewModel(
                     } else {
                         offscreenEditor?.erase(fullItemIds)
                         emptyArray()
+                    }
+
+                    val strokesToRemove = mutableListOf<InkView.Brush>()
+                    fullItemIds.forEach { strokeId ->
+                        val appStrokeId = strokeIdsMapping[strokeId]
+                        remainingStrokes.firstOrNull { it.id == appStrokeId }?.let {
+                            strokesToRemove.add(it)
+                        }
+                    }
+                    removeLastFromUndoRedoStack()
+                    val newHistory = addToUndoRedoStack(EditorHistoryAction.REMOVE, strokesToRemove)
+                    withContext(uiDispatcher) {
+                        _editorHistoryState.value = newHistory
                     }
 
                     // Erase the erased strokes and gesture strokes in your application
@@ -325,16 +373,145 @@ class InkViewModel(
         }
     }
 
+    private fun addToUndoRedoStack(action: EditorHistoryAction, strokes: List<InkView.Brush>): EditorHistoryState {
+        return addToUndoRedoStack(listOf(EditorHistoryItem(action, strokes)))
+    }
+
+    private fun addToUndoRedoStack(editorHistoryItems: List<EditorHistoryItem>): EditorHistoryState {
+        synchronized(undoRedoStack) {
+            if (undoRedoStack.isNotEmpty()) {
+                for (i in (undoRedoStack.size - 1).downTo(undoRedoIndex)) {
+                    undoRedoStack.removeAt(i)
+                }
+            }
+            undoRedoStack.add(undoRedoIndex++, editorHistoryItems)
+
+            return EditorHistoryState(
+                    canUndo = undoRedoIndex > 0,
+                    canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
+    private fun addStrokesForUndoRedo(initialStrokes: List<InkView.Brush>, strokesToAdd: List<InkView.Brush>): List<InkView.Brush> {
+        val strokes = initialStrokes.toMutableList()
+        strokes.addAll(strokesToAdd)
+
+        val pointerEvents = strokesToAdd.flatMap { brush ->
+            brush.stroke.toPointerEvents().map { pointerEvent ->
+                pointerEvent.convertPointerEvent(converter)
+            }
+        }.toTypedArray()
+
+        if (pointerEvents.isNotEmpty()) {
+            val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
+
+            if (addedStrokes != null) {
+                strokesToAdd.forEachIndexed { index, brush ->
+                    if (index in addedStrokes.indices) {
+                        strokeIdsMapping[addedStrokes[index]] = brush.id
+                    }
+                }
+            }
+        }
+
+        return strokes
+    }
+
+    private fun removeStrokesForUndoRedo(initialStrokes: List<InkView.Brush>, strokesToRemove: List<InkView.Brush>): List<InkView.Brush> {
+        val updatedStrokes = initialStrokes.filter {
+            it.id !in strokesToRemove.map { strokeToRemove -> strokeToRemove.id }
+        }
+
+        val strokeToUndoMapping = strokeIdsMapping.filter { (_, appStrokeId) ->
+            appStrokeId in strokesToRemove.map { strokeToRemove -> strokeToRemove.id }
+        }
+        offscreenEditor?.erase(strokeToUndoMapping.keys.toTypedArray())
+        strokeToUndoMapping.forEach {
+            strokeIdsMapping.remove(it.key)
+        }
+
+        return updatedStrokes
+    }
+
+    private fun clearUndoRedoStack():  EditorHistoryState {
+        synchronized(undoRedoStack) {
+            undoRedoStack.clear()
+            undoRedoIndex = 0
+            return EditorHistoryState()
+        }
+    }
+
+    private fun removeLastFromUndoRedoStack(): EditorHistoryState {
+        synchronized(undoRedoStack) {
+            undoRedoStack.removeAt(--undoRedoIndex)
+
+            return EditorHistoryState(
+                    canUndo = undoRedoIndex > 0,
+                    canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
+    fun undo() {
+        viewModelScope.launch(uiDispatcher) {
+            if (undoRedoIndex == 0 || undoRedoStack.isEmpty()) return@launch
+
+            val undoItems = synchronized(undoRedoStack){
+                undoRedoStack[--undoRedoIndex]
+            }
+            undoItems.forEach { item ->
+                val initialStrokes = strokes.value ?: emptyList()
+                _strokes.value = when (item.editorHistoryAction) {
+                    EditorHistoryAction.ADD -> removeStrokesForUndoRedo(initialStrokes, item.strokes)
+                    EditorHistoryAction.REMOVE -> addStrokesForUndoRedo(initialStrokes, item.strokes)
+                }
+            }
+
+            _editorHistoryState.value = EditorHistoryState(
+                    canUndo = undoRedoIndex > 0,
+                    canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
+    fun redo() {
+        viewModelScope.launch(uiDispatcher) {
+            if (undoRedoIndex == undoRedoStack.size || undoRedoStack.isEmpty()) return@launch
+
+            val redoItems = synchronized(undoRedoStack) {
+                undoRedoStack[undoRedoIndex++]
+            }
+            redoItems.forEach { item ->
+                val initialStrokes = strokes.value ?: emptyList()
+                _strokes.value = when (item.editorHistoryAction) {
+                    EditorHistoryAction.ADD -> addStrokesForUndoRedo(initialStrokes, item.strokes)
+                    EditorHistoryAction.REMOVE -> removeStrokesForUndoRedo(initialStrokes, item.strokes)
+                }
+            }
+
+            _editorHistoryState.value = EditorHistoryState(
+                    canUndo = undoRedoIndex > 0,
+                    canRedo = undoRedoIndex < undoRedoStack.size
+            )
+        }
+    }
+
     fun clearInk() {
         viewModelScope.launch(uiDispatcher) {
             offscreenEditor?.clear()
             strokeIdsMapping.clear()
+
+            _editorHistoryState.value = addToUndoRedoStack(EditorHistoryAction.REMOVE, _strokes.value ?: emptyList())
+
             _strokes.value = emptyList()
         }
     }
 
     fun loadInk() {
         viewModelScope.launch(uiDispatcher) {
+            _editorHistoryState.value = clearUndoRedoStack()
+
             val jsonString = withContext(ioDispatcher) {
                 repository.readInkFromFile()
             }
@@ -402,6 +579,8 @@ class InkViewModel(
             offscreenEditor?.addStrokes(pointerEvents, true)?.firstNotNullOf { strokeId ->
                 strokeIdsMapping[strokeId] = brush.id
             }
+
+            _editorHistoryState.value = addToUndoRedoStack(EditorHistoryAction.ADD, listOf(brush))
         }
     }
 

@@ -25,6 +25,24 @@
                 android:orientation="horizontal">
 
                 <ImageView
+                    android:id="@+id/undo_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_undo"
+                    android:contentDescription="Undo" />
+
+                <ImageView
+                    android:id="@+id/redo_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_redo"
+                    android:contentDescription="Redo" />
+
+                <ImageView
                     android:id="@+id/clear_ink_btn"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
