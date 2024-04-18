@@ -20,6 +20,7 @@ class InkApplication: Application() {
                 conf.setStringArray("configuration-manager.search-path", arrayOf(confDir))
                 val tempDir = File(cacheDir, "tmp")
                 conf.setString("content-package.temp-folder", tempDir.absolutePath)
+                conf.setBoolean("offscreen-editor.history-manager.enable", true);
             }
         }
     }
