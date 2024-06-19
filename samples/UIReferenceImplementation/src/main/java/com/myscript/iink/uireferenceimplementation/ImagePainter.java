@@ -5,8 +5,6 @@ package com.myscript.iink.uireferenceimplementation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
 
 import com.myscript.iink.IImagePainter;
 import com.myscript.iink.graphics.ICanvas;
@@ -14,18 +12,34 @@ import com.myscript.iink.graphics.ICanvas;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 public class ImagePainter implements IImagePainter
 {
   private ImageLoader imageLoader = null;
   private Map<String, Typeface> typefaceMap = null;
-  private Bitmap bitmap = null;
   protected android.graphics.Canvas canvas = null;
-  private float dpi = 96;
-
+  private Bitmap bitmap = null;
+  @NonNull
+  private final List<Canvas.ExtraBrushConfig> extraBrushConfigs;
+  private float dpi = 96.f;
   @ColorInt
   private int backgroundColor = Color.WHITE;
+
+  public ImagePainter()
+  {
+    this(Collections.emptyList());
+  }
+
+  public ImagePainter(@NonNull List<Canvas.ExtraBrushConfig> extraBrushConfigs)
+  {
+    this.extraBrushConfigs = extraBrushConfigs;
+  }
 
   public void setImageLoader(ImageLoader imageLoader)
   {
@@ -45,7 +59,7 @@ public class ImagePainter implements IImagePainter
   @Override
   public ICanvas createCanvas()
   {
-    return new Canvas(canvas, typefaceMap, imageLoader, null, dpi, dpi);
+    return new Canvas(canvas, extraBrushConfigs, typefaceMap, imageLoader, dpi, dpi);
   }
 
   @Override
