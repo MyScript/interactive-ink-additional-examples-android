@@ -18,7 +18,10 @@ import com.myscript.iink.IRenderTarget;
 import com.myscript.iink.IRenderTarget.LayerType;
 import com.myscript.iink.Renderer;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
@@ -50,6 +53,8 @@ public class LayerView extends View
   private android.graphics.Canvas sysCanvas = null; // for API < 28
   @Nullable
   private Canvas iinkCanvas = null;
+  @NonNull
+  private List<Canvas.ExtraBrushConfig> extraBrushConfigs = Collections.emptyList();
   private int pageWidth = 0;
   private int pageHeight = 0;
   private int viewWidth = 0;
@@ -77,6 +82,11 @@ public class LayerView extends View
   public void setRenderTarget(IRenderTarget renderTarget)
   {
     // do not need the renderTarget
+  }
+
+  public void setExtraBrushConfigs(@NonNull List<Canvas.ExtraBrushConfig> extraBrushConfigs)
+  {
+    this.extraBrushConfigs = extraBrushConfigs;
   }
 
   public void setOfflineSurfaceManager(@Nullable OfflineSurfaceManager offlineSurfaceManager)
@@ -167,19 +177,25 @@ public class LayerView extends View
       // Direct draw
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
       {
-        iinkCanvas = new Canvas(null, typefaceMap, imageLoader, offlineSurfaceManager, metrics.xdpi, metrics.ydpi);
+        if (iinkCanvas != null)
+          iinkCanvas.destroy();
+
+        iinkCanvas = new Canvas(null, extraBrushConfigs, typefaceMap, imageLoader, offlineSurfaceManager, metrics.xdpi, metrics.ydpi);
       }
       else // Bitmap draw
       {
         if (bitmap != null)
           bitmap.recycle();
+        if (iinkCanvas != null)
+          iinkCanvas.destroy();
 
         bitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888);
         sysCanvas = new android.graphics.Canvas(bitmap);
-        iinkCanvas = new Canvas(sysCanvas, typefaceMap, imageLoader, offlineSurfaceManager, metrics.xdpi, metrics.ydpi);
+        iinkCanvas = new Canvas(sysCanvas, extraBrushConfigs, typefaceMap, imageLoader, offlineSurfaceManager, metrics.xdpi, metrics.ydpi);
       }
 
       iinkCanvas.setClearOnStartDraw(false);
+      iinkCanvas.setKeepGLRenderer(true);
       canvasWidth = newWidth;
       canvasHeight = newHeight;
     }
