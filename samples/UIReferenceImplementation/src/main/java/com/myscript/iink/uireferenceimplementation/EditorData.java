@@ -2,10 +2,10 @@
 
 package com.myscript.iink.uireferenceimplementation;
 
-import androidx.annotation.Nullable;
-
 import com.myscript.iink.Editor;
 import com.myscript.iink.Renderer;
+
+import androidx.annotation.Nullable;
 
 public final class EditorData
 {
@@ -17,19 +17,19 @@ public final class EditorData
   private final InputController inputController;
 
   @Nullable
-  public final Editor getEditor()
+  public Editor getEditor()
   {
     return this.editor;
   }
 
   @Nullable
-  public final Renderer getRenderer()
+  public Renderer getRenderer()
   {
     return this.renderer;
   }
 
   @Nullable
-  public final InputController getInputController()
+  public InputController getInputController()
   {
     return this.inputController;
   }

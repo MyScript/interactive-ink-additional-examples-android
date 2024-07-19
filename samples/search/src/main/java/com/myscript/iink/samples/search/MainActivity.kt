@@ -12,9 +12,18 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.myscript.iink.*
+import com.myscript.iink.ContentPackage
+import com.myscript.iink.ContentPart
+import com.myscript.iink.Editor
+import com.myscript.iink.EditorError
+import com.myscript.iink.IEditorListener
 import com.myscript.iink.samples.search.utils.ErrorActivity
-import com.myscript.iink.uireferenceimplementation.*
+import com.myscript.iink.uireferenceimplementation.EditorBinding
+import com.myscript.iink.uireferenceimplementation.EditorData
+import com.myscript.iink.uireferenceimplementation.EditorView
+import com.myscript.iink.uireferenceimplementation.FontMetricsProvider
+import com.myscript.iink.uireferenceimplementation.FontUtils
+import com.myscript.iink.uireferenceimplementation.InputController
 import java.io.File
 
 
@@ -135,10 +144,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 title = "Type: " + contentPart.type
                 ed.setViewSize(editorView!!.width, editorView!!.height)
                 ed.configuration.let { conf ->
-                    conf.setBoolean("raw-content.recognition.shape", false)
-                    conf.setBoolean("raw-content.recognition.text", true)
+                    conf.setStringArray("raw-content.recognition.types", arrayOf("text"))
+
                     // Allow conversion of text
-                    conf.setBoolean("raw-content.convert.text", true)
+                    conf.setStringArray("raw-content.convert.types", arrayOf("text"))
                 }
 
                 // now search feature is only available for 'Raw Content' part

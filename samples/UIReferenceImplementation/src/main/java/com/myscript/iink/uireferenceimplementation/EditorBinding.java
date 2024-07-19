@@ -48,7 +48,7 @@ public final class EditorBinding
   }
 
   @NonNull
-  public final EditorData openEditor(@Nullable EditorView editorView)
+  public EditorData openEditor(@Nullable EditorView editorView)
   {
     Editor editor = null;
     Renderer renderer = null;

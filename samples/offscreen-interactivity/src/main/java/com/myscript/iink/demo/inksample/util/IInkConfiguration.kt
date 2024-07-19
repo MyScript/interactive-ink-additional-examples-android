@@ -18,8 +18,7 @@ val iinkConfig = """{
   },
   "raw-content": {
     "recognition": {
-      "text": true,
-      "shape": false
+      "types": ["text"]
     },
     "pen": {
       "gestures": ["scratch-out", "strike-through"]
