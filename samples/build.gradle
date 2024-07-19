@@ -19,10 +19,9 @@ subprojects {
                 abortOnError false
             }
             android {
-                // Needed until AGP 8.1.0 is out
                 compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_17
-                    targetCompatibility JavaVersion.VERSION_17
+                    sourceCompatibility JavaVersion.VERSION_21
+                    targetCompatibility JavaVersion.VERSION_21
                 }
 
                 ndkVersion Versions.ndk

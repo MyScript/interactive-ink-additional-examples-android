@@ -25,7 +25,6 @@ import java.util.EnumSet;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.core.view.GestureDetectorCompat;
 
 public class InputController implements View.OnTouchListener, GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener
 {
@@ -47,7 +46,7 @@ public class InputController implements View.OnTouchListener, GestureDetector.On
   private final EditorView editorView;
   private final Editor editor;
   private int _inputMode;
-  private final GestureDetectorCompat gestureDetector;
+  private final GestureDetector gestureDetector;
   private final ScaleGestureDetector scaleGestureDetector;
   private IInputControllerListener _listener;
   private final long eventTimeOffset;
@@ -69,7 +68,7 @@ public class InputController implements View.OnTouchListener, GestureDetector.On
     _listener = null;
     _inputMode = INPUT_MODE_AUTO;
     scaleGestureDetector = new ScaleGestureDetector(context, this);
-    gestureDetector = new GestureDetectorCompat(context, this);
+    gestureDetector = new GestureDetector(context, this);
 
     long rel_t = SystemClock.uptimeMillis();
     long abs_t = System.currentTimeMillis();
@@ -104,6 +103,11 @@ public class InputController implements View.OnTouchListener, GestureDetector.On
   public final synchronized IInputControllerListener getListener()
   {
     return _listener;
+  }
+
+  public final synchronized int getPreviousPointerId()
+  {
+    return previousPointerId;
   }
 
   private boolean handleOnTouchForPointer(MotionEvent event, int actionMask, int pointerIndex)

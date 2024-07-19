@@ -1,14 +1,14 @@
 // Copyright MyScript. All rights reserved.
 
 object Versions {
-    const val android_gradle_plugin = "8.0.2"
+    const val android_gradle_plugin = "8.7.1"
 
-    const val kotlin = "1.8.21"
+    const val kotlin = "1.9.23"
 
     // configure versions used by dependencies to harmonize and update easily across all components
-    const val compileSdk = 33
+    const val compileSdk = 34
     const val minSdk = 23
-    const val targetSdk = 33
+    const val targetSdk = 34
 
     // native build tools
     const val ndk = "21.4.7075529"
