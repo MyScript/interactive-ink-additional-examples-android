@@ -75,13 +75,10 @@ class MainActivity : AppCompatActivity() {
                 setBoolean("text.guides.enable", false);
 
                 // Activate handwriting recognition for text and shapes
-                setBoolean("raw-content.recognition.text", true)
-                setBoolean("raw-content.recognition.shape", true)
+                setStringArray("raw-content.recognition.types", arrayOf("text", "shape"))
 
                 // Allow conversion of text and shapes
-                setBoolean("raw-content.convert.text", true)
-                setBoolean("raw-content.convert.node", true)
-                setBoolean("raw-content.convert.edge", true)
+                setStringArray("raw-content.convert.types", arrayOf("text", "shape"))
             }
         }
 
