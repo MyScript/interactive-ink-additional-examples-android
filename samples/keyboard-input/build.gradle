@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace 'com.myscript.iink.samples.keyboardinput'
+
+    compileSdk Versions.compileSdk
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+
+    defaultConfig {
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+
+        applicationId 'com.myscript.iink.samples.keyboardinput'
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+
+        vectorDrawables.useSupportLibrary true
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:${Versions.androidx_core}"
+    implementation "androidx.activity:activity-ktx:${Versions.androidx_activity}"
+    implementation "androidx.appcompat:appcompat:${Versions.appcompat}"
+    implementation "com.google.android.material:material:${Versions.material}"
+
+    implementation project(':UIReferenceImplementation')
+    implementation project(':myscript-certificate')
+}

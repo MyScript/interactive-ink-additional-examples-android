@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/editor_menu_undo"
+        android:icon="@drawable/ic_undo"
+        app:showAsAction="always"
+        android:title="@string/menu_undo"/>
+    <item
+        android:id="@+id/editor_menu_redo"
+        android:icon="@drawable/ic_redo"
+        app:showAsAction="always"
+        android:title="@string/menu_redo"/>
+
+    <item
+        android:id="@+id/editor_menu_clear"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="always"
+        android:title="@string/menu_clear"/>
+
+    <item
+        android:id="@+id/editor_menu_open"
+        app:showAsAction="never"
+        android:title="@string/menu_open"/>
+
+    <item
+        android:id="@+id/editor_menu_save"
+        app:showAsAction="never"
+        android:title="@string/menu_save"/>
+</menu>
