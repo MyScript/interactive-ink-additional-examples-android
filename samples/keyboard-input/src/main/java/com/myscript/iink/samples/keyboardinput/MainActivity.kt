@@ -64,7 +64,7 @@ import kotlin.math.roundToInt
 private fun EditText.getTextWithLineBreaks() : String {
     return (0 until layout.lineCount).joinToString("") {
         val line = layout.text.subSequence(layout.getLineStart(it), layout.getLineVisibleEnd(it))
-        if (line.first() != '\n' && line.last() != '\n' && it < layout.lineCount - 1) {
+        if ((line.isEmpty() || (line.first() != '\n' && line.last() != '\n')) && it < layout.lineCount - 1) {
             "$line\n"
         } else {
             line
