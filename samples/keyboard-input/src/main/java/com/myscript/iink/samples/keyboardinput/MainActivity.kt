@@ -484,12 +484,10 @@ class MainActivity : AppCompatActivity() {
                     contentPart?.close()
                     contentPackage?.close()
 
-                    engine?.openPackage(file).use { packageFile ->
-                        contentPackage = packageFile
-                        contentPart = contentPackage?.getPart(0)
-                        editorData?.editor?.part = contentPart
-                        editorData?.renderer?.setViewOffset(0f, 0f)
-                    }
+                    contentPackage = engine?.openPackage(file)
+                    contentPart = contentPackage?.getPart(0)
+                    editorData?.editor?.part = contentPart
+                    editorData?.renderer?.setViewOffset(0f, 0f)
                 }
             }
             else -> Toast.makeText(applicationContext, "Not able to open file", Toast.LENGTH_LONG).show()
