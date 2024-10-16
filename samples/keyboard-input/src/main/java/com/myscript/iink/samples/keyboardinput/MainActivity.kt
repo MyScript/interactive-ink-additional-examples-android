@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     private val editorListener = object : IEditorListener {
         override fun partChanging(editor: Editor, oldPart: ContentPart?, newPart: ContentPart?) = Unit
         override fun partChanged(editor: Editor) = Unit
-        override fun contentChanged(editor: Editor, blockIds: Array<out String>?) {
+        override fun contentChanged(editor: Editor, blockIds: Array<out String>) {
             invalidateOptionsMenu()
         }
         override fun onError(editor: Editor, blockId: String, err: EditorError, message: String) = Unit
@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
             return blocksAtCoordinates
         }
 
-        override fun onDoubleTap(editor: Editor, tool: PointerTool?, gestureStrokeIds: Array<out String>?, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
+        override fun onDoubleTap(editor: Editor, tool: PointerTool?, gestureStrokeIds: Array<out String>, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
 
         override fun onLongPress(editor: Editor, tool: PointerTool?, gestureStrokeId: String, x: Float, y: Float): GestureAction {
             editor.pointerCancel(editorData?.inputController?.previousPointerId ?: 0)

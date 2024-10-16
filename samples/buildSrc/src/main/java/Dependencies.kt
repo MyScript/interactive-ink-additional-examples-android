@@ -1,7 +1,7 @@
 // Copyright MyScript. All rights reserved.
 
 object Versions {
-    const val android_gradle_plugin = "8.5.0"
+    const val android_gradle_plugin = "8.7.1"
 
     const val kotlin = "1.9.23"
 
