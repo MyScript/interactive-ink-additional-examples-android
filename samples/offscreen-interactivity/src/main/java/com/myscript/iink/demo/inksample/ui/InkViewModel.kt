@@ -105,6 +105,10 @@ class InkViewModel(
     val iinkModel: LiveData<String>
         get() = _iinkModel
 
+    private val _iinkJIIX: MutableLiveData<String> = MutableLiveData()
+    val iinkJIIX: LiveData<String>
+        get() = _iinkJIIX
+
     private var offscreenEditor by autoCloseable<OffscreenEditor>()
     private var currentPart by autoCloseable<ContentPart>()
 
@@ -119,7 +123,7 @@ class InkViewModel(
     // Maps the data model IDs of the iink offscreen editor to the data model IDs of the application.
     private val strokeIdsMapping: MutableMap<String /* id of iink stroke */, String /* id of app stroke */> = mutableMapOf()
 
-    private val contentFile: File
+    val contentFile: File
         get() = File(dataDir, "OffscreenEditor.iink")
 
     var displayMetrics: DisplayMetrics? = null
@@ -327,6 +331,19 @@ class InkViewModel(
                         } ?: emptyList()
                     } ?: emptyList()
                 }
+                _iinkJIIX.value = withContext(defaultDispatcher) {
+                    val engine = engine ?: return@withContext ""
+
+                    offscreenEditor?.export_(emptyArray(), MimeType.JIIX, engine.createParameterSet().apply {
+                        setBoolean("export.jiix.strokes", false)
+                        setBoolean("export.jiix.bounding-box", false)
+                        setBoolean("export.jiix.glyphs", false)
+                        setBoolean("export.jiix.primitives", false)
+                        setBoolean("export.jiix.text.chars", false)
+                        setBoolean("export.jiix.text.words", false)
+
+                    })
+                } ?: ""
                 _recognitionFeedback.value = _recognitionFeedback.value?.copy(words = adjustedWords)
             }
         }
