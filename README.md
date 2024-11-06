@@ -68,6 +68,9 @@ For more details on the sample, read more [here](samples/write-to-type/ReadMe.pd
 It drives the content model by sending the captured strokes to iink SDK and keeps the incremental recognition principle and gesture notifications.
 This sample uses a third-party rendering library to manage the captured strokes and display its model, and get real-time recognition results and gesture notifications.
 
+6. The keyboard input sample shows a specific usage for the `Placeholder` feature. In this sample, you'll be able to input text by keyboard within an iink document, with minumum code.
+It shows how to manage switching from an Android view to an image managed by iink.
+
 ## Documentation
 
 A complete guide is available on [MyScript Developer Portal](https://developer.myscript.com/docs/interactive-ink/latest/android/).
