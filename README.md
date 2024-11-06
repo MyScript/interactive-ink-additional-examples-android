@@ -72,6 +72,9 @@ This sample uses a third-party rendering library to manage the captured strokes 
  <img src="offscreen-sample.gif" alt="offscreen interacticity sample" width="302">
 </div>
 
+6. The keyboard input sample shows a specific usage for the `Placeholder` feature. In this sample, you'll be able to input text by keyboard within an iink document, with minumum code.
+It shows how to manage switching from an Android view to an image managed by iink.
+
 ## Documentation
 
 A complete guide is available on [MyScript Developer Portal](https://developer.myscript.com/docs/interactive-ink/latest/android/).
