@@ -87,3 +87,12 @@ fun Word.toScreenCoordinates(converter: DisplayMetricsConverter?): Word {
         this
     }
 }
+
+fun BoundingBox.toScreenCoordinates(converter: DisplayMetricsConverter?): BoundingBox {
+    return BoundingBox(
+        x = converter?.x_mm2px(this.x) ?: this.x,
+        y = converter?.y_mm2px(this.y) ?: this.y,
+        width = converter?.x_mm2px(this.width) ?: this.width,
+        height = converter?.y_mm2px(this.height) ?: this.height
+    )
+}
