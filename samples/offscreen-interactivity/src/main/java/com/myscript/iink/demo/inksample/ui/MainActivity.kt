@@ -136,8 +136,8 @@ class MainActivity : AppCompatActivity() {
             inkView.alpha = if (recognitionFeedback.isVisible) .25f else 1f
 
             if (recognitionFeedback.isVisible) {
-                recognitionFeedback.words.forEach { word ->
-                    val customView = WordView(this@MainActivity, word)
+                recognitionFeedback.items.forEach { item ->
+                    val customView = RecognitionItemView(this@MainActivity, item)
                     recognitionContent.addView(customView)
                 }
             }

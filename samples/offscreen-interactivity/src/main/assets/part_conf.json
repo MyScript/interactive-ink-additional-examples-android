@@ -1,0 +1,36 @@
+{
+  "raw-content": {
+    "configuration": {
+      "analyzer": {
+        "bundle": "raw-content2",
+        "name": "standard"
+      },
+      "math": {
+        "bundle": "math2",
+        "name": "standard"
+      }
+    },
+    "classification": {
+      "types": [ "text", "drawing", "math", "shape" ]
+    },
+    "recognition": {
+      "types": [ "text", "math", "shape" ]
+    },
+    "pen": {
+      "gestures": [ "scratch-out", "strike-through" ]
+    }
+  },
+  "export": {
+    "jiix": {
+      "text": {
+        "chars": true,
+        "words": true
+      },
+      "bounding-box": true,
+      "strokes": false,
+      "glyphs": false,
+      "primitives": false,
+      "ids": true
+    }
+  }
+}
