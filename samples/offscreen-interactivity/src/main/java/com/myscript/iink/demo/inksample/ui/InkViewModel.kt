@@ -24,6 +24,8 @@ import com.myscript.iink.ItemIdHelper
 import com.myscript.iink.MimeType
 import com.myscript.iink.OffscreenEditor
 import com.myscript.iink.OffscreenGestureAction
+import com.myscript.iink.demo.ink.serialization.jiix.BoundingBox
+import com.myscript.iink.demo.ink.serialization.jiix.Element
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.Word
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
@@ -37,7 +39,6 @@ import com.myscript.iink.demo.inksample.data.InkRepository
 import com.myscript.iink.demo.inksample.data.InkRepositoryImpl
 import com.myscript.iink.demo.inksample.util.DisplayMetricsConverter
 import com.myscript.iink.demo.inksample.util.autoCloseable
-import com.myscript.iink.demo.inksample.util.iinkConfig
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -46,9 +47,20 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.Executors
 
+enum class BlockType {
+    TEXT,
+    MATH
+}
+
+data class RecognitionItem(
+    val text: String,
+    val type: BlockType,
+    val boundingBox: BoundingBox?
+)
+
 data class RecognitionFeedback(
     val isVisible: Boolean = false,
-    val words: List<Word> = emptyList()
+    val items: List<RecognitionItem> = emptyList()
 )
 
 enum class EditorHistoryAction {
@@ -325,12 +337,32 @@ class InkViewModel(
                     val recognitionRoot = Gson().fromJson(exportedData, RecognitionRoot::class.java)
 
                     // Filter out elements that are null or contain any null list of words
-                    recognitionRoot.elements?.flatMap { element ->
-                        element.words?.map { word ->
-                            word.toScreenCoordinates(converter)
-                        } ?: emptyList()
-                    } ?: emptyList()
+                    val recognitionResult = mutableListOf<RecognitionItem>()
+
+                    recognitionRoot.elements?.forEach { element ->
+                        if (element.expressions != null) {
+                            recognitionResult.add(RecognitionItem(
+                                text = "",
+                                type = BlockType.MATH,
+                                boundingBox = element.boundingBox.toScreenCoordinates(converter)
+                            ))
+                        }
+                        if (element.words != null) {
+                            recognitionResult.addAll(
+                                element.words.map { word ->
+                                    RecognitionItem(
+                                        text = word.label ?: "",
+                                        type = BlockType.TEXT,
+                                        boundingBox = word.boundingBox?.toScreenCoordinates(converter)
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    recognitionResult
                 }
+
                 _iinkJIIX.value = withContext(defaultDispatcher) {
                     val engine = engine ?: return@withContext ""
 
@@ -344,7 +376,7 @@ class InkViewModel(
 
                     })
                 } ?: ""
-                _recognitionFeedback.value = _recognitionFeedback.value?.copy(words = adjustedWords)
+                _recognitionFeedback.value = _recognitionFeedback.value?.copy(items = adjustedWords)
             }
         }
 
@@ -636,7 +668,9 @@ class InkViewModel(
                 val application = checkNotNull(this[APPLICATION_KEY])
                 val engine = checkNotNull((application as InkApplication).engine)
                 val dataDir = File(application.filesDir, "data")
-                InkViewModel(InkRepositoryImpl(dataDir), engine, dataDir, iinkConfig)
+
+                val config = application.assets.open("part_conf.json").bufferedReader().use { it.readText() }
+                InkViewModel(InkRepositoryImpl(dataDir), engine, dataDir, config)
             }
         }
     }
