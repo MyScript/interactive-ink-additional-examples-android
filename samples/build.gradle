@@ -33,15 +33,19 @@ subprojects {
                 def resourcesURL = gradle.ext.iinkResourcesURL
                 def sourceUrls = ["${resourcesURL}/myscript-iink-recognition-diagram.zip",
                                   "${resourcesURL}/myscript-iink-recognition-raw-content.zip",
+                                  "${resourcesURL}/myscript-iink-recognition-raw-content2.zip",
                                   "${resourcesURL}/myscript-iink-recognition-math.zip",
+                                  "${resourcesURL}/myscript-iink-recognition-math2.zip",
                                   "${resourcesURL}/myscript-iink-recognition-text-en_US.zip"]
                 def targetDir = new File(proj.projectDir, "src/main/assets/")
                 def diagramConf = new File(targetDir, "conf/diagram.conf")
                 def rawContentConf = new File(targetDir, "conf/raw-content.conf")
+                def rawContent2Conf = new File(targetDir, "conf/raw-content2.conf")
                 def mathConf = new File(targetDir, "conf/math.conf")
+                def math2Conf = new File(targetDir, "conf/math2.conf")
                 def textConf = new File(targetDir, "conf/en_US.conf")
 
-                if (!diagramConf.exists() || !rawContentConf.exists() || !mathConf.exists() || !textConf.exists()) {
+                if (!diagramConf.exists() || !rawContentConf.exists() || !rawContent2Conf.exists() || !mathConf.exists() || !math2Conf.exists() || !textConf.exists()) {
                     def tmpAssetsDir = new File(proj.projectDir, "tmp-assets/")
                     def zipDir = new File(tmpAssetsDir, "zips")
 
@@ -68,10 +72,12 @@ subprojects {
                 def targetDir = new File(proj.projectDir, "src/main/assets/")
                 def diagramConf = new File(targetDir, "conf/diagram.conf")
                 def rawContentConf = new File(targetDir, "conf/raw-content.conf")
+                def rawContent2Conf = new File(targetDir, "conf/raw-content2.conf")
                 def mathConf = new File(targetDir, "conf/math.conf")
+                def math2Conf = new File(targetDir, "conf/math2.conf")
                 def textConf = new File(targetDir, "conf/en_US.conf")
 
-                if (!diagramConf.exists() || !rawContentConf.exists() || !mathConf.exists() || !textConf.exists()) {
+                if (!diagramConf.exists() || !rawContentConf.exists() || !rawContent2Conf.exists() || !mathConf.exists() || !math2Conf.exists() || !textConf.exists()) {
                     def tmpAssetsDir = new File(proj.projectDir, "tmp-assets/")
 
                     if (!tmpAssetsDir.isDirectory())
