@@ -20,10 +20,12 @@ object Versions {
     const val androidx_cardview = "1.0.0"
     const val androidx_preference = "1.2.0"
     const val androidx_lifecycle = "2.6.1"
+    const val androidx_recyclerview = "1.3.2"
     const val material = "1.9.0"
     const val appcompat = "1.6.1"
     const val annotation = "1.6.0"
     const val documentfile = "1.0.1"
+    const val recyclerview = "1.3.2"
 
     // 3rd party
     const val gson = "2.10.1"
