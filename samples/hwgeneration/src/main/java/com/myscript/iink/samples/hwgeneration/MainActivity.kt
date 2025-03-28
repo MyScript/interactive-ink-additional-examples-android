@@ -1,0 +1,280 @@
+// Copyright @ MyScript. All rights reserved.
+package com.myscript.iink.samples.hwgeneration
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.Build.VERSION_CODES
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.Spinner
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.slider.Slider
+import com.myscript.iink.Engine
+import com.myscript.iink.PredefinedHandwritingProfileId
+import com.myscript.iink.samples.hwgeneration.databinding.ActivityMainBinding
+import com.myscript.iink.uireferenceimplementation.EditorView
+import java.io.File
+import java.nio.file.Files
+
+
+class MainActivity : AppCompatActivity() {
+
+    private var engine: Engine? = null
+
+    private var editorView: EditorView? = null
+
+    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+
+    private val editorViewModel: EditorViewModel by viewModels {
+        EditorViewModelFactory(application, requireNotNull(engine), requireNotNull(editorView))//.create(EditorViewModel::class.java)
+    }
+
+    private val generationViewModel: GenerationViewModel by viewModels {
+        GenerationViewModelFactory(requireNotNull(engine))//.create(GenerationViewModel::class.java)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        engine = IInkApplication.getEngine()
+
+        if (engine == null) {
+            // The certificate provided is incorrect, you need to use the one provided by MyScript
+            AlertDialog.Builder(this)
+                    .setTitle( getString(R.string.app_error_invalid_certificate_title))
+                    .setMessage( getString(R.string.app_error_invalid_certificate_message))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            finishAndRemoveTask() // be sure to end the application
+            return
+        }
+
+        // configure recognition
+        engine?.configuration?.let { configuration ->
+            val confDir = "zip://$packageCodePath!/assets/conf"
+            val hwResDir = "zip://$packageCodePath!/assets/resources/handwriting_generation"
+            configuration.setStringArray("configuration-manager.search-path", arrayOf(confDir, hwResDir))
+            configuration.setString("content-package.temp-folder", File(filesDir, "tmp").absolutePath)
+        }
+
+        setContentView(binding.root)
+
+        supportActionBar?.title = getString(R.string.app_name)
+
+        editorView = findViewById(com.myscript.iink.uireferenceimplementation.R.id.editor_view)
+
+        engine?.let { engine ->
+            editorView?.let { editorView ->
+                editorViewModel.openEditor(engine, editorView)
+            }
+        }
+
+        editorViewModel.isWriting.observe(this) { isWriting ->
+            invalidateOptionsMenu()
+            binding.readOnlyLayer.visibility = if (isWriting) View.VISIBLE else View.GONE
+        }
+
+        editorViewModel.partHistoryState.observe(this) {
+            invalidateOptionsMenu()
+        }
+
+        editorViewModel.onLongPress.observe(this) { (happened, x, y) ->
+            if (happened) {
+                editorViewModel.onLongPressConsummed()
+                displayInput(x, y)
+            }
+        }
+
+        generationViewModel.hwrResults.observe(this) { hwrResults ->
+            if (hwrResults.isNotEmpty()) {
+                editorViewModel.write(hwrResults.last().events)
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        val canUndo = editorViewModel.partHistoryState.value?.canUndo ?: false
+        val canRedo = editorViewModel.partHistoryState.value?.canRedo ?: false
+        val isWriting = editorViewModel.isWriting.value ?: false
+        val isEditorEmpty = editorViewModel.isEmpty()
+
+        menu?.findItem(R.id.editor_menu_undo)?.isEnabled = !isWriting && canUndo
+        menu?.findItem(R.id.editor_menu_redo)?.isEnabled = !isWriting && canRedo
+        menu?.findItem(R.id.editor_menu_clear)?.isEnabled = !isWriting && !isEditorEmpty
+
+        menu?.findItem(R.id.editor_menu_save_as)?.isEnabled = !isWriting && !isEditorEmpty
+        menu?.findItem(R.id.editor_menu_go)?.isEnabled = !isWriting
+
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.editor_menu_undo -> {
+                editorViewModel.undo()
+                true
+            }
+            R.id.editor_menu_redo -> {
+                editorViewModel.redo()
+                true
+            }
+            R.id.editor_menu_clear -> {
+                editorViewModel.clear()
+                true
+            }
+            R.id.editor_menu_go -> {
+                displayInput()
+                true
+            }
+            R.id.editor_menu_save_as -> {
+                saveAs()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onDestroy() {
+        generationViewModel.cancel()
+        editorViewModel.closeEditor()
+
+        editorView?.let {
+            it.setOnTouchListener(null)
+            it.editor = null
+        }
+
+        // IInkApplication has the ownership, do not close here
+        engine = null
+
+        super.onDestroy()
+    }
+
+    private fun saveAs() {
+        val exportedFile = File(cacheDir, EXPORTED_FILE_NAME)
+        editorViewModel.saveAs(exportedFile)
+
+        val i = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            type = "application/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+            putExtra(Intent.EXTRA_TITLE, exportedFile.name)
+        }
+
+        if (Build.VERSION.SDK_INT >= VERSION_CODES.O) {
+            exportLauncher.launch(i)
+        } else {
+            Toast.makeText(applicationContext, "Not able to save file on this Android version", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    @RequiresApi(VERSION_CODES.O)
+    val exportLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            it.data?.data?.also { uri ->
+                val contentResolver = applicationContext.contentResolver
+                val inputFile = File(cacheDir, EXPORTED_FILE_NAME)
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    Files.copy(inputFile.toPath(), outputStream)
+                }
+            }
+        }
+
+    private fun displayInput(x: Float = X_OFFSET_DEFAULT_PX, y: Float = Y_OFFSET_DEFAULT_PX) {
+        val dialogBuilder = AlertDialog.Builder(this)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_input, null)
+        dialogBuilder.setView(dialogView)
+        dialogBuilder.setTitle("Handwriting Generation Input")
+
+        val inputText = dialogView.findViewById<EditText>(R.id.text_input)
+
+        val spinner = dialogView.findViewById<Spinner>(R.id.profile_dropdown)
+        val adapter = StyleAdapter(this@MainActivity, PredefinedHandwritingProfileId.entries.toList())
+        spinner.setAdapter(adapter)
+
+        val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
+
+        dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
+            val step = dialogView.findViewById<Slider>(R.id.step).value
+            val textSize = inputTextSize.value
+            val profileId = spinner.selectedItem.toString().uppercase()
+
+            generationViewModel.generateHandwriting(inputText.text.toString().trim(), PredefinedHandwritingProfileId.valueOf(profileId), step, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
+        }
+        dialogBuilder.setNegativeButton(android.R.string.cancel, null)
+
+        val alertDialog = dialogBuilder.create()
+        alertDialog.show()
+    }
+
+    companion object {
+        private const val EXPORTED_FILE_NAME = "export.iink"
+
+        private const val X_OFFSET_DEFAULT_PX = 50f
+        private const val Y_OFFSET_DEFAULT_PX = 200f
+    }
+}
+
+class StyleAdapter(private val context: Context, private val profiles: List<PredefinedHandwritingProfileId>) : BaseAdapter() {
+
+    override fun getCount(): Int {
+        return profiles.size
+    }
+
+    override fun getItem(position: Int): PredefinedHandwritingProfileId {
+        return profiles[position]
+    }
+
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
+    }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.style_spinner_item, parent, false)
+
+        view.findViewById<ImageView>(R.id.style_image).setImageResource(when (getItem(position)) {
+            PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
+            PredefinedHandwritingProfileId.PROFILE_1 -> R.drawable.generation_1
+            PredefinedHandwritingProfileId.PROFILE_2 -> R.drawable.generation_2
+            PredefinedHandwritingProfileId.PROFILE_3 -> R.drawable.generation_3
+            PredefinedHandwritingProfileId.PROFILE_4 -> R.drawable.generation_4
+            PredefinedHandwritingProfileId.PROFILE_5 -> R.drawable.generation_5
+            PredefinedHandwritingProfileId.PROFILE_6 -> R.drawable.generation_6
+            PredefinedHandwritingProfileId.PROFILE_7 -> R.drawable.generation_7
+            PredefinedHandwritingProfileId.PROFILE_8 -> R.drawable.generation_8
+            PredefinedHandwritingProfileId.PROFILE_9 -> R.drawable.generation_9
+            PredefinedHandwritingProfileId.PROFILE_10 -> R.drawable.generation_10
+            PredefinedHandwritingProfileId.PROFILE_11 -> R.drawable.generation_11
+            PredefinedHandwritingProfileId.PROFILE_12 -> R.drawable.generation_12
+            PredefinedHandwritingProfileId.PROFILE_13 -> R.drawable.generation_13
+            PredefinedHandwritingProfileId.PROFILE_14 -> R.drawable.generation_14
+        })
+
+        return view
+    }
+
+    override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        return getView(position, convertView, parent)
+    }
+}
