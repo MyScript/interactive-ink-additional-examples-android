@@ -40,7 +40,7 @@ data class PartHistoryState(val canUndo: Boolean = false, val canRedo: Boolean =
 
 data class OnLongPress(val show: Boolean = false, val x: Float = 0f, val y: Float = 0f)
 
-class EditorViewModel(application: Application, engine: Engine, editorView: EditorView) : AndroidViewModel(application) {
+class EditorViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _partHistoryState = MutableLiveData(PartHistoryState())
     val partHistoryState: LiveData<PartHistoryState>
@@ -270,12 +270,12 @@ class EditorViewModel(application: Application, engine: Engine, editorView: Edit
     }
 }
 
-class EditorViewModelFactory(private val application: Application, private val engine: Engine, private val editorView: EditorView) : ViewModelProvider.Factory {
+class EditorViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(EditorViewModel::class.java) -> {
-                EditorViewModel(application, engine, editorView) as T
+                EditorViewModel(application) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel $modelClass")
         }

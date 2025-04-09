@@ -41,11 +41,11 @@ class MainActivity : AppCompatActivity() {
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
 
     private val editorViewModel: EditorViewModel by viewModels {
-        EditorViewModelFactory(application, requireNotNull(engine), requireNotNull(editorView))//.create(EditorViewModel::class.java)
+        EditorViewModelFactory(application)
     }
 
     private val generationViewModel: GenerationViewModel by viewModels {
-        GenerationViewModelFactory(requireNotNull(engine))//.create(GenerationViewModel::class.java)
+        GenerationViewModelFactory(requireNotNull(engine))
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -216,11 +216,10 @@ class MainActivity : AppCompatActivity() {
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
 
         dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
-            val step = dialogView.findViewById<Slider>(R.id.step).value
             val textSize = inputTextSize.value
             val profileId = spinner.selectedItem.toString().uppercase()
 
-            generationViewModel.generateHandwriting(inputText.text.toString().trim(), PredefinedHandwritingProfileId.valueOf(profileId), step, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
+            generationViewModel.generateHandwriting(inputText.text.toString().trim(), PredefinedHandwritingProfileId.valueOf(profileId), textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
         }
         dialogBuilder.setNegativeButton(android.R.string.cancel, null)
 

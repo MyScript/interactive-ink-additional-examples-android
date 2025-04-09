@@ -58,14 +58,14 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
         }
     }
 
-    fun generateHandwriting(inputSentence: String, profileId: PredefinedHandwritingProfileId, step: Float, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform) {
+    fun generateHandwriting(inputSentence: String, profileId: PredefinedHandwritingProfileId, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform) {
         if (inputSentence.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.Main) {
             _isGenerating.value = true
 
             withContext(Dispatchers.IO) {
-                generate(inputSentence, profileId, step, inputTextSize, inputX, inputY, width, transform, object : HWResultListener {
+                generate(inputSentence, profileId, inputTextSize, inputX, inputY, width, transform, object : HWResultListener {
                     override fun onResult(result: HWRResult) {
                         viewModelScope.launch(Dispatchers.Main) {
                             val previousList: MutableList<HWRResult> = _hwrResults.value?.toMutableList() ?: mutableListOf()
@@ -79,7 +79,7 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
         }
     }
 
-    private fun generate(sentence: String, profileId: PredefinedHandwritingProfileId, step: Float, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, listener: HWResultListener): HWRResult {
+    private fun generate(sentence: String, profileId: PredefinedHandwritingProfileId, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, listener: HWResultListener): HWRResult {
         val builder = generator.createHandwritingProfileBuilder()
         val profile = builder.createFromId(profileId)
 
@@ -107,24 +107,19 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
         })
 
         generator.start("Text", profile, engine.createParameterSet().apply {
-            setNumber("handwriting-generation.timestamp-ms", -1)
-            setNumber("handwriting-generation.stroke-delta-timing-ms", 10.0)
-            setNumber("handwriting-generation.sample-delta-timing-ms", 10.0)
-
-            setBoolean("handwriting-generation.force-new-line", false)
+            setBoolean("handwriting-generation.session.force-new-line", false)
 
             val invertTransform = Transform(transform).apply {
                 invert()
             }
             val offsetMM = invertTransform.apply(xOffset, yOffset)
             val widthMM = invertTransform.apply(width, 0f)
-            setNumber("handwriting-generation.width-mm", widthMM.x - offsetMM.x)
-            setNumber("handwriting-generation.left-x-mm", offsetMM.x)
-            setNumber("handwriting-generation.origin-y-mm", offsetMM.y)
+            setNumber("handwriting-generation.session.width-mm", widthMM.x - offsetMM.x)
+            setNumber("handwriting-generation.session.left-x-mm", offsetMM.x)
+            setNumber("handwriting-generation.session.origin-y-mm", offsetMM.y)
 
-            setNumber("handwriting-generation.line-gap-mm", textSize * LINE_GAP_RATIO)
-            setNumber("handwriting-generation.text-scale", textSize)
-            setNumber("handwriting-generation.step-count", step) // 25 default
+            setNumber("handwriting-generation.session.line-gap-mm", textSize * LINE_GAP_RATIO)
+            setNumber("handwriting-generation.session.x-height-mm", textSize)
         })
 
         words.forEach { word ->
