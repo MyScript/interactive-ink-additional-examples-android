@@ -10,7 +10,6 @@
     <string name="menu_clear">Clear</string>
     <string name="menu_save">Save</string>
 
-    <string name="menu_tool_select">Select</string>
-    <string name="menu_tool_pen">Pen</string>
+    <string name="menu_build_profile">Build Profile</string>
 
 </resources>

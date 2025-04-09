@@ -40,16 +40,7 @@ data class PartHistoryState(val canUndo: Boolean = false, val canRedo: Boolean =
 
 data class OnLongPress(val show: Boolean = false, val x: Float = 0f, val y: Float = 0f)
 
-enum class ToolType {
-    PEN,
-    SELECT,
-}
-
 class EditorViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val _selectedTool = MutableLiveData(ToolType.PEN)
-    val selectedTool: LiveData<ToolType>
-        get() = _selectedTool
 
     private val _partHistoryState = MutableLiveData(PartHistoryState())
     val partHistoryState: LiveData<PartHistoryState>
@@ -62,6 +53,14 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     private val _onLongPress = MutableLiveData(OnLongPress())
     val onLongPress: LiveData<OnLongPress>
         get() = _onLongPress
+
+    private val _isSelectionMode = MutableLiveData(false)
+    val isSelectionMode: LiveData<Boolean>
+        get() = _isSelectionMode
+
+    private val _selection = MutableLiveData<ContentSelection>(null)
+    val selection: LiveData<ContentSelection>
+        get() = _selection
 
     private val editorListener: IEditorListener = object : IEditorListener {
         private fun notifyUndoRedo(editor: Editor) {
@@ -82,7 +81,13 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         override fun onError(editor: Editor, blockId: String, err: EditorError, message: String) = Unit
-        override fun selectionChanged(editor: Editor) = Unit
+
+        override fun selectionChanged(editor: Editor) {
+            viewModelScope.launch(Dispatchers.Main) {
+                _selection.value = editor.selection
+            }
+        }
+
         override fun activeBlockChanged(editor: Editor, blockId: String) = Unit
     }
 
@@ -121,8 +126,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         val editor = requireNotNull(editorData.editor)
         this.editor = editor
 
-        _selectedTool.value = ToolType.PEN
-
         editorData.inputController?.inputMode = InputController.INPUT_MODE_AUTO
 
         val file = File(context.filesDir, "file.iink")
@@ -138,8 +141,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             contentPackage?.getPart(0)
         }
 
-        editor.toolController.setToolForType(PointerType.PEN, PointerTool.PEN)
-
         editor.addListener(editorListener)
 
         // wait for view size initialization before setting part
@@ -154,6 +155,8 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                     editor.configuration.inject(configuration)
                     editor.part = contentPart
                     editor.setGestureHandler(gestureHandler)
+
+                    setSelectionMode(false)
                 }
             }
         }
@@ -201,17 +204,15 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         editor?.clear()
     }
 
-    fun switchTool() {
-        _selectedTool.value = when (_selectedTool.value) {
-            ToolType.PEN -> {
-                editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.SELECTOR)
-                ToolType.SELECT
-            }
-            ToolType.SELECT -> {
-                editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.PEN)
-                ToolType.PEN
-            }
-            else -> ToolType.PEN
+    fun setSelectionMode(enabled: Boolean) {
+        if (enabled) {
+            editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.SELECTOR)
+        } else {
+            editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.PEN)
+            editor?.setSelection(null)
+        }
+        viewModelScope.launch(Dispatchers.Main) {
+            _isSelectionMode.value = enabled
         }
     }
 
@@ -238,6 +239,8 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             val previousGestureConf = editor.configuration.getBoolean("gesture.enable")
             editor.configuration.setBoolean("gesture.enable", false)
 
+            setSelectionMode(false)
+
             withContext(Dispatchers.Main) {
                 _isWriting.value = true
             }
@@ -246,10 +249,8 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                 val events = synchronized(toWrite) {
                     toWrite.removeAt(0)
                 }
-                var stopIndex = 0
                 try {
                     events.forEachIndexed { index, pointerEvent ->
-                        stopIndex = index
                         withContext(Dispatchers.Main) {
                             when (pointerEvent.eventType) {
                                 PointerEventType.DOWN -> {

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
+import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -16,6 +17,7 @@ import android.widget.BaseAdapter
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,7 +25,6 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.slider.Slider
 import com.myscript.iink.Engine
 import com.myscript.iink.PredefinedHandwritingProfileId
@@ -46,7 +47,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val generationViewModel: GenerationViewModel by viewModels {
-        GenerationViewModelFactory(requireNotNull(engine))
+        GenerationViewModelFactory(application, requireNotNull(engine))
+    }
+
+    private var actionMode: ActionMode? = null
+    private val actionModeCallback = object : ActionMode.Callback {
+        override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+            menuInflater.inflate(R.menu.action_menu, menu)
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+            menu.findItem(R.id.action_menu_build_profile).isEnabled = generationViewModel.isProfileBuilding.value != true
+            return false
+        }
+
+        override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+            return when (item.itemId) {
+                R.id.action_menu_build_profile -> {
+                    editorViewModel.selection.value?.let {
+                        generationViewModel.buildProfile(it)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
+        override fun onDestroyActionMode(mode: ActionMode) {
+            editorViewModel.setSelectionMode(false)
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -102,14 +132,34 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        editorViewModel.selectedTool.observe(this) {
-            invalidateOptionsMenu()
+        editorViewModel.isSelectionMode.observe(this) { isSelectionMode ->
+            if (isSelectionMode) {
+                actionMode = startActionMode(actionModeCallback)
+            } else {
+                if (actionMode != null) {
+                    actionMode?.finish()
+                    actionMode = null
+                }
+            }
         }
 
         generationViewModel.hwrResults.observe(this) { hwrResults ->
             if (hwrResults.isNotEmpty()) {
                 editorViewModel.write(hwrResults.last().events)
             }
+        }
+
+        generationViewModel.isProfileBuilding.observe(this) { isProfileBuilding ->
+            if (isProfileBuilding) {
+                Toast.makeText(this, "Building profile...", Toast.LENGTH_SHORT).show()
+
+            } else {
+                Toast.makeText(this, "Profile built", Toast.LENGTH_SHORT).show()
+                actionMode?.finish()
+            }
+            invalidateOptionsMenu()
+            actionMode?.invalidate()
+            binding.readOnlyLayer.visibility = if (isProfileBuilding) View.VISIBLE else View.GONE
         }
     }
 
@@ -122,26 +172,17 @@ class MainActivity : AppCompatActivity() {
         val canUndo = editorViewModel.partHistoryState.value?.canUndo ?: false
         val canRedo = editorViewModel.partHistoryState.value?.canRedo ?: false
         val isWriting = editorViewModel.isWriting.value ?: false
+        val isProfileBuilding = generationViewModel.isProfileBuilding.value ?: false
         val isEditorEmpty = editorViewModel.isEmpty()
 
-        menu?.findItem(R.id.editor_menu_undo)?.isEnabled = !isWriting && canUndo
-        menu?.findItem(R.id.editor_menu_redo)?.isEnabled = !isWriting && canRedo
-        menu?.findItem(R.id.editor_menu_clear)?.isEnabled = !isWriting && !isEditorEmpty
+        menu?.findItem(R.id.editor_menu_undo)?.isEnabled = !isProfileBuilding && !isWriting && canUndo
+        menu?.findItem(R.id.editor_menu_redo)?.isEnabled = !isProfileBuilding && !isWriting && canRedo
+        menu?.findItem(R.id.editor_menu_clear)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
 
-        menu?.findItem(R.id.editor_menu_save_as)?.isEnabled = !isWriting && !isEditorEmpty
-        menu?.findItem(R.id.editor_menu_go)?.isEnabled = !isWriting
+        menu?.findItem(R.id.editor_menu_save_as)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
+        menu?.findItem(R.id.editor_menu_go)?.isEnabled = !isProfileBuilding && !isWriting
 
-        menu?.findItem(R.id.editor_menu_tool)?.apply {
-            val currentTool = editorViewModel.selectedTool.value ?: ToolType.PEN
-            title = when (currentTool) {
-                ToolType.SELECT -> getString(R.string.menu_tool_pen)
-                ToolType.PEN -> getString(R.string.menu_tool_select)
-            }
-            icon = when (currentTool) {
-                ToolType.SELECT -> ResourcesCompat.getDrawable(resources, R.drawable.ic_pen, applicationContext.theme)
-                ToolType.PEN -> ResourcesCompat.getDrawable(resources, R.drawable.ic_select, applicationContext.theme)
-            }
-        }
+        menu?.findItem(R.id.editor_menu_build_profile)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
 
         return super.onPrepareOptionsMenu(menu)
     }
@@ -168,8 +209,8 @@ class MainActivity : AppCompatActivity() {
                 saveAs()
                 true
             }
-            R.id.editor_menu_tool -> {
-                editorViewModel.switchTool()
+            R.id.editor_menu_build_profile -> {
+                editorViewModel.setSelectionMode(true)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -231,7 +272,7 @@ class MainActivity : AppCompatActivity() {
         val inputText = dialogView.findViewById<EditText>(R.id.text_input)
 
         val spinner = dialogView.findViewById<Spinner>(R.id.profile_dropdown)
-        val adapter = StyleAdapter(this@MainActivity, PredefinedHandwritingProfileId.entries.toList())
+        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles())
         spinner.setAdapter(adapter)
 
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
@@ -239,8 +280,7 @@ class MainActivity : AppCompatActivity() {
         dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
             val textSize = inputTextSize.value
             val profileId = spinner.selectedItem.toString().uppercase()
-
-            generationViewModel.generateHandwriting(inputText.text.toString().trim(), PredefinedHandwritingProfileId.valueOf(profileId), textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
+            generationViewModel.generateHandwriting(inputText.text.toString().trim(), GenerationProfile.fromString(profileId), textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
         }
         dialogBuilder.setNegativeButton(android.R.string.cancel, null)
 
@@ -256,13 +296,13 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class StyleAdapter(private val context: Context, private val profiles: List<PredefinedHandwritingProfileId>) : BaseAdapter() {
+class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>) : BaseAdapter() {
 
     override fun getCount(): Int {
         return profiles.size
     }
 
-    override fun getItem(position: Int): PredefinedHandwritingProfileId {
+    override fun getItem(position: Int): GenerationProfile {
         return profiles[position]
     }
 
@@ -273,23 +313,36 @@ class StyleAdapter(private val context: Context, private val profiles: List<Pred
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.style_spinner_item, parent, false)
 
-        view.findViewById<ImageView>(R.id.style_image).setImageResource(when (getItem(position)) {
-            PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
-            PredefinedHandwritingProfileId.PROFILE_1 -> R.drawable.generation_1
-            PredefinedHandwritingProfileId.PROFILE_2 -> R.drawable.generation_2
-            PredefinedHandwritingProfileId.PROFILE_3 -> R.drawable.generation_3
-            PredefinedHandwritingProfileId.PROFILE_4 -> R.drawable.generation_4
-            PredefinedHandwritingProfileId.PROFILE_5 -> R.drawable.generation_5
-            PredefinedHandwritingProfileId.PROFILE_6 -> R.drawable.generation_6
-            PredefinedHandwritingProfileId.PROFILE_7 -> R.drawable.generation_7
-            PredefinedHandwritingProfileId.PROFILE_8 -> R.drawable.generation_8
-            PredefinedHandwritingProfileId.PROFILE_9 -> R.drawable.generation_9
-            PredefinedHandwritingProfileId.PROFILE_10 -> R.drawable.generation_10
-            PredefinedHandwritingProfileId.PROFILE_11 -> R.drawable.generation_11
-            PredefinedHandwritingProfileId.PROFILE_12 -> R.drawable.generation_12
-            PredefinedHandwritingProfileId.PROFILE_13 -> R.drawable.generation_13
-            PredefinedHandwritingProfileId.PROFILE_14 -> R.drawable.generation_14
-        })
+        val generationProfile = getItem(position)
+
+        val profileImage = view.findViewById<ImageView>(R.id.profile_image)
+        val profileText = view.findViewById<TextView>(R.id.profile_text)
+
+        if (generationProfile.profilePath != null) {
+            profileImage.visibility = View.GONE
+            profileText.visibility = View.VISIBLE
+            profileText.text = File(generationProfile.profilePath).name
+        } else {
+            profileImage.setImageResource(when (generationProfile.id) {
+                PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
+                PredefinedHandwritingProfileId.PROFILE_1 -> R.drawable.generation_1
+                PredefinedHandwritingProfileId.PROFILE_2 -> R.drawable.generation_2
+                PredefinedHandwritingProfileId.PROFILE_3 -> R.drawable.generation_3
+                PredefinedHandwritingProfileId.PROFILE_4 -> R.drawable.generation_4
+                PredefinedHandwritingProfileId.PROFILE_5 -> R.drawable.generation_5
+                PredefinedHandwritingProfileId.PROFILE_6 -> R.drawable.generation_6
+                PredefinedHandwritingProfileId.PROFILE_7 -> R.drawable.generation_7
+                PredefinedHandwritingProfileId.PROFILE_8 -> R.drawable.generation_8
+                PredefinedHandwritingProfileId.PROFILE_9 -> R.drawable.generation_9
+                PredefinedHandwritingProfileId.PROFILE_10 -> R.drawable.generation_10
+                PredefinedHandwritingProfileId.PROFILE_11 -> R.drawable.generation_11
+                PredefinedHandwritingProfileId.PROFILE_12 -> R.drawable.generation_12
+                PredefinedHandwritingProfileId.PROFILE_13 -> R.drawable.generation_13
+                PredefinedHandwritingProfileId.PROFILE_14 -> R.drawable.generation_14
+            })
+            profileImage.visibility = View.VISIBLE
+            profileText.visibility = View.GONE
+        }
 
         return view
     }

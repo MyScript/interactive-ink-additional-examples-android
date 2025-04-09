@@ -2,11 +2,14 @@
 
 package com.myscript.iink.samples.hwgeneration
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.myscript.iink.ContentSelection
 import com.myscript.iink.Engine
 import com.myscript.iink.HandwritingGenerator
 import com.myscript.iink.HandwritingGeneratorError
@@ -20,17 +23,42 @@ import com.myscript.iink.samples.hwgeneration.None.word
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.UUID
 
 open class HWRResult(val word: String, val events: Array<PointerEvent>)
 object None: HWRResult("", emptyArray())
 
-class GenerationViewModel(private val engine: Engine) : ViewModel() {
+data class GenerationProfile(
+    val id: PredefinedHandwritingProfileId = PredefinedHandwritingProfileId.DEFAULT,
+    val profilePath: String? = null) {
+
+    companion object {
+        fun fromString(id: String): GenerationProfile {
+            return fromId(PredefinedHandwritingProfileId.valueOf(id))
+        }
+
+        fun fromId(id: PredefinedHandwritingProfileId): GenerationProfile {
+            return GenerationProfile(id, null)
+        }
+
+        fun fromPath(path: String): GenerationProfile {
+            return GenerationProfile(PredefinedHandwritingProfileId.DEFAULT, path)
+        }
+    }
+}
+
+class GenerationViewModel(application: Application, private val engine: Engine) : AndroidViewModel(application) {
 
     private val generator: HandwritingGenerator
 
     private val _isGenerating = MutableLiveData(false)
     val isGenerating: LiveData<Boolean>
         get() = _isGenerating
+
+    private val _isProfileBuilding = MutableLiveData(false)
+    val isProfileBuilding: LiveData<Boolean>
+        get() = _isProfileBuilding
 
     private val _hwrResults = MutableLiveData<List<HWRResult>>()
     val hwrResults: LiveData<List<HWRResult>>
@@ -40,10 +68,6 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
         _isGenerating.value = false
 
         generator = engine.createHandwritingGenerator()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
     }
 
     private interface HWResultListener {
@@ -58,14 +82,46 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
         }
     }
 
-    fun generateHandwriting(inputSentence: String, profileId: PredefinedHandwritingProfileId, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform) {
+    fun getProfiles(): List<GenerationProfile> {
+        val predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
+            GenerationProfile.fromId(it)
+        }
+
+        val userProfiles = File(getApplication<Application>().filesDir, PROFILE_FOLDER).listFiles()?.map { file ->
+            GenerationProfile.fromPath(file.absolutePath)
+        } ?: emptyList()
+
+        return predefinedProfiles + userProfiles
+    }
+
+    fun buildProfile(selection: ContentSelection) {
+        viewModelScope.launch(Dispatchers.Main) {
+            _isProfileBuilding.value = true
+
+            withContext(Dispatchers.IO) {
+                val builder = generator.createHandwritingProfileBuilder()
+                val profile = builder.createFromSelection(selection)
+
+                val profileDirectory = File(getApplication<Application>().filesDir, PROFILE_FOLDER)
+                if (!profileDirectory.exists()) {
+                    profileDirectory.mkdirs()
+                }
+                val profileFile = File(profileDirectory, "${UUID.randomUUID()}.profile")
+                builder.store(profile, profileFile.absolutePath)
+            }
+
+            _isProfileBuilding.value = false
+        }
+    }
+
+    fun generateHandwriting(inputSentence: String, generationProfile: GenerationProfile, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform) {
         if (inputSentence.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.Main) {
             _isGenerating.value = true
 
             withContext(Dispatchers.IO) {
-                generate(inputSentence, profileId, inputTextSize, inputX, inputY, width, transform, object : HWResultListener {
+                generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, object : HWResultListener {
                     override fun onResult(result: HWRResult) {
                         viewModelScope.launch(Dispatchers.Main) {
                             val previousList: MutableList<HWRResult> = _hwrResults.value?.toMutableList() ?: mutableListOf()
@@ -79,9 +135,14 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
         }
     }
 
-    private fun generate(sentence: String, profileId: PredefinedHandwritingProfileId, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, listener: HWResultListener): HWRResult {
+    private fun generate(sentence: String, generationProfile: GenerationProfile, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, listener: HWResultListener): HWRResult {
         val builder = generator.createHandwritingProfileBuilder()
-        val profile = builder.createFromId(profileId)
+
+        val profile = if (generationProfile.profilePath != null && File(generationProfile.profilePath).exists()) {
+            builder.load(generationProfile.profilePath)
+        } else {
+            builder.createFromId(generationProfile.id)
+        }
 
         val indexLock = Any()
         var currentPointerEventIndex = 0
@@ -137,15 +198,17 @@ class GenerationViewModel(private val engine: Engine) : ViewModel() {
 
     companion object {
         private const val LINE_GAP_RATIO = 3
+
+        private const val PROFILE_FOLDER = "profiles"
     }
 }
 
-class GenerationViewModelFactory(private val engine: Engine) : ViewModelProvider.Factory {
+class GenerationViewModelFactory(private val application: Application, private val engine: Engine) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(GenerationViewModel::class.java) -> {
-                GenerationViewModel(engine) as T
+                GenerationViewModel(application, engine) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel $modelClass")
         }
