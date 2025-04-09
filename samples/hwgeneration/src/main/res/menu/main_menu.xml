@@ -25,6 +25,12 @@
         android:title="@string/menu_clear"/>
 
     <item
+        android:id="@+id/editor_menu_tool"
+        android:icon="@drawable/ic_select"
+        app:showAsAction="always"
+        android:title="@string/menu_tool_select"/>
+
+    <item
         android:id="@+id/editor_menu_save_as"
         app:showAsAction="never"
         android:title="@string/menu_save"/>

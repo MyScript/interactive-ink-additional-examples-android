@@ -23,6 +23,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.slider.Slider
 import com.myscript.iink.Engine
 import com.myscript.iink.PredefinedHandwritingProfileId
@@ -101,6 +102,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        editorViewModel.selectedTool.observe(this) {
+            invalidateOptionsMenu()
+        }
+
         generationViewModel.hwrResults.observe(this) { hwrResults ->
             if (hwrResults.isNotEmpty()) {
                 editorViewModel.write(hwrResults.last().events)
@@ -126,6 +131,18 @@ class MainActivity : AppCompatActivity() {
         menu?.findItem(R.id.editor_menu_save_as)?.isEnabled = !isWriting && !isEditorEmpty
         menu?.findItem(R.id.editor_menu_go)?.isEnabled = !isWriting
 
+        menu?.findItem(R.id.editor_menu_tool)?.apply {
+            val currentTool = editorViewModel.selectedTool.value ?: ToolType.PEN
+            title = when (currentTool) {
+                ToolType.SELECT -> getString(R.string.menu_tool_pen)
+                ToolType.PEN -> getString(R.string.menu_tool_select)
+            }
+            icon = when (currentTool) {
+                ToolType.SELECT -> ResourcesCompat.getDrawable(resources, R.drawable.ic_pen, applicationContext.theme)
+                ToolType.PEN -> ResourcesCompat.getDrawable(resources, R.drawable.ic_select, applicationContext.theme)
+            }
+        }
+
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -149,6 +166,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.editor_menu_save_as -> {
                 saveAs()
+                true
+            }
+            R.id.editor_menu_tool -> {
+                editorViewModel.switchTool()
                 true
             }
             else -> super.onOptionsItemSelected(item)

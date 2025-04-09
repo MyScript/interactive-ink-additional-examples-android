@@ -40,7 +40,16 @@ data class PartHistoryState(val canUndo: Boolean = false, val canRedo: Boolean =
 
 data class OnLongPress(val show: Boolean = false, val x: Float = 0f, val y: Float = 0f)
 
+enum class ToolType {
+    PEN,
+    SELECT,
+}
+
 class EditorViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val _selectedTool = MutableLiveData(ToolType.PEN)
+    val selectedTool: LiveData<ToolType>
+        get() = _selectedTool
 
     private val _partHistoryState = MutableLiveData(PartHistoryState())
     val partHistoryState: LiveData<PartHistoryState>
@@ -111,6 +120,8 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
         val editor = requireNotNull(editorData.editor)
         this.editor = editor
+
+        _selectedTool.value = ToolType.PEN
 
         editorData.inputController?.inputMode = InputController.INPUT_MODE_AUTO
 
@@ -188,6 +199,20 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     fun clear() {
         editor?.clear()
+    }
+
+    fun switchTool() {
+        _selectedTool.value = when (_selectedTool.value) {
+            ToolType.PEN -> {
+                editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.SELECTOR)
+                ToolType.SELECT
+            }
+            ToolType.SELECT -> {
+                editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.PEN)
+                ToolType.PEN
+            }
+            else -> ToolType.PEN
+        }
     }
 
     fun isEmpty(): Boolean {
