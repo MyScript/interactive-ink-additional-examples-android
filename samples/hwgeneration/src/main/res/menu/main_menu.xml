@@ -31,6 +31,11 @@
         android:title="@string/menu_build_profile"/>
 
     <item
+        android:id="@+id/editor_menu_build_profile_from_file"
+        app:showAsAction="never"
+        android:title="@string/menu_build_profile_from_file"/>
+
+    <item
         android:id="@+id/editor_menu_save_as"
         app:showAsAction="never"
         android:title="@string/menu_save"/>

@@ -2,8 +2,10 @@
 package com.myscript.iink.samples.hwgeneration
 
 import android.annotation.SuppressLint
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
@@ -25,13 +27,19 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.coroutineScope
 import com.google.android.material.slider.Slider
 import com.myscript.iink.Engine
 import com.myscript.iink.PredefinedHandwritingProfileId
 import com.myscript.iink.samples.hwgeneration.databinding.ActivityMainBinding
 import com.myscript.iink.uireferenceimplementation.EditorView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
+import java.util.UUID
 
 
 class MainActivity : AppCompatActivity() {
@@ -48,6 +56,14 @@ class MainActivity : AppCompatActivity() {
 
     private val generationViewModel: GenerationViewModel by viewModels {
         GenerationViewModelFactory(application, requireNotNull(engine))
+    }
+
+    private val profileBuildingProgress by lazy {
+        @Suppress("DEPRECATION")
+        ProgressDialog(this).apply {
+            setMessage("Building Handwriting Profile...")
+            setCancelable(false)
+        }
     }
 
     private var actionMode: ActionMode? = null
@@ -151,10 +167,14 @@ class MainActivity : AppCompatActivity() {
 
         generationViewModel.isProfileBuilding.observe(this) { isProfileBuilding ->
             if (isProfileBuilding) {
-                Toast.makeText(this, "Building profile...", Toast.LENGTH_SHORT).show()
+                if (!profileBuildingProgress.isShowing) {
+                    profileBuildingProgress.show()
+                }
 
             } else {
-                Toast.makeText(this, "Profile built", Toast.LENGTH_SHORT).show()
+                if (profileBuildingProgress.isShowing) {
+                    profileBuildingProgress.dismiss()
+                }
                 actionMode?.finish()
             }
             invalidateOptionsMenu()
@@ -182,6 +202,7 @@ class MainActivity : AppCompatActivity() {
         menu?.findItem(R.id.editor_menu_save_as)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
         menu?.findItem(R.id.editor_menu_go)?.isEnabled = !isProfileBuilding && !isWriting
 
+        menu?.findItem(R.id.editor_menu_build_profile_from_file)?.isEnabled = !isProfileBuilding && !isWriting
         menu?.findItem(R.id.editor_menu_build_profile)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
 
         return super.onPrepareOptionsMenu(menu)
@@ -203,6 +224,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.editor_menu_go -> {
                 displayInput()
+                true
+            }
+            R.id.editor_menu_build_profile_from_file -> {
+                importRequest.launch("*/*")
                 true
             }
             R.id.editor_menu_save_as -> {
@@ -263,6 +288,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val importRequest = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val mimeType = DocumentFile.fromSingleUri(this@MainActivity, uri)?.type ?: contentResolver.getType(uri)
+        when (mimeType) {
+            "binary/octet-stream",
+            "application/zip",
+            "application/octet-stream",
+            "application/binary",
+            "application/x-zip" -> lifecycle.coroutineScope.launch {
+                processUriFile(uri, File(cacheDir, "${UUID.randomUUID()}.iink")) { file ->
+                   generationViewModel.buildProfile(file)
+                }
+            }
+            else -> Toast.makeText(applicationContext, "Not able to open file", Toast.LENGTH_LONG).show()
+
+        }
+    }
+
+    private suspend fun Context.processUriFile(uri: Uri, file: File, logic: (File) -> Unit) {
+        withContext(Dispatchers.IO) {
+            runCatching {
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    file.outputStream().use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+            }
+        }
+        try {
+            logic(file)
+        } finally {
+            file.deleteOnExit()
+        }
+    }
+
     private fun displayInput(x: Float = X_OFFSET_DEFAULT_PX, y: Float = Y_OFFSET_DEFAULT_PX) {
         val dialogBuilder = AlertDialog.Builder(this)
         val dialogView = layoutInflater.inflate(R.layout.dialog_input, null)
@@ -321,7 +381,7 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
         if (generationProfile.profilePath != null) {
             profileImage.visibility = View.GONE
             profileText.visibility = View.VISIBLE
-            profileText.text = File(generationProfile.profilePath).name
+            profileText.text = File(generationProfile.profilePath).nameWithoutExtension
         } else {
             profileImage.setImageResource(when (generationProfile.id) {
                 PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0

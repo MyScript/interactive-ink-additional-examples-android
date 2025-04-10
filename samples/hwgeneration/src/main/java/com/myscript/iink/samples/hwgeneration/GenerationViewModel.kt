@@ -83,24 +83,38 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     }
 
     fun getProfiles(): List<GenerationProfile> {
-        val predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
-            GenerationProfile.fromId(it)
-        }
-
         val userProfiles = File(getApplication<Application>().filesDir, PROFILE_FOLDER).listFiles()?.map { file ->
             GenerationProfile.fromPath(file.absolutePath)
         } ?: emptyList()
 
-        return predefinedProfiles + userProfiles
+        val predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
+            GenerationProfile.fromId(it)
+        }
+
+        return userProfiles + predefinedProfiles
+    }
+
+    fun buildProfile(iinkFile: File) {
+        buildProfileInternal(iinkFile = iinkFile)
     }
 
     fun buildProfile(selection: ContentSelection) {
+        buildProfileInternal(selection = selection)
+    }
+
+    private fun buildProfileInternal(selection: ContentSelection? = null, iinkFile: File? = null) {
         viewModelScope.launch(Dispatchers.Main) {
             _isProfileBuilding.value = true
 
             withContext(Dispatchers.IO) {
                 val builder = generator.createHandwritingProfileBuilder()
-                val profile = builder.createFromSelection(selection)
+                val profile = if (selection != null) {
+                    builder.createFromSelection(selection)
+                } else if (iinkFile != null && iinkFile.exists()) {
+                    builder.createFromFile(iinkFile.absolutePath)
+                } else {
+                    return@withContext
+                }
 
                 val profileDirectory = File(getApplication<Application>().filesDir, PROFILE_FOLDER)
                 if (!profileDirectory.exists()) {
