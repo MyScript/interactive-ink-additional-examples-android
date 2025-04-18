@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
+import android.util.Log
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
@@ -181,6 +182,22 @@ class MainActivity : AppCompatActivity() {
             actionMode?.invalidate()
             binding.readOnlyLayer.visibility = if (isProfileBuilding) View.VISIBLE else View.GONE
         }
+
+        generationViewModel.message.observe(this) { message ->
+            if (message == null) {
+                return@observe
+            }
+            Log.d("MainActivity", message.toString(), message.exception)
+            when (message.type) {
+                Message.Type.ERROR ->
+                    AlertDialog.Builder(this)
+                        .setMessage(message.message)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                else -> Toast.makeText(applicationContext, message.message, Toast.LENGTH_LONG).show()
+            }
+            generationViewModel.dismissMessage(message)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -339,8 +356,8 @@ class MainActivity : AppCompatActivity() {
 
         dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
             val textSize = inputTextSize.value
-            val profileId = spinner.selectedItem.toString().uppercase()
-            generationViewModel.generateHandwriting(inputText.text.toString().trim(), GenerationProfile.fromString(profileId), textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
+            val profile = spinner.selectedItem as GenerationProfile
+            generationViewModel.generateHandwriting(inputText.text.toString().trim(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
         }
         dialogBuilder.setNegativeButton(android.R.string.cancel, null)
 

@@ -29,15 +29,21 @@ import java.util.UUID
 open class HWRResult(val word: String, val events: Array<PointerEvent>)
 object None: HWRResult("", emptyArray())
 
+data class Message(
+    val type: Type,
+    val message: String,
+    val exception: Exception? = null,
+) {
+    enum class Type { NOTIFICATION, ERROR }
+
+    internal val id = UUID.randomUUID()
+}
+
 data class GenerationProfile(
     val id: PredefinedHandwritingProfileId = PredefinedHandwritingProfileId.DEFAULT,
     val profilePath: String? = null) {
 
     companion object {
-        fun fromString(id: String): GenerationProfile {
-            return fromId(PredefinedHandwritingProfileId.valueOf(id))
-        }
-
         fun fromId(id: PredefinedHandwritingProfileId): GenerationProfile {
             return GenerationProfile(id, null)
         }
@@ -63,6 +69,10 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     private val _hwrResults = MutableLiveData<List<HWRResult>>()
     val hwrResults: LiveData<List<HWRResult>>
         get() = _hwrResults
+
+    private var _message = MutableLiveData<Message?>(null)
+    val message: LiveData<Message?>
+        get() = _message
 
     init {
         _isGenerating.value = false
@@ -108,11 +118,17 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
 
             withContext(Dispatchers.IO) {
                 val builder = generator.createHandwritingProfileBuilder()
-                val profile = if (selection != null) {
-                    builder.createFromSelection(selection)
-                } else if (iinkFile != null && iinkFile.exists()) {
-                    builder.createFromFile(iinkFile.absolutePath)
-                } else {
+
+                val profile = try {
+                    if (selection != null) {
+                        builder.createFromSelection(selection)
+                    } else if (iinkFile != null && iinkFile.exists()) {
+                        builder.createFromFile(iinkFile.absolutePath)
+                    } else {
+                        return@withContext
+                    }
+                } catch (e: IllegalArgumentException) {
+                    notify(Message(Message.Type.ERROR, "Error while building profile ${e.message}", e))
                     return@withContext
                 }
 
@@ -120,8 +136,11 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
                 if (!profileDirectory.exists()) {
                     profileDirectory.mkdirs()
                 }
-                val profileFile = File(profileDirectory, "${UUID.randomUUID()}.profile")
+                val profileId = UUID.randomUUID()
+                val profileFile = File(profileDirectory, "$profileId.profile")
                 builder.store(profile, profileFile.absolutePath)
+
+                notify(Message(Message.Type.NOTIFICATION, "Profile built with ID $profileId"))
             }
 
             _isProfileBuilding.value = false
@@ -208,6 +227,25 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         val events = result.toPointerEvents(transform)
 
         return HWRResult(word, events)
+    }
+
+    private fun notify(message: Message) {
+        synchronized(_message) {
+            viewModelScope.launch(Dispatchers.Main) {
+                _message.value = message
+            }
+        }
+    }
+
+    fun dismissMessage(message: Message) {
+        synchronized(_message) {
+            viewModelScope.launch(Dispatchers.Main) {
+                val currentError = _message.value
+                if (currentError?.id == message.id) {
+                    _message.value = null
+                }
+            }
+        }
     }
 
     companion object {
