@@ -71,6 +71,9 @@ This sample uses a third-party rendering library to manage the captured strokes 
 6. The keyboard input sample shows a specific usage for the `Placeholder` feature. In this sample, you'll be able to input text by keyboard within an iink document, with minumum code.
 It shows how to manage switching from an Android view to an image managed by iink.
 
+7. The handwriting generation sample demonstrates the use of MyScript's handwriting generation APIs. It shows how to generate ink from text input, in different styles, and how to create a style from your own handwriting.
+To use the handwriting generation, you must [contact our sales team](https://developer.myscript.com/contact-us/on-device-recognition).
+
 ## Documentation
 
 A complete guide is available on [MyScript Developer Portal](https://developer.myscript.com/docs/interactive-ink/latest/android/).

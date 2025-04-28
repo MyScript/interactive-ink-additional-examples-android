@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/editor_menu_go"
+        android:icon="@drawable/ic_go"
+        app:showAsAction="always"
+        android:title="@string/menu_go"/>
+    <item
+        android:id="@+id/editor_menu_undo"
+        android:icon="@drawable/ic_undo"
+        app:showAsAction="always"
+        android:title="@string/menu_undo"/>
+    <item
+        android:id="@+id/editor_menu_redo"
+        android:icon="@drawable/ic_redo"
+        app:showAsAction="always"
+        android:title="@string/menu_redo"/>
+
+    <item
+        android:id="@+id/editor_menu_clear"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="always"
+        android:title="@string/menu_clear"/>
+
+    <item
+        android:id="@+id/editor_menu_build_profile"
+        android:icon="@drawable/ic_select"
+        app:showAsAction="always"
+        android:title="@string/menu_build_profile"/>
+
+    <item
+        android:id="@+id/editor_menu_build_profile_from_file"
+        app:showAsAction="never"
+        android:title="@string/menu_build_profile_from_file"/>
+
+    <item
+        android:id="@+id/editor_menu_save_as"
+        app:showAsAction="never"
+        android:title="@string/menu_save"/>
+</menu>

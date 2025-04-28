@@ -1,0 +1,34 @@
+{
+  "raw-content": {
+    "session-time": 100,
+    "classification": {
+      "types": [ "text", "shape", "drawing" ]
+    },
+    "recognition": {
+      "types": [ "text", "shape", "math" ]
+    },
+    "convert": {
+      "shape-on-hold": true,
+      "types": [ "text", "shape", "math" ]
+    },
+    "shape": {
+      "snap-axis": [ "triangle", "rectangle", "rhombus", "parallelogram", "ellipse" ]
+    },
+    "eraser": {
+      "erase-precisely": false,
+      "dynamic-radius": true
+    },
+    "auto-connection": true,
+    "interactive-blocks": {
+      "feedback": [ "math" ]
+    },
+    "pen": {
+      "gestures": [ "scratch-out", "strike-through", "surround", "long-press" ]
+    },
+    "line-pattern": "grid",
+    "guides": {
+      "show": [ "alignment", "text", "square", "square-inside", "image-aspect-ratio", "rotation" ],
+      "snap": [ "alignment", "text", "square", "square-inside", "image-aspect-ratio", "rotation" ]
+    }
+  }
+}
