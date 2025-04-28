@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.view.ActionMode
 import android.view.LayoutInflater
@@ -109,7 +110,6 @@ class MainActivity : AppCompatActivity() {
                     .setMessage( getString(R.string.app_error_invalid_certificate_message))
                     .setPositiveButton(android.R.string.ok, null)
                     .show()
-            finishAndRemoveTask() // be sure to end the application
             return
         }
 
@@ -158,6 +158,18 @@ class MainActivity : AppCompatActivity() {
                     actionMode = null
                 }
             }
+        }
+
+        try {
+            // Dummy check to verify handwriting generation resource and proper certificate.
+            val generationViewModel = this.generationViewModel
+        } catch (e: IllegalStateException) {
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.app_error_missing_resource_title))
+                .setMessage(Html.fromHtml(getString(R.string.app_error_missing_resource_message)))
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            return
         }
 
         generationViewModel.hwrResults.observe(this) { hwrResults ->
@@ -209,7 +221,7 @@ class MainActivity : AppCompatActivity() {
         val canUndo = editorViewModel.partHistoryState.value?.canUndo ?: false
         val canRedo = editorViewModel.partHistoryState.value?.canRedo ?: false
         val isWriting = editorViewModel.isWriting.value ?: false
-        val isProfileBuilding = generationViewModel.isProfileBuilding.value ?: false
+        val isProfileBuilding = try { generationViewModel.isProfileBuilding.value } catch (e: Exception) { false } ?: false
         val isEditorEmpty = editorViewModel.isEmpty()
 
         menu?.findItem(R.id.editor_menu_undo)?.isEnabled = !isProfileBuilding && !isWriting && canUndo
