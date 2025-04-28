@@ -76,7 +76,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             notifyUndoRedo(editor)
         }
 
-        override fun contentChanged(editor: Editor, blockIds: Array<out String>?) {
+        override fun contentChanged(editor: Editor, blockIds: Array<out String>) {
             notifyUndoRedo(editor)
         }
 
@@ -93,7 +93,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     private val gestureHandler = object : IGestureHandler {
         override fun onTap(editor: Editor, tool: PointerTool?, gestureStrokeId: String, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onDoubleTap(editor: Editor, tool: PointerTool?, gestureStrokeIds: Array<out String>?, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
+        override fun onDoubleTap(editor: Editor, tool: PointerTool?, gestureStrokeIds: Array<out String>, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
 
         override fun onLongPress(editor: Editor, tool: PointerTool?, gestureStrokeId: String, x: Float, y: Float): GestureAction {
             viewModelScope.launch(Dispatchers.Main) {
