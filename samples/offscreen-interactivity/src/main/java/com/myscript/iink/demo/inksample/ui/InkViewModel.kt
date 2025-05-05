@@ -441,8 +441,10 @@ class InkViewModel(
     }
 
     private fun addStrokesForUndoRedo(initialStrokes: List<InkView.Brush>, strokesToAdd: List<InkView.Brush>): List<InkView.Brush> {
-        strokesToAdd.map(InkView.Brush::id).forEach { id ->
-            strokeIdsMappingDeleted[id]?.also { appStrokeId ->
+        strokesToAdd.map(InkView.Brush::id).forEach { appStrokeId ->
+            strokeIdsMappingDeleted.entries.firstOrNull { entry ->
+                entry.value == appStrokeId
+            }?.key?.also { id ->
                 strokeIdsMapping[id] = appStrokeId
                 strokeIdsMappingDeleted.remove(id)
             }
