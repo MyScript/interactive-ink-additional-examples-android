@@ -92,22 +92,33 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private val gestureHandler = object : IGestureHandler {
-        override fun onTap(editor: Editor, tool: PointerTool?, gestureStrokeId: String, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onDoubleTap(editor: Editor, tool: PointerTool?, gestureStrokeIds: Array<out String>, x: Float, y: Float): GestureAction = GestureAction.APPLY_GESTURE
+        private fun handleGesture(): GestureAction {
+            return if (_isWriting.value == true) {
+                GestureAction.ADD_STROKE
+            } else {
+                GestureAction.APPLY_GESTURE
+            }
+        }
+
+        override fun onTap(editor: Editor, tool: PointerTool?, gestureStrokeId: String, x: Float, y: Float): GestureAction = handleGesture()
+        override fun onDoubleTap(editor: Editor, tool: PointerTool?, gestureStrokeIds: Array<out String>, x: Float, y: Float): GestureAction = handleGesture()
 
         override fun onLongPress(editor: Editor, tool: PointerTool?, gestureStrokeId: String, x: Float, y: Float): GestureAction {
+            val handleGesture = handleGesture()
+            if (handleGesture != GestureAction.IGNORE) {
             viewModelScope.launch(Dispatchers.Main) {
                 _onLongPress.value = OnLongPress(true, x, y)
             }
-            return GestureAction.APPLY_GESTURE
+            }
+            return handleGesture
         }
 
-        override fun onUnderline(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onSurround(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onJoin(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onInsert(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onStrikethrough(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onScratch(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
+        override fun onUnderline(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = handleGesture()
+        override fun onSurround(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = handleGesture()
+        override fun onJoin(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = handleGesture()
+        override fun onInsert(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = handleGesture()
+        override fun onStrikethrough(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = handleGesture()
+        override fun onScratch(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = handleGesture()
     }
 
     private var contentPackage: ContentPackage? = null
@@ -236,9 +247,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         if (_isWriting.value == true) return
 
         viewModelScope.launch(Dispatchers.Default) {
-            val previousGestureConf = editor.configuration.getBoolean("gesture.enable")
-            editor.configuration.setBoolean("gesture.enable", false)
-
             setSelectionMode(false)
 
             withContext(Dispatchers.Main) {
@@ -278,8 +286,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                     return@launch
                 }
             }
-
-            editor.configuration.setBoolean("gesture.enable", previousGestureConf)
 
             withContext(Dispatchers.Main) {
                 _isWriting.value = false
