@@ -76,7 +76,7 @@ This sample uses a third-party rendering library to manage the captured strokes 
 It shows how to manage switching from an Android view to an image managed by iink.
 
 7. The handwriting generation sample demonstrates the use of MyScript's handwriting generation APIs. It shows how to generate ink from text input, in different styles, and how to create a style from your own handwriting.
-To use the handwriting generation, you must [contact our sales team](https://developer.myscript.com/contact-us/on-device-recognition).
+To use the handwriting generation, you must [contact our sales team](https://developer.myscript.com/contact-us/on-device-recognition). You will then have access to the "myscript-iink-handwriting-generation" resource package, from which `handwriting_generation` folder must extracted and copied to `samples/hwgeneration/src/main/assets/resources/`
 
 ## Documentation
 
