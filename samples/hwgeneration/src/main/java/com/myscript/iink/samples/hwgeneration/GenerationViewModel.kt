@@ -196,7 +196,9 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
                 }
             }
             override fun onEnd(generator: HandwritingGenerator) = Unit
-            override fun onError(generator: HandwritingGenerator, code: HandwritingGeneratorError, message: String) = Unit
+            override fun onError(generator: HandwritingGenerator, code: HandwritingGeneratorError, message: String) {
+                notify(Message(Message.Type.ERROR, "Error $code due to $message"))
+            }
             override fun onUnsupportedCharacter(generator: HandwritingGenerator, label: String, character: String, index: Int) = Unit
         })
 
