@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Typeface
 import android.text.TextPaint
 import android.view.View
@@ -29,6 +30,14 @@ class RecognitionItemView(context: Context, private val item: RecognitionItem) :
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
     }
 
+    private val solvingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.GRAY
+        style = Paint.Style.STROKE
+        strokeWidth = 4f
+    }
+
+    private val solvingPath = Path()
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
@@ -42,6 +51,7 @@ class RecognitionItemView(context: Context, private val item: RecognitionItem) :
                     color = when(item.type) {
                         BlockType.TEXT -> TEXT_COLOR
                         BlockType.MATH -> MATH_COLOR
+                        BlockType.SOLVING -> SOLVER_COLOR
                     }
                 }
             )
@@ -59,6 +69,7 @@ class RecognitionItemView(context: Context, private val item: RecognitionItem) :
                 when(item.type) {
                     BlockType.TEXT -> "abc"
                     BlockType.MATH -> "Σ"
+                    BlockType.SOLVING -> "="
                 },
                 box.x + 5,
                 box.y + (textPaint.descent() - textPaint.ascent()) / 2,
@@ -66,14 +77,29 @@ class RecognitionItemView(context: Context, private val item: RecognitionItem) :
                     color = when(item.type) {
                         BlockType.TEXT -> TEXT_COLOR
                         BlockType.MATH -> MATH_COLOR
+                        BlockType.SOLVING -> SOLVER_COLOR
                     }
                 }
             )
+
+            if (item.type == BlockType.SOLVING && item.strokes.isNotEmpty()) {
+                item.strokes.forEach { stroke ->
+                    if (stroke.points.isNotEmpty()) {
+                        solvingPath.reset()
+                        solvingPath.moveTo(stroke.points[0].x, stroke.points[0].y)
+                        for (i in 1 until stroke.points.size) {
+                            solvingPath.lineTo(stroke.points[i].x, stroke.points[i].y)
+                        }
+                        canvas.drawPath(solvingPath, solvingPaint)
+                    }
+                }
+            }
         }
     }
 
     companion object {
         private const val TEXT_COLOR = Color.RED
         private const val MATH_COLOR = Color.BLUE
+        private const val SOLVER_COLOR = Color.GREEN
     }
 }
