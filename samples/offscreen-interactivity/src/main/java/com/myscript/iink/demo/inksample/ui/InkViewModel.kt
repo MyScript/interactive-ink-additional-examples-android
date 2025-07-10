@@ -2,6 +2,7 @@
 
 package com.myscript.iink.demo.inksample.ui
 
+import android.graphics.PointF
 import android.util.DisplayMetrics
 import android.util.Log
 import androidx.annotation.VisibleForTesting
@@ -25,9 +26,8 @@ import com.myscript.iink.MimeType
 import com.myscript.iink.OffscreenEditor
 import com.myscript.iink.OffscreenGestureAction
 import com.myscript.iink.demo.ink.serialization.jiix.BoundingBox
-import com.myscript.iink.demo.ink.serialization.jiix.Element
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
-import com.myscript.iink.demo.ink.serialization.jiix.Word
+import com.myscript.iink.demo.ink.serialization.jiix.SolverRoot
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
 import com.myscript.iink.demo.ink.serialization.jiix.toBrush
 import com.myscript.iink.demo.ink.serialization.jiix.toPointerEvents
@@ -49,13 +49,19 @@ import java.util.concurrent.Executors
 
 enum class BlockType {
     TEXT,
-    MATH
+    MATH,
+    SOLVING
 }
+
+data class Stroke(
+    val points: List<PointF>
+)
 
 data class RecognitionItem(
     val text: String,
     val type: BlockType,
-    val boundingBox: BoundingBox?
+    val boundingBox: BoundingBox?,
+    val strokes: List<Stroke> = emptyList()
 )
 
 data class RecognitionFeedback(
@@ -341,6 +347,47 @@ class InkViewModel(
 
                     recognitionRoot.elements?.forEach { element ->
                         if (element.expressions != null) {
+
+                            // If possible, get solver output and strokes.
+                            if (offscreenEditor?.mathSolverController?.getAvailableActions(element.id)?.contains("numerical-computation") == true) {
+                                val solverJIIX = offscreenEditor?.mathSolverController?.getActionOutput(element.id, "numerical-computation", MimeType.JIIX, engine?.createParameterSet()?.apply {
+                                    setBoolean("export.jiix.strokes", true);
+                                })
+
+                                val solverRoot = Gson().fromJson(solverJIIX, SolverRoot::class.java)
+                                if (solverRoot.type == "Math") {
+                                    solverRoot.expressions?.forEach { expression ->
+                                        expression.operands?.forEach { operand ->
+                                            if (operand.solverOutput) {
+                                                val strokes = mutableListOf<Stroke>()
+                                                operand.items?.forEach loop@{ item ->
+                                                    val xPoints = item.X ?: return@loop
+                                                    val yPoints = item.Y ?: return@loop
+                                                    val converter = converter ?: return@loop
+
+                                                    val points = mutableListOf<PointF>()
+                                                    for (index in xPoints.indices) {
+                                                        points.add(PointF(
+                                                                converter.x_mm2px(xPoints[index]),
+                                                                converter.y_mm2px(yPoints[index])))
+                                                    }
+                                                    strokes.add(Stroke(points))
+                                                }
+
+                                                recognitionResult.add(
+                                                    RecognitionItem(
+                                                        text = operand.label ?: "",
+                                                        type = BlockType.SOLVING,
+                                                        boundingBox = operand.boundingBox?.toScreenCoordinates(converter),
+                                                        strokes = strokes
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             recognitionResult.add(RecognitionItem(
                                 text = "",
                                 type = BlockType.MATH,
