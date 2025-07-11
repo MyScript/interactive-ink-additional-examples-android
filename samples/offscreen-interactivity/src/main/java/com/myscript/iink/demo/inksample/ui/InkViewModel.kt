@@ -357,7 +357,10 @@ class InkViewModel(
                             // If possible, get solver output and strokes.
                             if (isSolvable) {
                                 val solverJIIX = offscreenEditor?.mathSolverController?.getActionOutput(element.id, "numerical-computation", MimeType.JIIX, engine?.createParameterSet()?.apply {
-                                    setBoolean("export.jiix.strokes", true);
+                                    setBoolean("export.jiix.strokes", true)
+                                    setStringArray("math.solver.numerical-computation", arrayOf("at-right-of-equal-sign"))
+                                    setBoolean("math.solver.enable-syntactic-correction", false)
+                                    setBoolean("math.solver.display-implicit-multiply", false)
                                 })
 
                                 val solverRoot = Gson().fromJson(solverJIIX, SolverRoot::class.java)
