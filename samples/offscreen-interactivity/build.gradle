@@ -17,6 +17,9 @@ android {
         targetSdk Versions.targetSdk
 
         applicationId 'com.myscript.iink.offscreen.demo'
+
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
     }
 }
 
