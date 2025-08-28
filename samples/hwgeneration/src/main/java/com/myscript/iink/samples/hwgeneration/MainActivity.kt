@@ -210,6 +210,10 @@ class MainActivity : AppCompatActivity() {
             }
             generationViewModel.dismissMessage(message)
         }
+
+        generationViewModel.language.observe(this) { language ->
+            invalidateOptionsMenu()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -233,6 +237,13 @@ class MainActivity : AppCompatActivity() {
 
         menu?.findItem(R.id.editor_menu_build_profile_from_file)?.isEnabled = !isProfileBuilding && !isWriting
         menu?.findItem(R.id.editor_menu_build_profile)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
+
+        generationViewModel.language.value?.let { language ->
+            menu?.findItem(R.id.editor_menu_language)?.title = when (language) {
+                HWGLanguage.CHINESE -> getString(R.string.menu_language_en)
+                HWGLanguage.ENGLISH -> getString(R.string.menu_language_zh)
+            }
+        }
 
         return super.onPrepareOptionsMenu(menu)
     }
@@ -265,6 +276,16 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.editor_menu_build_profile -> {
                 editorViewModel.setSelectionMode(true)
+                true
+            }
+            R.id.editor_menu_language -> {
+                generationViewModel.language.value?.let { language ->
+                    val newLanguage = when (language) {
+                        HWGLanguage.CHINESE -> HWGLanguage.ENGLISH
+                        HWGLanguage.ENGLISH -> HWGLanguage.CHINESE
+                    }
+                    generationViewModel.setLanguage(newLanguage)
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
