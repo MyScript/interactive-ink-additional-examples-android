@@ -153,6 +153,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
                     val configuration = context.assets.open("parts/interactivity.json").bufferedReader().use(Reader::readText)
                     editor.configuration.inject(configuration)
+
+                    editor.configuration.setString("lang", "zh_CN")
+
                     editor.part = contentPart
                     editor.setGestureHandler(gestureHandler)
 
