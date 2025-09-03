@@ -382,7 +382,7 @@ class MainActivity : AppCompatActivity() {
         val inputText = dialogView.findViewById<EditText>(R.id.text_input)
 
         val spinner = dialogView.findViewById<Spinner>(R.id.profile_dropdown)
-        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles())
+        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles(), generationViewModel.language.value ?: HWGLanguage.ENGLISH)
         spinner.setAdapter(adapter)
 
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
@@ -406,7 +406,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>) : BaseAdapter() {
+class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>, private val language: HWGLanguage) : BaseAdapter() {
 
     override fun getCount(): Int {
         return profiles.size
@@ -432,6 +432,10 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
             profileImage.visibility = View.GONE
             profileText.visibility = View.VISIBLE
             profileText.text = File(generationProfile.profilePath).nameWithoutExtension
+        } else if(language == HWGLanguage.CHINESE) {
+            profileImage.visibility = View.GONE
+            profileText.visibility = View.VISIBLE
+            profileText.text = "Profile ${position}"
         } else {
             profileImage.setImageResource(when (generationProfile.id) {
                 PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
