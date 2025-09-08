@@ -239,12 +239,10 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         if (_isWriting.value == true) return
 
         viewModelScope.launch(Dispatchers.Default) {
-            val previousGestureConf = editor.configuration.getBoolean("gesture.enable")
-            editor.configuration.setBoolean("gesture.enable", false)
-
             setSelectionMode(false)
 
             withContext(Dispatchers.Main) {
+                editor.configuration.setBoolean("gesture.enable", false)
                 _isWriting.value = true
             }
 
@@ -282,10 +280,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                 }
             }
 
-            editor.configuration.setBoolean("gesture.enable", previousGestureConf)
-
             withContext(Dispatchers.Main) {
                 _isWriting.value = false
+                editor.configuration.setBoolean("gesture.enable", true)
             }
         }
     }
