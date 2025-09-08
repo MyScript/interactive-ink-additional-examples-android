@@ -176,14 +176,14 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         }
     }
 
-    fun generateHandwriting(inputSentence: String, generationProfile: GenerationProfile, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform) {
+    fun generateHandwriting(inputSentence: String, generationProfile: GenerationProfile, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform, forceRandomSeed: Boolean = false) {
         if (inputSentence.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.Main) {
             _isGenerating.value = true
 
             withContext(Dispatchers.IO) {
-                generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, object : HWResultListener {
+                generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, forceRandomSeed, object : HWResultListener {
                     override fun onResult(result: HWRResult) {
                         viewModelScope.launch(Dispatchers.Main) {
                             val previousList: MutableList<HWRResult> = _hwrResults.value?.toMutableList() ?: mutableListOf()
@@ -197,7 +197,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         }
     }
 
-    private fun generate(sentence: String, generationProfile: GenerationProfile, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, listener: HWResultListener): HWRResult {
+    private fun generate(sentence: String, generationProfile: GenerationProfile, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, forceRandomSeed: Boolean, listener: HWResultListener): HWRResult {
         val generator = generator ?: return None
 
         val builder = generator.createHandwritingProfileBuilder()
@@ -233,6 +233,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
 
         generator.start("Text", profile, engine.createParameterSet().apply {
             setBoolean("handwriting-generation.session.force-new-line", false)
+            setNumber("handwriting-generation.session.seed", if (forceRandomSeed) 0L else -1)
 
             val invertTransform = Transform(transform).apply {
                 invert()

@@ -29,6 +29,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.coroutineScope
 import com.google.android.material.slider.Slider
@@ -388,10 +389,13 @@ class MainActivity : AppCompatActivity() {
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
         inputTextSize.value = if (generationViewModel.language.value == HWGLanguage.CHINESE) 4f else 3f
 
+        val inputForceRandomSeed = dialogView.findViewById<SwitchCompat>(R.id.force_random_seed)
+
         dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
             val textSize = inputTextSize.value
             val profile = spinner.selectedItem as GenerationProfile
-            generationViewModel.generateHandwriting(inputText.text.toString().trim(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
+            val forceRandomSeed = inputForceRandomSeed.isChecked
+            generationViewModel.generateHandwriting(inputText.text.toString().trim(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform(), forceRandomSeed)
         }
         dialogBuilder.setNegativeButton(android.R.string.cancel, null)
 
