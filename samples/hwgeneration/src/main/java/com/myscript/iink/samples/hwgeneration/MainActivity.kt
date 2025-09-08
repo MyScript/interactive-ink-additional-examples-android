@@ -435,7 +435,25 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
         } else if(language == HWGLanguage.CHINESE) {
             profileImage.visibility = View.GONE
             profileText.visibility = View.VISIBLE
-            profileText.text = "Profile ${position}"
+            val profileNumber = when (generationProfile.id) {
+                PredefinedHandwritingProfileId.DEFAULT -> "1"
+                PredefinedHandwritingProfileId.PROFILE_1 -> "2"
+                PredefinedHandwritingProfileId.PROFILE_2 -> "3"
+                PredefinedHandwritingProfileId.PROFILE_3 -> "4"
+                PredefinedHandwritingProfileId.PROFILE_4 -> "5"
+                PredefinedHandwritingProfileId.PROFILE_5 -> "6"
+                PredefinedHandwritingProfileId.PROFILE_6 -> "7"
+                PredefinedHandwritingProfileId.PROFILE_7 -> "8"
+                PredefinedHandwritingProfileId.PROFILE_8 -> "9"
+                PredefinedHandwritingProfileId.PROFILE_9 -> "10"
+                PredefinedHandwritingProfileId.PROFILE_10 -> "11"
+                PredefinedHandwritingProfileId.PROFILE_11 -> "12"
+                PredefinedHandwritingProfileId.PROFILE_12 -> "13"
+                PredefinedHandwritingProfileId.PROFILE_13 -> "14"
+                PredefinedHandwritingProfileId.PROFILE_14 -> "15"
+                else -> "?"
+            }
+            profileText.text = "Profile $profileNumber"
         } else {
             profileImage.setImageResource(when (generationProfile.id) {
                 PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
