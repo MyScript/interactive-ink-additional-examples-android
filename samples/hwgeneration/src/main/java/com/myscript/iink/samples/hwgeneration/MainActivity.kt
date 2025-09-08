@@ -386,6 +386,7 @@ class MainActivity : AppCompatActivity() {
         spinner.setAdapter(adapter)
 
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
+        inputTextSize.value = if (generationViewModel.language.value == HWGLanguage.CHINESE) 4f else 3f
 
         dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
             val textSize = inputTextSize.value
