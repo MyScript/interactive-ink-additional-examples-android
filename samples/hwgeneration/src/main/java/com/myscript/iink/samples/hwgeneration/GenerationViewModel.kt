@@ -232,7 +232,8 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         })
 
         generator.start("Text", profile, engine.createParameterSet().apply {
-            setBoolean("handwriting-generation.session.force-new-line", false)
+            setBoolean("handwriting-generation.session.preserve-new-line", language.value != HWGLanguage.CHINESE)
+
             setNumber("handwriting-generation.session.seed", if (forceRandomSeed) 0L else -1)
 
             val invertTransform = Transform(transform).apply {
