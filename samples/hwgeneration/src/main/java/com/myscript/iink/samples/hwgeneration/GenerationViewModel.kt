@@ -124,8 +124,12 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
             GenerationProfile.fromPath(file.absolutePath)
         } ?: emptyList()
 
-        val predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
+        var predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
             GenerationProfile.fromId(it)
+        }
+
+        if (_language.value == HWGLanguage.CHINESE) {
+            predefinedProfiles = predefinedProfiles.subList(0, 10)
         }
 
         return userProfiles + predefinedProfiles
