@@ -2,26 +2,20 @@
   "raw-content": {
     "session-time": 100,
     "classification": {
-      "types": [ "text", "shape", "drawing" ]
+      "types": [ "text", "drawing" ]
     },
     "recognition": {
-      "types": [ "text", "shape", "math" ]
+      "types": [ "text" ]
     },
     "convert": {
       "shape-on-hold": true,
-      "types": [ "text", "shape", "math" ]
-    },
-    "shape": {
-      "snap-axis": [ "triangle", "rectangle", "rhombus", "parallelogram", "ellipse" ]
+      "types": [ "text" ]
     },
     "eraser": {
       "erase-precisely": false,
       "dynamic-radius": true
     },
     "auto-connection": true,
-    "interactive-blocks": {
-      "feedback": [ "math" ]
-    },
     "pen": {
       "gestures": [ "scratch-out", "strike-through", "surround", "long-press" ]
     },
