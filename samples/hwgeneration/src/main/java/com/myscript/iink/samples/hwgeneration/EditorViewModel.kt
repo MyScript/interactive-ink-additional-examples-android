@@ -107,7 +107,13 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         override fun onJoin(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
         override fun onInsert(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
         override fun onStrikethrough(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onScratch(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
+        override fun onScratch(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction {
+            return if (isWriting.value == true) {
+                GestureAction.IGNORE
+            } else {
+                GestureAction.APPLY_GESTURE
+            }
+        }
     }
 
     private var contentPackage: ContentPackage? = null
@@ -242,7 +248,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             setSelectionMode(false)
 
             withContext(Dispatchers.Main) {
-                editor.configuration.setBoolean("gesture.enable", false)
                 _isWriting.value = true
             }
 
@@ -282,7 +287,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
             withContext(Dispatchers.Main) {
                 _isWriting.value = false
-                editor.configuration.setBoolean("gesture.enable", true)
             }
         }
     }
