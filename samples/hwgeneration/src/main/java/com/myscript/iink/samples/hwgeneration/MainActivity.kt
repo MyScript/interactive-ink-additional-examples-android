@@ -394,7 +394,7 @@ class MainActivity : AppCompatActivity() {
             val textSize = inputTextSize.value
             val profile = spinner.selectedItem as GenerationProfile
             val forceRandomSeed = inputForceRandomSeed.isChecked
-            generationViewModel.generateHandwriting(inputText.text.toString().trim(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform(), forceRandomSeed)
+            generationViewModel.generateHandwriting(inputText.text.toString(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform(), forceRandomSeed)
         }
         dialogBuilder.setNegativeButton(android.R.string.cancel, null)
 
