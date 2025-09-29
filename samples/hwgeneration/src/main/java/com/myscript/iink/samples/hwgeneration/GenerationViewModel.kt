@@ -215,7 +215,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         var currentPointerEventIndex = 0
         var wordIndex = 0
 
-        val words = sentence.split(" ").filter { it.isNotEmpty() }
+        val words = sentence.split(" ").map { "$it " }.filter { it.isNotEmpty() }
 
         generator.setListener(object: IHandwritingGeneratorListener {
             override fun onPartialResult(generator: HandwritingGenerator, result: HandwritingResult) {
