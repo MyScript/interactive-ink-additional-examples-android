@@ -214,6 +214,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setSelectionMode(enabled: Boolean) {
+        editor?.waitForIdle()
         if (enabled) {
             editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.SELECTOR)
         } else {
