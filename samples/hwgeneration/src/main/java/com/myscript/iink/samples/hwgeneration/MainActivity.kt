@@ -34,7 +34,6 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.coroutineScope
 import com.google.android.material.slider.Slider
 import com.myscript.iink.Engine
-import com.myscript.iink.PredefinedHandwritingProfileId
 import com.myscript.iink.samples.hwgeneration.databinding.ActivityMainBinding
 import com.myscript.iink.uireferenceimplementation.EditorView
 import kotlinx.coroutines.Dispatchers
@@ -440,42 +439,25 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
         } else if(language == HWGLanguage.CHINESE) {
             profileImage.visibility = View.GONE
             profileText.visibility = View.VISIBLE
-            val profileNumber = when (generationProfile.id) {
-                PredefinedHandwritingProfileId.DEFAULT -> "1"
-                PredefinedHandwritingProfileId.PROFILE_1 -> "2"
-                PredefinedHandwritingProfileId.PROFILE_2 -> "3"
-                PredefinedHandwritingProfileId.PROFILE_3 -> "4"
-                PredefinedHandwritingProfileId.PROFILE_4 -> "5"
-                PredefinedHandwritingProfileId.PROFILE_5 -> "6"
-                PredefinedHandwritingProfileId.PROFILE_6 -> "7"
-                PredefinedHandwritingProfileId.PROFILE_7 -> "8"
-                PredefinedHandwritingProfileId.PROFILE_8 -> "9"
-                PredefinedHandwritingProfileId.PROFILE_9 -> "10"
-                PredefinedHandwritingProfileId.PROFILE_10 -> "11"
-                PredefinedHandwritingProfileId.PROFILE_11 -> "12"
-                PredefinedHandwritingProfileId.PROFILE_12 -> "13"
-                PredefinedHandwritingProfileId.PROFILE_13 -> "14"
-                PredefinedHandwritingProfileId.PROFILE_14 -> "15"
-                else -> "?"
-            }
-            profileText.text = "Profile $profileNumber"
+            profileText.text = "Profile ${generationProfile.index}"
         } else {
-            profileImage.setImageResource(when (generationProfile.id) {
-                PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
-                PredefinedHandwritingProfileId.PROFILE_1 -> R.drawable.generation_1
-                PredefinedHandwritingProfileId.PROFILE_2 -> R.drawable.generation_2
-                PredefinedHandwritingProfileId.PROFILE_3 -> R.drawable.generation_3
-                PredefinedHandwritingProfileId.PROFILE_4 -> R.drawable.generation_4
-                PredefinedHandwritingProfileId.PROFILE_5 -> R.drawable.generation_5
-                PredefinedHandwritingProfileId.PROFILE_6 -> R.drawable.generation_6
-                PredefinedHandwritingProfileId.PROFILE_7 -> R.drawable.generation_7
-                PredefinedHandwritingProfileId.PROFILE_8 -> R.drawable.generation_8
-                PredefinedHandwritingProfileId.PROFILE_9 -> R.drawable.generation_9
-                PredefinedHandwritingProfileId.PROFILE_10 -> R.drawable.generation_10
-                PredefinedHandwritingProfileId.PROFILE_11 -> R.drawable.generation_11
-                PredefinedHandwritingProfileId.PROFILE_12 -> R.drawable.generation_12
-                PredefinedHandwritingProfileId.PROFILE_13 -> R.drawable.generation_13
-                PredefinedHandwritingProfileId.PROFILE_14 -> R.drawable.generation_14
+            profileImage.setImageResource(when (generationProfile.index) {
+                0 -> R.drawable.generation_0
+                1 -> R.drawable.generation_1
+                2 -> R.drawable.generation_2
+                3 -> R.drawable.generation_3
+                4 -> R.drawable.generation_4
+                5 -> R.drawable.generation_5
+                6 -> R.drawable.generation_6
+                7 -> R.drawable.generation_7
+                8 -> R.drawable.generation_8
+                9 -> R.drawable.generation_9
+                10 -> R.drawable.generation_10
+                11 -> R.drawable.generation_11
+                12 -> R.drawable.generation_12
+                13 -> R.drawable.generation_13
+                14 -> R.drawable.generation_14
+                else -> R.drawable.generation_0
             })
             profileImage.visibility = View.VISIBLE
             profileText.visibility = View.GONE

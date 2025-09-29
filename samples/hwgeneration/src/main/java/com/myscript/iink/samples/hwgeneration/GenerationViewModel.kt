@@ -17,7 +17,6 @@ import com.myscript.iink.HandwritingResult
 import com.myscript.iink.IHandwritingGeneratorListener
 import com.myscript.iink.MimeType
 import com.myscript.iink.PointerEvent
-import com.myscript.iink.PredefinedHandwritingProfileId
 import com.myscript.iink.graphics.Transform
 import com.myscript.iink.samples.hwgeneration.None.word
 import kotlinx.coroutines.Dispatchers
@@ -40,16 +39,16 @@ data class Message(
 }
 
 data class GenerationProfile(
-    val id: PredefinedHandwritingProfileId = PredefinedHandwritingProfileId.DEFAULT,
+    val index: Int = 0,
     val profilePath: String? = null) {
 
     companion object {
-        fun fromId(id: PredefinedHandwritingProfileId): GenerationProfile {
+        fun fromId(id: Int): GenerationProfile {
             return GenerationProfile(id, null)
         }
 
         fun fromPath(path: String): GenerationProfile {
-            return GenerationProfile(PredefinedHandwritingProfileId.DEFAULT, path)
+            return GenerationProfile(-1, path)
         }
     }
 }
@@ -120,16 +119,16 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     }
 
     fun getProfiles(): List<GenerationProfile> {
+        val generator = generator ?: return emptyList()
+
         val userProfiles = File(getApplication<Application>().filesDir, PROFILE_FOLDER).listFiles()?.map { file ->
             GenerationProfile.fromPath(file.absolutePath)
         } ?: emptyList()
 
-        var predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
+        var predefinedProfiles = generator.createHandwritingProfileBuilder().predefinedProfileCount.let { count ->
+            (0 until count).toList()
+        }.map {
             GenerationProfile.fromId(it)
-        }
-
-        if (_language.value == HWGLanguage.CHINESE) {
-            predefinedProfiles = predefinedProfiles.subList(0, 10)
         }
 
         return userProfiles + predefinedProfiles
@@ -209,7 +208,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         val profile = if (generationProfile.profilePath != null && File(generationProfile.profilePath).exists()) {
             builder.load(generationProfile.profilePath)
         } else {
-            builder.createFromId(generationProfile.id)
+            builder.getPredefinedProfileAt(generationProfile.index)
         }
 
         val indexLock = Any()
