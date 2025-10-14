@@ -429,19 +429,35 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
 
         val generationProfile = getItem(position)
 
-        val profileImage = view.findViewById<ImageView>(R.id.profile_image)
+        val profileImageEn = view.findViewById<ImageView>(R.id.profile_image_en)
+        val profileImageZh = view.findViewById<ImageView>(R.id.profile_image_zh)
         val profileText = view.findViewById<TextView>(R.id.profile_text)
 
         if (generationProfile.profilePath != null) {
-            profileImage.visibility = View.GONE
+            profileImageEn.visibility = View.GONE
+            profileImageZh.visibility = View.GONE
             profileText.visibility = View.VISIBLE
             profileText.text = File(generationProfile.profilePath).nameWithoutExtension
         } else if(language == HWGLanguage.CHINESE) {
-            profileImage.visibility = View.GONE
-            profileText.visibility = View.VISIBLE
-            profileText.text = "Profile ${generationProfile.index}"
+
+            profileImageZh.setImageResource(when (generationProfile.index) {
+                0 -> R.drawable.zh_profile_0
+                1 -> R.drawable.zh_profile_1
+                2 -> R.drawable.zh_profile_2
+                3 -> R.drawable.zh_profile_3
+                4 -> R.drawable.zh_profile_4
+                5 -> R.drawable.zh_profile_5
+                6 -> R.drawable.zh_profile_6
+                7 -> R.drawable.zh_profile_7
+                8 -> R.drawable.zh_profile_8
+                9 -> R.drawable.zh_profile_9
+                else -> R.drawable.zh_profile_0
+            })
+            profileImageZh.visibility = View.VISIBLE
+            profileImageEn.visibility = View.GONE
+            profileText.visibility = View.GONE
         } else {
-            profileImage.setImageResource(when (generationProfile.index) {
+            profileImageEn.setImageResource(when (generationProfile.index) {
                 0 -> R.drawable.generation_0
                 1 -> R.drawable.generation_1
                 2 -> R.drawable.generation_2
@@ -459,7 +475,8 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
                 14 -> R.drawable.generation_14
                 else -> R.drawable.generation_0
             })
-            profileImage.visibility = View.VISIBLE
+            profileImageEn.visibility = View.VISIBLE
+            profileImageZh.visibility = View.GONE
             profileText.visibility = View.GONE
         }
 
