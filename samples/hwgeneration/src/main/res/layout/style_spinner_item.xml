@@ -19,8 +19,9 @@
 
     <ImageView
         android:id="@+id/profile_image_zh"
-        android:layout_width="200dp"
+        android:layout_width="wrap_content"
         android:layout_height="64dp"
-        android:gravity="start|center_vertical"/>
+        android:adjustViewBounds="true"
+        android:gravity="start|center_vertical" />
 
 </FrameLayout>
