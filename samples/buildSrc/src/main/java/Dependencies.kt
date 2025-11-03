@@ -6,12 +6,12 @@ object Versions {
     const val kotlin = "1.9.23"
 
     // configure versions used by dependencies to harmonize and update easily across all components
-    const val compileSdk = 34
+    const val compileSdk = 35
     const val minSdk = 23
-    const val targetSdk = 34
+    const val targetSdk = 35
 
     // native build tools
-    const val ndk = "21.4.7075529"
+    const val ndk = "27.3.13750724"
     const val cmake = "3.22.1"
 
     // android
