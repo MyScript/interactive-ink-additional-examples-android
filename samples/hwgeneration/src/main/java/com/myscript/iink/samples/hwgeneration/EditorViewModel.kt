@@ -107,7 +107,13 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         override fun onJoin(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
         override fun onInsert(editor: Editor, tool: PointerTool?, gestureStrokeId: String, before: NativeObjectHandle<ContentSelection>, after: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
         override fun onStrikethrough(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
-        override fun onScratch(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction = GestureAction.APPLY_GESTURE
+        override fun onScratch(editor: Editor, tool: PointerTool?, gestureStrokeId: String, selection: NativeObjectHandle<ContentSelection>): GestureAction {
+            return if (isWriting.value == true) {
+                GestureAction.IGNORE
+            } else {
+                GestureAction.APPLY_GESTURE
+            }
+        }
     }
 
     private var contentPackage: ContentPackage? = null
@@ -153,6 +159,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
                     val configuration = context.assets.open("parts/interactivity.json").bufferedReader().use(Reader::readText)
                     editor.configuration.inject(configuration)
+
+                    editor.configuration.setString("lang", "zh_CN")
+
                     editor.part = contentPart
                     editor.setGestureHandler(gestureHandler)
 
@@ -205,6 +214,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setSelectionMode(enabled: Boolean) {
+        editor?.waitForIdle()
         if (enabled) {
             editor?.toolController?.setToolForType(PointerType.PEN, PointerTool.SELECTOR)
         } else {
@@ -236,9 +246,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         if (_isWriting.value == true) return
 
         viewModelScope.launch(Dispatchers.Default) {
-            val previousGestureConf = editor.configuration.getBoolean("gesture.enable")
-            editor.configuration.setBoolean("gesture.enable", false)
-
             setSelectionMode(false)
 
             withContext(Dispatchers.Main) {
@@ -278,8 +285,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                     return@launch
                 }
             }
-
-            editor.configuration.setBoolean("gesture.enable", previousGestureConf)
 
             withContext(Dispatchers.Main) {
                 _isWriting.value = false

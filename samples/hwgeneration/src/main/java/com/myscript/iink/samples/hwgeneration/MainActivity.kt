@@ -29,11 +29,11 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.coroutineScope
 import com.google.android.material.slider.Slider
 import com.myscript.iink.Engine
-import com.myscript.iink.PredefinedHandwritingProfileId
 import com.myscript.iink.samples.hwgeneration.databinding.ActivityMainBinding
 import com.myscript.iink.uireferenceimplementation.EditorView
 import kotlinx.coroutines.Dispatchers
@@ -210,6 +210,10 @@ class MainActivity : AppCompatActivity() {
             }
             generationViewModel.dismissMessage(message)
         }
+
+        generationViewModel.language.observe(this) { language ->
+            invalidateOptionsMenu()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -233,6 +237,13 @@ class MainActivity : AppCompatActivity() {
 
         menu?.findItem(R.id.editor_menu_build_profile_from_file)?.isEnabled = !isProfileBuilding && !isWriting
         menu?.findItem(R.id.editor_menu_build_profile)?.isEnabled = !isProfileBuilding && !isWriting && !isEditorEmpty
+
+        generationViewModel.language.value?.let { language ->
+            menu?.findItem(R.id.editor_menu_language)?.title = when (language) {
+                HWGLanguage.CHINESE -> getString(R.string.menu_language_en)
+                HWGLanguage.ENGLISH -> getString(R.string.menu_language_zh)
+            }
+        }
 
         return super.onPrepareOptionsMenu(menu)
     }
@@ -265,6 +276,16 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.editor_menu_build_profile -> {
                 editorViewModel.setSelectionMode(true)
+                true
+            }
+            R.id.editor_menu_language -> {
+                generationViewModel.language.value?.let { language ->
+                    val newLanguage = when (language) {
+                        HWGLanguage.CHINESE -> HWGLanguage.ENGLISH
+                        HWGLanguage.ENGLISH -> HWGLanguage.CHINESE
+                    }
+                    generationViewModel.setLanguage(newLanguage)
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -361,15 +382,19 @@ class MainActivity : AppCompatActivity() {
         val inputText = dialogView.findViewById<EditText>(R.id.text_input)
 
         val spinner = dialogView.findViewById<Spinner>(R.id.profile_dropdown)
-        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles())
+        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles(), generationViewModel.language.value ?: HWGLanguage.ENGLISH)
         spinner.setAdapter(adapter)
 
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
+        inputTextSize.value = if (generationViewModel.language.value == HWGLanguage.CHINESE) 4f else 3f
+
+        val inputForceRandomSeed = dialogView.findViewById<SwitchCompat>(R.id.force_random_seed)
 
         dialogBuilder.setPositiveButton(android.R.string.ok) { _, _ ->
             val textSize = inputTextSize.value
             val profile = spinner.selectedItem as GenerationProfile
-            generationViewModel.generateHandwriting(inputText.text.toString().trim(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform())
+            val forceRandomSeed = inputForceRandomSeed.isChecked
+            generationViewModel.generateHandwriting(inputText.text.toString(), profile, textSize, x, y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform(), forceRandomSeed)
         }
         dialogBuilder.setNegativeButton(android.R.string.cancel, null)
 
@@ -385,7 +410,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>) : BaseAdapter() {
+class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>, private val language: HWGLanguage) : BaseAdapter() {
 
     override fun getCount(): Int {
         return profiles.size
@@ -404,32 +429,54 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
 
         val generationProfile = getItem(position)
 
-        val profileImage = view.findViewById<ImageView>(R.id.profile_image)
+        val profileImageEn = view.findViewById<ImageView>(R.id.profile_image_en)
+        val profileImageZh = view.findViewById<ImageView>(R.id.profile_image_zh)
         val profileText = view.findViewById<TextView>(R.id.profile_text)
 
         if (generationProfile.profilePath != null) {
-            profileImage.visibility = View.GONE
+            profileImageEn.visibility = View.GONE
+            profileImageZh.visibility = View.GONE
             profileText.visibility = View.VISIBLE
             profileText.text = File(generationProfile.profilePath).nameWithoutExtension
-        } else {
-            profileImage.setImageResource(when (generationProfile.id) {
-                PredefinedHandwritingProfileId.DEFAULT -> R.drawable.generation_0
-                PredefinedHandwritingProfileId.PROFILE_1 -> R.drawable.generation_1
-                PredefinedHandwritingProfileId.PROFILE_2 -> R.drawable.generation_2
-                PredefinedHandwritingProfileId.PROFILE_3 -> R.drawable.generation_3
-                PredefinedHandwritingProfileId.PROFILE_4 -> R.drawable.generation_4
-                PredefinedHandwritingProfileId.PROFILE_5 -> R.drawable.generation_5
-                PredefinedHandwritingProfileId.PROFILE_6 -> R.drawable.generation_6
-                PredefinedHandwritingProfileId.PROFILE_7 -> R.drawable.generation_7
-                PredefinedHandwritingProfileId.PROFILE_8 -> R.drawable.generation_8
-                PredefinedHandwritingProfileId.PROFILE_9 -> R.drawable.generation_9
-                PredefinedHandwritingProfileId.PROFILE_10 -> R.drawable.generation_10
-                PredefinedHandwritingProfileId.PROFILE_11 -> R.drawable.generation_11
-                PredefinedHandwritingProfileId.PROFILE_12 -> R.drawable.generation_12
-                PredefinedHandwritingProfileId.PROFILE_13 -> R.drawable.generation_13
-                PredefinedHandwritingProfileId.PROFILE_14 -> R.drawable.generation_14
+        } else if(language == HWGLanguage.CHINESE) {
+
+            profileImageZh.setImageResource(when (generationProfile.index) {
+                0 -> R.drawable.zh_profile_0
+                1 -> R.drawable.zh_profile_1
+                2 -> R.drawable.zh_profile_2
+                3 -> R.drawable.zh_profile_3
+                4 -> R.drawable.zh_profile_4
+                5 -> R.drawable.zh_profile_5
+                6 -> R.drawable.zh_profile_6
+                7 -> R.drawable.zh_profile_7
+                8 -> R.drawable.zh_profile_8
+                9 -> R.drawable.zh_profile_9
+                else -> R.drawable.zh_profile_0
             })
-            profileImage.visibility = View.VISIBLE
+            profileImageZh.visibility = View.VISIBLE
+            profileImageEn.visibility = View.GONE
+            profileText.visibility = View.GONE
+        } else {
+            profileImageEn.setImageResource(when (generationProfile.index) {
+                0 -> R.drawable.generation_0
+                1 -> R.drawable.generation_1
+                2 -> R.drawable.generation_2
+                3 -> R.drawable.generation_3
+                4 -> R.drawable.generation_4
+                5 -> R.drawable.generation_5
+                6 -> R.drawable.generation_6
+                7 -> R.drawable.generation_7
+                8 -> R.drawable.generation_8
+                9 -> R.drawable.generation_9
+                10 -> R.drawable.generation_10
+                11 -> R.drawable.generation_11
+                12 -> R.drawable.generation_12
+                13 -> R.drawable.generation_13
+                14 -> R.drawable.generation_14
+                else -> R.drawable.generation_0
+            })
+            profileImageEn.visibility = View.VISIBLE
+            profileImageZh.visibility = View.GONE
             profileText.visibility = View.GONE
         }
 
