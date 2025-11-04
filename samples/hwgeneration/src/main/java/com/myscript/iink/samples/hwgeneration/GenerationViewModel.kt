@@ -17,7 +17,6 @@ import com.myscript.iink.HandwritingResult
 import com.myscript.iink.IHandwritingGeneratorListener
 import com.myscript.iink.MimeType
 import com.myscript.iink.PointerEvent
-import com.myscript.iink.PredefinedHandwritingProfileId
 import com.myscript.iink.graphics.Transform
 import com.myscript.iink.samples.hwgeneration.None.word
 import kotlinx.coroutines.Dispatchers
@@ -40,23 +39,28 @@ data class Message(
 }
 
 data class GenerationProfile(
-    val id: PredefinedHandwritingProfileId = PredefinedHandwritingProfileId.DEFAULT,
+    val index: Int = 0,
     val profilePath: String? = null) {
 
     companion object {
-        fun fromId(id: PredefinedHandwritingProfileId): GenerationProfile {
+        fun fromId(id: Int): GenerationProfile {
             return GenerationProfile(id, null)
         }
 
         fun fromPath(path: String): GenerationProfile {
-            return GenerationProfile(PredefinedHandwritingProfileId.DEFAULT, path)
+            return GenerationProfile(-1, path)
         }
     }
 }
 
+enum class HWGLanguage {
+    ENGLISH,
+    CHINESE
+}
+
 class GenerationViewModel(application: Application, private val engine: Engine) : AndroidViewModel(application) {
 
-    private val generator: HandwritingGenerator
+    private var generator: HandwritingGenerator? = null
 
     private val _isGenerating = MutableLiveData(false)
     val isGenerating: LiveData<Boolean>
@@ -70,22 +74,44 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     val hwrResults: LiveData<List<HWRResult>>
         get() = _hwrResults
 
-    private var _message = MutableLiveData<Message?>(null)
+    private val _message = MutableLiveData<Message?>(null)
     val message: LiveData<Message?>
         get() = _message
+
+    private val _language = MutableLiveData(DEFAULT_LANGUAGE)
+    val language: LiveData<HWGLanguage>
+        get() = _language
 
     init {
         _isGenerating.value = false
 
-        generator = engine.createHandwritingGenerator()
+        setLanguage(DEFAULT_LANGUAGE)
     }
 
     private interface HWResultListener {
         fun onResult(result: HWRResult)
     }
 
+    fun setLanguage(language: HWGLanguage) {
+        if (generator != null && _language.value == language) return
+
+        generator?.cancel()
+
+        engine.configuration.apply {
+            when (language) {
+                HWGLanguage.ENGLISH -> setString("handwriting-generation.init.resource","en-hw-gen.res")
+                HWGLanguage.CHINESE -> setString("handwriting-generation.init.resource","zh-hw-gen.res")
+            }
+        }
+        generator = engine.createHandwritingGenerator()
+
+        viewModelScope.launch(Dispatchers.Main) {
+            _language.value = language
+        }
+    }
+
     fun cancel() {
-        generator.cancel()
+        generator?.cancel()
         viewModelScope.launch(Dispatchers.Main) {
             _isGenerating.value = false
             _hwrResults.value = emptyList()
@@ -93,11 +119,15 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     }
 
     fun getProfiles(): List<GenerationProfile> {
+        val generator = generator ?: return emptyList()
+
         val userProfiles = File(getApplication<Application>().filesDir, PROFILE_FOLDER).listFiles()?.map { file ->
             GenerationProfile.fromPath(file.absolutePath)
         } ?: emptyList()
 
-        val predefinedProfiles = PredefinedHandwritingProfileId.entries.toList().map {
+        var predefinedProfiles = generator.createHandwritingProfileBuilder().predefinedProfileCount.let { count ->
+            (0 until count).toList()
+        }.map {
             GenerationProfile.fromId(it)
         }
 
@@ -113,6 +143,8 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     }
 
     private fun buildProfileInternal(selection: ContentSelection? = null, iinkFile: File? = null) {
+        val generator = generator ?: return
+
         viewModelScope.launch(Dispatchers.Main) {
             _isProfileBuilding.value = true
 
@@ -147,14 +179,14 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         }
     }
 
-    fun generateHandwriting(inputSentence: String, generationProfile: GenerationProfile, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform) {
+    fun generateHandwriting(inputSentence: String, generationProfile: GenerationProfile, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform, forceRandomSeed: Boolean = false) {
         if (inputSentence.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.Main) {
             _isGenerating.value = true
 
             withContext(Dispatchers.IO) {
-                generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, object : HWResultListener {
+                generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, forceRandomSeed, object : HWResultListener {
                     override fun onResult(result: HWRResult) {
                         viewModelScope.launch(Dispatchers.Main) {
                             val previousList: MutableList<HWRResult> = _hwrResults.value?.toMutableList() ?: mutableListOf()
@@ -168,20 +200,22 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         }
     }
 
-    private fun generate(sentence: String, generationProfile: GenerationProfile, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, listener: HWResultListener): HWRResult {
+    private fun generate(sentence: String, generationProfile: GenerationProfile, textSize: Float, xOffset: Float, yOffset: Float, width: Float, transform: Transform, forceRandomSeed: Boolean, listener: HWResultListener): HWRResult {
+        val generator = generator ?: return None
+
         val builder = generator.createHandwritingProfileBuilder()
 
         val profile = if (generationProfile.profilePath != null && File(generationProfile.profilePath).exists()) {
             builder.load(generationProfile.profilePath)
         } else {
-            builder.createFromId(generationProfile.id)
+            builder.getPredefinedProfileAt(generationProfile.index)
         }
 
         val indexLock = Any()
         var currentPointerEventIndex = 0
         var wordIndex = 0
 
-        val words = sentence.split(" ").filter { it.isNotEmpty() }
+        val words = sentence.split(" ").map { "$it " }
 
         generator.setListener(object: IHandwritingGeneratorListener {
             override fun onPartialResult(generator: HandwritingGenerator, result: HandwritingResult) {
@@ -203,7 +237,9 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         })
 
         generator.start("Text", profile, engine.createParameterSet().apply {
-            setBoolean("handwriting-generation.session.force-new-line", false)
+            setBoolean("handwriting-generation.session.preserve-new-line", language.value != HWGLanguage.CHINESE)
+
+            setNumber("handwriting-generation.session.seed", if (forceRandomSeed) 0L else -1)
 
             val invertTransform = Transform(transform).apply {
                 invert()
@@ -254,6 +290,8 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         private const val LINE_GAP_RATIO = 3
 
         private const val PROFILE_FOLDER = "profiles"
+
+        private val DEFAULT_LANGUAGE = HWGLanguage.ENGLISH
     }
 }
 

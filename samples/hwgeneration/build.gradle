@@ -3,6 +3,8 @@ plugins {
     id 'kotlin-android'
 }
 
+ext.additionalLanguages = ["zh_CN"]
+
 android {
     namespace 'com.myscript.iink.samples.hwgeneration'
 
