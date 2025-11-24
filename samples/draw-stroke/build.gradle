@@ -1,0 +1,29 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace "com.myscript.draw_stroke_example"
+
+    compileSdk Versions.compileSdk
+
+    defaultConfig {
+        applicationId "com.myscript.draw_stroke_example"
+
+        minSdk Versions.minSdk
+        targetSdk Versions.targetSdk
+
+        versionCode project.ext.iinkVersionCode
+        versionName project.ext.iinkVersionName
+
+        vectorDrawables.useSupportLibrary true
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:${Versions.appcompat}"
+    implementation project(':UIReferenceImplementation')
+
+    implementation project(':myscript-certificate')
+}

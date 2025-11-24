@@ -18,6 +18,7 @@ def projects = [
         ':offscreen-interactivity'    : file("$settingsDir/offscreen-interactivity"),
         ':keyboard-input'             : file("$settingsDir/keyboard-input"),
         ':hwgeneration'               : file("$settingsDir/hwgeneration"),
+        ':draw-stroke'               : file("$settingsDir/draw-stroke"),
         // MyScript certificate -> this should be empty
         ':myscript-certificate'       : file("$settingsDir/certificate"),
         // MyScript iink UI reference implementation.
