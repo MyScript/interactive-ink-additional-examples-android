@@ -127,6 +127,8 @@ class InkViewModel(
     val iinkJIIX: LiveData<String>
         get() = _iinkJIIX
 
+    var fullJIIX = ""
+
     private var offscreenEditor by autoCloseable<OffscreenEditor>()
     private var currentPart by autoCloseable<ContentPart>()
 
@@ -432,6 +434,9 @@ class InkViewModel(
 
                     })
                 } ?: ""
+
+                fullJIIX = offscreenEditor?.export_(emptyArray(), MimeType.JIIX, engine?.createParameterSet()) ?: ""
+
                 _recognitionFeedback.value = _recognitionFeedback.value?.copy(items = adjustedWords)
             }
         }

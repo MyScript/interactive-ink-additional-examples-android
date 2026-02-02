@@ -19,18 +19,5 @@
     "pen": {
       "gestures": [ "scratch-out", "strike-through" ]
     }
-  },
-  "export": {
-    "jiix": {
-      "text": {
-        "chars": true,
-        "words": true
-      },
-      "bounding-box": true,
-      "strokes": false,
-      "glyphs": false,
-      "primitives": false,
-      "ids": true
-    }
   }
 }
