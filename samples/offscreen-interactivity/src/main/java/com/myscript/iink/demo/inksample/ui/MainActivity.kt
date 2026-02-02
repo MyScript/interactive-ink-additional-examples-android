@@ -9,6 +9,8 @@ import android.content.Context
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
 import android.view.View
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.webkit.WebSettings
 import android.webkit.WebViewClient
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +22,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import com.microsoft.device.ink.InkView
+import com.myscript.iink.offscreen.demo.R
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
 import java.io.File
 
@@ -113,6 +116,36 @@ class MainActivity : AppCompatActivity() {
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("jiix", iinkJiix.text)
                 clipboard.setPrimaryClip(clip)
+
+                val initialDimen = resources.getDimension(R.dimen.iink_model_preview_size).toInt()
+                if (iinkJiixLayout.layoutParams.width == initialDimen) {
+                    iinkContainer.layoutParams = iinkContainer.layoutParams.apply {
+                        height = MATCH_PARENT
+                        width = MATCH_PARENT
+                    }
+                    iinkJiixLayout.layoutParams = iinkJiixLayout.layoutParams.apply {
+                        height = MATCH_PARENT
+                        width = MATCH_PARENT
+                    }
+
+                    iinkJiix.post {
+                        iinkJiix.text = inkViewModel.fullJIIX
+                    }
+                } else {
+                    iinkContainer.layoutParams = iinkContainer.layoutParams.apply {
+                        height = WRAP_CONTENT
+                        width = WRAP_CONTENT
+                    }
+                    iinkJiixLayout.layoutParams = iinkJiixLayout.layoutParams.apply {
+                        height = initialDimen
+                        width = initialDimen
+                    }
+
+                    iinkJiix.post {
+                        iinkJiix.text = inkViewModel.iinkJIIX.value
+                    }
+                }
+
                 true
             }
         }

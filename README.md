@@ -8,7 +8,7 @@ This repository comes in addition with further advanced Android examples that de
 
 ## Installation
 
-1. Clone the examples repository `git clone https://github.com/MyScript/iink_sdk-additional-examples-android.git`.
+1. Clone the examples repository `git clone https://github.com/MyScript/interactive-ink-additional-examples-android.git`.
 
 2. If you already have a certificate go to next step, else claim to receive the free license to start develop your application by following the first steps of [Getting Started](https://developer.myscript.com/getting-started).
 
