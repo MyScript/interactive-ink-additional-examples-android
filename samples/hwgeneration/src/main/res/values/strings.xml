@@ -17,5 +17,6 @@
 
     <string name="menu_build_profile_from_file">Build Profile from file</string>
     <string name="menu_build_profile">Build Profile</string>
+    <string name="menu_beautify">Beautify</string>
 
 </resources>

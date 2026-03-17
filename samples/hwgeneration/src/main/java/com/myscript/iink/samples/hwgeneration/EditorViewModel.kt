@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.myscript.iink.ContentPackage
 import com.myscript.iink.ContentPart
 import com.myscript.iink.ContentSelection
@@ -19,6 +20,7 @@ import com.myscript.iink.Engine
 import com.myscript.iink.GestureAction
 import com.myscript.iink.IEditorListener
 import com.myscript.iink.IGestureHandler
+import com.myscript.iink.MimeType
 import com.myscript.iink.NativeObjectHandle
 import com.myscript.iink.PointerEvent
 import com.myscript.iink.PointerEventType
@@ -270,15 +272,16 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                 try {
                     events.forEachIndexed { index, pointerEvent ->
                         withContext(Dispatchers.Main) {
+                            val timestamp = System.currentTimeMillis()
                             when (pointerEvent.eventType) {
                                 PointerEventType.DOWN -> {
-                                    editor.pointerDown(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerDown(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.MOVE -> {
-                                    editor.pointerMove(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerMove(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.UP -> {
-                                    editor.pointerUp(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerUp(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.CANCEL -> {
                                     editor.pointerCancel(pointerEvent.pointerId)
@@ -309,6 +312,62 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     fun onLongPressConsummed() {
         _onLongPress.value = OnLongPress()
+    }
+
+    data class Sentence(val text: String, val x: Float, val y: Float, var xHeight: Float = 0f)
+
+    private fun parseWords(words: List<JsonResult.Word>, transform: Transform): Sentence {
+        var xStart = 0f
+        var yStart = 0f
+        var sentence = ""
+        words.forEachIndexed { index, word ->
+            if (index == 0) {
+                xStart = word.boundingBox.x
+                yStart = word.boundingBox.y + word.boundingBox.height
+            }
+            sentence += word.label
+        }
+        val startPx = transform.apply(xStart, yStart)
+        return Sentence(sentence, startPx.x, startPx.y)
+    }
+
+    fun clearSelection() {
+        editor?.selection?.let {
+            editor?.erase(it)
+        }
+    }
+
+    fun selectionToText(): List<Sentence> {
+        val editor = requireNotNull(editor)
+
+        val transform = editor.renderer.viewTransform ?: return emptyList()
+        if (!editor.hasSelection()) return emptyList()
+
+        val jiix = editor.export_(editor.selection, MimeType.JIIX, editor.engine.createParameterSet().apply {
+            setBoolean("export.jiix.text.lines", true)
+            setBoolean("export.jiix.strokes", false)
+        })
+
+        val jsonResult = Gson().fromJson(jiix, JsonResult::class.java)
+
+        val sentences = mutableListOf<Sentence>()
+
+        if (jsonResult.elements.isNullOrEmpty()) {
+            parseWords(jsonResult.words, transform).let { sentence ->
+                sentences.add(sentence)
+            }
+        } else {
+            jsonResult.elements.forEach { element ->
+                parseWords(element.words, transform).let { sentence ->
+                    if (element.lines != null && element.lines.isNotEmpty()) {
+                        sentence.xHeight = element.lines[0].xHeight
+                    }
+                    sentences.add(sentence)
+                }
+            }
+        }
+
+        return sentences
     }
 }
 

@@ -181,20 +181,23 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
 
     fun generateHandwriting(inputSentence: String, generationProfile: GenerationProfile, inputTextSize: Float, inputX: Float, inputY: Float, width: Float, transform: Transform, forceRandomSeed: Boolean = false) {
         if (inputSentence.isEmpty()) return
+        val generator = generator ?: return
 
         viewModelScope.launch(Dispatchers.Main) {
             _isGenerating.value = true
 
             withContext(Dispatchers.IO) {
-                generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, forceRandomSeed, object : HWResultListener {
-                    override fun onResult(result: HWRResult) {
-                        viewModelScope.launch(Dispatchers.Main) {
-                            val previousList: MutableList<HWRResult> = _hwrResults.value?.toMutableList() ?: mutableListOf()
-                            previousList.add(result)
-                            _hwrResults.value = previousList
+                synchronized(generator) {
+                    generate(inputSentence, generationProfile, inputTextSize, inputX, inputY, width, transform, forceRandomSeed, object : HWResultListener {
+                        override fun onResult(result: HWRResult) {
+                            viewModelScope.launch(Dispatchers.Main) {
+                                val previousList: MutableList<HWRResult> = _hwrResults.value?.toMutableList() ?: mutableListOf()
+                                previousList.add(result)
+                                _hwrResults.value = previousList
+                            }
                         }
-                    }
-                })
+                    })
+                }
             }
             _isGenerating.value = false
         }

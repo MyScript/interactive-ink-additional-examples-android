@@ -7,4 +7,10 @@
         app:showAsAction="always"
         android:title="@string/menu_build_profile"/>
 
+
+    <item
+        android:id="@+id/action_menu_beautify"
+        app:showAsAction="always"
+        android:title="@string/menu_beautify"/>
+
 </menu>

@@ -88,6 +88,25 @@ class MainActivity : AppCompatActivity() {
                     }
                     true
                 }
+                R.id.action_menu_beautify -> {
+                    editorViewModel.selection.value?.let {
+
+                        val sentences = editorViewModel.selectionToText()
+                        editorViewModel.clearSelection()
+
+                        val defaultProfile = generationViewModel.getProfiles().let { profiles ->
+                            profiles.firstOrNull { profile -> profile.profilePath == null }
+                        }
+                        if (defaultProfile != null) {
+                            sentences.forEach { sentence ->
+                                // At the moment only the first sentence is working.
+//                                val sentence = sentences.firstOrNull() ?: return@let
+                                generationViewModel.generateHandwriting(sentence.text, defaultProfile, sentence.xHeight, sentence.x, sentence.y, editorView?.width?.toFloat() ?: 0f, editorViewModel.transform(), forceRandomSeed = true)
+                            }
+                        }
+                    }
+                    true
+                }
                 else -> false
             }
         }
