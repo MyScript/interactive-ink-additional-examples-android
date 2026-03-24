@@ -40,5 +40,13 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
+
+    implementation "androidx.ink:ink-authoring:${Versions.google_ink}"
+    implementation "androidx.ink:ink-brush:${Versions.google_ink}"
+    implementation "androidx.ink:ink-geometry:${Versions.google_ink}"
+    implementation "androidx.ink:ink-nativeloader:${Versions.google_ink}"
+    implementation "androidx.ink:ink-rendering:${Versions.google_ink}"
+    implementation "androidx.ink:ink-strokes:${Versions.google_ink}"
+    implementation "androidx.input:input-motionprediction:${Versions.input}"
 }
 

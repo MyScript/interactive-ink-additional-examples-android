@@ -21,7 +21,8 @@ import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
-import com.microsoft.device.ink.InkView
+import com.google.ink.GoogleInkStroke
+import com.google.ink.GoogleInkStrokeView
 import com.myscript.iink.offscreen.demo.R
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
 import java.io.File
@@ -203,11 +204,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Listen for strokes from InkView.InputManager
+     * Listen for strokes from GoogleInkStrokeView
      */
-    inner class StrokesListener: InkView.StrokesListener {
-        override fun onStrokeAdded(brush: InkView.Brush) {
-            inkViewModel.addStroke(brush)
+    inner class StrokesListener: GoogleInkStrokeView.StrokesListener {
+        override fun onStrokeAdded(stroke: GoogleInkStroke) {
+            inkViewModel.addStroke(stroke)
         }
     }
 }

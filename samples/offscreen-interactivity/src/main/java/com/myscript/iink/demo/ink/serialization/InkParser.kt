@@ -2,32 +2,38 @@
 
 package com.myscript.iink.demo.ink.serialization
 
+import androidx.ink.strokes.MutableStrokeInputBatch
+import androidx.ink.strokes.Stroke
+import androidx.ink.strokes.StrokeInput
 import com.google.gson.Gson
-import com.microsoft.device.ink.InkView.Brush
-import com.microsoft.device.ink.InputManager
+import com.google.ink.GoogleInkStroke
+import com.google.ink.GoogleInkStrokeView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-fun List<Brush>.json(): String {
-    val inkFormats = mapNotNull { brush ->
-        val stroke = brush.stroke
-        val points = stroke.getPoints()
+fun List<GoogleInkStroke>.json(): String {
+    val inkFormats = mapNotNull { googleInkStroke ->
+        val X = mutableListOf<Float>()
+        val Y = mutableListOf<Float>()
+        val deltas = mutableListOf<Long>()
+        val F = mutableListOf<Float>()
 
-        val initialTimestamp = stroke.getPenInfo(points.first())?.timestamp ?: return@mapNotNull null
-
-        val deltas = points.mapNotNull { point ->
-            stroke.getPenInfo(point)?.timestamp?.let { timestamp -> timestamp - initialTimestamp }
+        for (index in 0 until googleInkStroke.stroke.inputs.size) {
+            X.add(googleInkStroke.stroke.inputs[index].x)
+            Y.add(googleInkStroke.stroke.inputs[index].y)
+            deltas.add(googleInkStroke.stroke.inputs[index].elapsedTimeMillis)
+            F.add(0f)
         }
 
         InkFormat(
-            timestamp = formatTimestamp(initialTimestamp),
-            X = points.map { point -> point.x },
-            Y = points.map { point ->  point.y},
+            timestamp = formatTimestamp(googleInkStroke.start),
+            X = X,
+            Y = Y,
             T = deltas,
-            F = points.map { point -> stroke.getPenInfo(point)?.pressure ?: 0f },
+            F = F,
             type = "stroke",
-            id = brush.id
+            id = googleInkStroke.id
         )
     }
 
@@ -41,28 +47,24 @@ fun List<Brush>.json(): String {
     return Gson().toJson(inkRoot)
 }
 
-fun parseJson(json: String): List<Brush> {
+fun parseJson(json: String): List<GoogleInkStroke> {
     val inkRoot = Gson().fromJson(json, InkRoot::class.java)
     return inkRoot.items.map { item ->
         val initialTimestamp = stringToTimestamp(item.timestamp)
-        val stroke = InputManager.ExtendedStroke()
 
+        val strokeInputBatch = MutableStrokeInputBatch()
         item.X.forEachIndexed { index, x ->
-            val penInfo = InputManager.PenInfo(
-                pointerType = InputManager.PointerType.PEN_TIP,
-                x = x,
-                y = item.Y[index],
-                timestamp = initialTimestamp + item.T[index],
-                pressure = item.F[index],
-                orientation = 0f,
-                tilt = 0f,
-                primaryButtonState = false,
-                secondaryButtonState = false
-            )
-            stroke.addPoint(penInfo)
+            // On the previous renderer, the first point of each stroke was duplicated, so we need to ignore it in order to be backward compatible in this sample, because Google Ink does not allowed for duplicated points.
+            if (index >= 1
+                && item.X[index] == item.X[index-1]
+                && item.Y[index] == item.Y[index-1]
+                && item.T[index] == item.T[index-1])
+                return@forEachIndexed
+
+            strokeInputBatch.add(StrokeInput.create(x, item.Y[index],    item.T[index], pressure = item.F[index]))
         }
 
-        Brush(id = item.id, stroke = stroke)
+        GoogleInkStroke(id = item.id, start = initialTimestamp, stroke = Stroke(GoogleInkStrokeView.DEFAULT_BRUSH, strokeInputBatch.toImmutable()))
     }
 }
 
