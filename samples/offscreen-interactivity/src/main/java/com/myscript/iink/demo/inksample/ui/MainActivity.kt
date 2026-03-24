@@ -21,7 +21,8 @@ import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
-import com.microsoft.device.ink.InkView
+import com.google.ink.GoogleInkStroke
+import com.google.ink.GoogleInkStrokeView
 import com.myscript.iink.offscreen.demo.R
 import com.myscript.iink.offscreen.demo.databinding.MainActivityBinding
 import java.io.File
@@ -60,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             // Be aware that calling drawStrokes in this context may not be optimal for performance,
             // as it triggers a complete redraw with each LiveData update.
             // While this method serves as a quick demonstration of how strokes are drawn, your application should be designed to handle this more efficiently
-            inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
+            inkViewModel.strokes.observe(this,binding.inkView::drawStrokes)
         }
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
@@ -203,11 +204,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Listen for strokes from InkView.InputManager
+     * Listen for strokes from GoogleInkStrokeView
      */
-    inner class StrokesListener: InkView.StrokesListener {
-        override fun onStrokeAdded(brush: InkView.Brush) {
-            inkViewModel.addStroke(brush)
+    inner class StrokesListener: GoogleInkStrokeView.StrokesListener {
+        override fun onStrokeAdded(stroke: GoogleInkStroke) {
+            inkViewModel.addStroke(stroke)
         }
     }
 }

@@ -68,14 +68,10 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <com.microsoft.device.ink.InkView
+        <com.google.ink.GoogleInkStrokeView
             android:id="@+id/ink_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:enable_pressure="false"
-            app:ink_color="?android:textColorPrimary"
-            app:max_stroke_width="25"
-            app:min_stroke_width="10" />
+            android:layout_height="match_parent"/>
 
         <FrameLayout
             android:id="@+id/recognition_content"
