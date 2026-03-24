@@ -30,6 +30,8 @@ import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.SolverRoot
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
 import com.myscript.iink.demo.ink.serialization.jiix.toScreenCoordinates
+import com.myscript.iink.demo.ink.serialization.json
+import com.myscript.iink.demo.ink.serialization.parseJson
 import com.myscript.iink.demo.inksample.InkApplication
 import com.myscript.iink.demo.inksample.data.InkRepository
 import com.myscript.iink.demo.inksample.data.InkRepositoryImpl
@@ -630,55 +632,51 @@ class InkViewModel(
                 repository.readInkFromFile()
             }
 
-            offscreenEditor?.clear()
-            strokeIdsMapping.clear()
-            _strokes.value = emptyList()
+            _strokes.value = if (jsonString != null) {
+                val strokes = parseJson(jsonString)
+                offscreenEditor?.clear()
+                strokeIdsMapping.clear()
 
-//            _strokes.value = if (jsonString != null) {
-//                val brushes = parseJson(jsonString)
-//                offscreenEditor?.clear()
-//                strokeIdsMapping.clear()
-//
-//                val pointerEvents = withContext(defaultDispatcher) {
-//                    brushes.flatMap { brush ->
-//                        brush.stroke.toPointerEvents().map { pointerEvent ->
-//                            pointerEvent.convertPointerEvent(converter)
-//                        }
-//                    }.toTypedArray()
-//                }
-//
-//                // OffscreenEditor requires a non empty array
-//                if (pointerEvents.isNotEmpty()) {
-//                    val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
-//                    if (addedStrokes != null) {
-//                        brushes.forEachIndexed { index, brush ->
-//                            if (index in addedStrokes.indices) {
-//                                strokeIdsMapping[addedStrokes[index]] = brush.id
-//                            }
-//                        }
-//                    }
-//                }
-//                brushes
-//            } else {
-//                offscreenEditor?.clear()
-//                strokeIdsMapping.clear()
-//                emptyList()
-//            }
+                val pointerEvents = withContext(defaultDispatcher) {
+                    strokes.flatMap { stroke ->
+                        stroke.toPointerEvents().map { pointerEvent ->
+                            pointerEvent.convertPointerEvent(converter)
+                        }
+                    }.toTypedArray()
+                }
+
+                // OffscreenEditor requires a non empty array
+                if (pointerEvents.isNotEmpty()) {
+                    val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
+                    if (addedStrokes != null) {
+                        strokes.forEachIndexed { index, brush ->
+                            if (index in addedStrokes.indices) {
+                                strokeIdsMapping[addedStrokes[index]] = brush.id
+                            }
+                        }
+                    }
+                }
+                strokes
+            } else {
+                offscreenEditor?.clear()
+                strokeIdsMapping.clear()
+                emptyList()
+            }
         }
     }
 
     fun saveInk(callback: () -> Unit) {
-//        viewModelScope.launch(uiDispatcher) {
-//            withContext(ioDispatcher) {
-//                _strokes.value?.json()?.let { jsonString ->
-//                    repository.saveInkToFile(jsonString)
-//                }
-//                engine?.openPackage(contentFile).use { contentPackage ->
-//                    contentPackage?.save()
-//                }
-//            }
-//            callback.invoke()
-//        }
+        viewModelScope.launch(uiDispatcher) {
+            withContext(ioDispatcher) {
+                _strokes.value?.json()?.let { jsonString ->
+                    repository.saveInkToFile(jsonString)
+                }
+                engine?.openPackage(contentFile).use { contentPackage ->
+                    contentPackage?.save()
+                }
+            }
+            callback.invoke()
+        }
     }
 
     fun toggleRecognition(isVisible: Boolean) {
