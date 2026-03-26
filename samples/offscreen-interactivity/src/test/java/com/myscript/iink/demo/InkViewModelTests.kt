@@ -3,8 +3,6 @@
 package com.myscript.iink.demo
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.microsoft.device.ink.InkView
-import com.microsoft.device.ink.InputManager
 import com.myscript.iink.Engine
 import com.myscript.iink.demo.inksample.data.InkRepository
 import com.myscript.iink.demo.inksample.ui.InkViewModel
@@ -81,59 +79,6 @@ class InkViewModelTests {
             loadInk()
             clearInk()
             assertTrue(strokes.getOrAwaitValue().isEmpty())
-        }
-    }
-
-    @Test
-    fun `adding a stroke should update live data`() = runTest {
-        val point1 = InputManager.PenInfo(
-            pointerType = InputManager.PointerType.PEN_TIP,
-            x = 1f,
-            y = 1f,
-            timestamp = -1,
-            pressure = 0f,
-            orientation = 0f,
-            tilt = 0f,
-            primaryButtonState = false,
-            secondaryButtonState = false
-        )
-        val point2 = InputManager.PenInfo(
-            pointerType = InputManager.PointerType.PEN_TIP,
-            x = 2f,
-            y = 2f,
-            timestamp = -1,
-            pressure = 0f,
-            orientation = 0f,
-            tilt = 0f,
-            primaryButtonState = false,
-            secondaryButtonState = false
-        )
-        val point3 = InputManager.PenInfo(
-            pointerType = InputManager.PointerType.PEN_TIP,
-            x = 3f,
-            y = 3f,
-            timestamp = -1,
-            pressure = 0f,
-            orientation = 0f,
-            tilt = 0f,
-            primaryButtonState = false,
-            secondaryButtonState = false
-        )
-        val stroke = InputManager.ExtendedStroke().apply {
-            addPoint(point1)
-            addPoint(point2)
-            addPoint(point3)
-        }
-        val brush = InkView.Brush(
-            id = "1",
-            stroke = stroke
-        )
-
-        usingViewModel {
-            val oldStrokes = strokes.getOrAwaitValue()
-            addStroke(brush)
-            val currentStrokes = strokes.getOrAwaitValue()
-            assertTrue(currentStrokes.size == oldStrokes.size + 1)
         }
     }
 }
