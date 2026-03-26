@@ -30,6 +30,7 @@ dependencies {
     implementation "androidx.activity:activity-ktx:${Versions.androidx_activity}"
     implementation "androidx.appcompat:appcompat:${Versions.appcompat}"
     implementation "com.google.android.material:material:${Versions.material}"
+    implementation "androidx.documentfile:documentfile:${Versions.documentfile}"
 
     implementation project(':UIReferenceImplementation')
     implementation project(':myscript-certificate')
