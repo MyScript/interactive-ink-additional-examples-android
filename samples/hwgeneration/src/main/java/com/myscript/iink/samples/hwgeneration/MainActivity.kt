@@ -23,6 +23,7 @@ import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -30,6 +31,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.coroutineScope
 import com.google.android.material.slider.Slider
@@ -121,7 +124,13 @@ class MainActivity : AppCompatActivity() {
             configuration.setString("content-package.temp-folder", File(filesDir, "tmp").absolutePath)
         }
 
+        enableEdgeToEdge()
         setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         supportActionBar?.title = getString(R.string.app_name)
 
