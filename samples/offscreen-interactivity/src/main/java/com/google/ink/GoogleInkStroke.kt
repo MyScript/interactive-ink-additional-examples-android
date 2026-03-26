@@ -2,9 +2,6 @@
 
 package com.google.ink
 
-import android.graphics.Color
-import androidx.ink.brush.Brush
-import androidx.ink.brush.StockBrushes
 import androidx.ink.strokes.MutableStrokeInputBatch
 import androidx.ink.strokes.Stroke
 import androidx.ink.strokes.StrokeInput
@@ -15,6 +12,7 @@ import java.util.UUID
 
 class GoogleInkStroke(
     val id: String = UUID.randomUUID().toString(),
+    val start: Long = System.currentTimeMillis(),
     val stroke: Stroke) {
 
     fun toPointerEvents(): List<PointerEvent> {
@@ -27,7 +25,7 @@ class GoogleInkStroke(
                 else -> PointerEventType.MOVE
             }
 
-            pointerEvents.add(PointerEvent(pointerEventType, point.x, point.y, point.elapsedTimeMillis, 0f, PointerType.PEN, 0))
+            pointerEvents.add(PointerEvent(pointerEventType, point.x, point.y, start + point.elapsedTimeMillis, 0f, PointerType.PEN, 0))
         }
 
         return pointerEvents
@@ -36,11 +34,14 @@ class GoogleInkStroke(
     companion object {
         fun fromPointerEvents(pointerEvents: List<PointerEvent>): GoogleInkStroke {
             val brush = GoogleInkStrokeView.DEFAULT_BRUSH
+
+            val initialTime = pointerEvents.firstOrNull()?.t ?: 0L
+
             val strokeInputBatch = MutableStrokeInputBatch()
             pointerEvents.forEach {
-                strokeInputBatch.add(StrokeInput.create(it.x, it.y, it.t))
+                strokeInputBatch.add(StrokeInput.create(it.x, it.y, it.t - initialTime))
             }
-            return GoogleInkStroke(stroke = Stroke(brush, strokeInputBatch.toImmutable()))
+            return GoogleInkStroke(start = initialTime, stroke = Stroke(brush, strokeInputBatch.toImmutable()))
         }
     }
 }

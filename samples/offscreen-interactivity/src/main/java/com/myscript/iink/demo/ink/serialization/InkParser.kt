@@ -22,12 +22,12 @@ fun List<GoogleInkStroke>.json(): String {
         for (index in 0 until googleInkStroke.stroke.inputs.size) {
             X.add(googleInkStroke.stroke.inputs[index].x)
             Y.add(googleInkStroke.stroke.inputs[index].y)
-            deltas.add(googleInkStroke.stroke.inputs[index].elapsedTimeMillis - googleInkStroke.stroke.inputs[0].elapsedTimeMillis)
+            deltas.add(googleInkStroke.stroke.inputs[index].elapsedTimeMillis)
             F.add(0f)
         }
 
         InkFormat(
-            timestamp = formatTimestamp(googleInkStroke.stroke.inputs[0].elapsedTimeMillis),
+            timestamp = formatTimestamp(googleInkStroke.start),
             X = X,
             Y = Y,
             T = deltas,
@@ -54,10 +54,10 @@ fun parseJson(json: String): List<GoogleInkStroke> {
 
         val strokeInputBatch = MutableStrokeInputBatch()
         item.X.forEachIndexed { index, x ->
-            strokeInputBatch.add(StrokeInput.create(x, item.Y[index],  initialTimestamp + item.T[index], pressure = item.F[index]))
+            strokeInputBatch.add(StrokeInput.create(x, item.Y[index],    item.T[index], pressure = item.F[index]))
         }
 
-        GoogleInkStroke(id = item.id, stroke = Stroke(GoogleInkStrokeView.DEFAULT_BRUSH, strokeInputBatch.toImmutable()))
+        GoogleInkStroke(id = item.id, start = initialTimestamp, stroke = Stroke(GoogleInkStrokeView.DEFAULT_BRUSH, strokeInputBatch.toImmutable()))
     }
 }
 
