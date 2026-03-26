@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             // Be aware that calling drawStrokes in this context may not be optimal for performance,
             // as it triggers a complete redraw with each LiveData update.
             // While this method serves as a quick demonstration of how strokes are drawn, your application should be designed to handle this more efficiently
-            inkViewModel.strokes.observe(this,binding.inkView::drawStrokes)
+            inkViewModel.strokes.observe(this, binding.inkView::drawStrokes)
         }
         inkViewModel.recognitionFeedback.observe(this, ::onRecognitionUpdate)
         inkViewModel.iinkModel.observe(this, ::onIInkModelUpdate)
