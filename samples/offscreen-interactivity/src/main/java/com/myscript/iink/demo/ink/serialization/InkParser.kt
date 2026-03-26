@@ -54,6 +54,13 @@ fun parseJson(json: String): List<GoogleInkStroke> {
 
         val strokeInputBatch = MutableStrokeInputBatch()
         item.X.forEachIndexed { index, x ->
+            // On the previous renderer, the first point of each stroke was duplicated, so we need to ignore it in order to be backward compatible in this sample, because Google Ink does not allowed for duplicated points.
+            if (index >= 1
+                && item.X[index] == item.X[index-1]
+                && item.Y[index] == item.Y[index-1]
+                && item.T[index] == item.T[index-1])
+                return@forEachIndexed
+
             strokeInputBatch.add(StrokeInput.create(x, item.Y[index],    item.T[index], pressure = item.F[index]))
         }
 
