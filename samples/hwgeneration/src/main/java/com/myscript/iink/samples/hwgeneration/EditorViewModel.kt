@@ -259,15 +259,16 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                 try {
                     events.forEachIndexed { index, pointerEvent ->
                         withContext(Dispatchers.Main) {
+                            val timestamp = System.currentTimeMillis()
                             when (pointerEvent.eventType) {
                                 PointerEventType.DOWN -> {
-                                    editor.pointerDown(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerDown(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.MOVE -> {
-                                    editor.pointerMove(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerMove(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.UP -> {
-                                    editor.pointerUp(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerUp(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.CANCEL -> {
                                     editor.pointerCancel(pointerEvent.pointerId)
