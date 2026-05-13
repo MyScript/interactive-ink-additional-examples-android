@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
 
         engine?.let { engine ->
             editorView?.let { editorView ->
-                editorViewModel.openEditor(engine, editorView)
+                editorViewModel.openEditor(engine, editorView, DEFAULT_LANGUAGE)
             }
         }
 
@@ -180,6 +180,8 @@ class MainActivity : AppCompatActivity() {
                 .show()
             return
         }
+
+        generationViewModel.setLanguage(DEFAULT_LANGUAGE)
 
         generationViewModel.hwrResults.observe(this) { hwrResults ->
             if (hwrResults.isNotEmpty()) {
@@ -249,8 +251,8 @@ class MainActivity : AppCompatActivity() {
 
         generationViewModel.language.value?.let { language ->
             menu?.findItem(R.id.editor_menu_language)?.title = when (language) {
-                HWGLanguage.CHINESE -> getString(R.string.menu_language_en)
-                HWGLanguage.ENGLISH -> getString(R.string.menu_language_zh)
+                AppLanguage.CHINESE -> getString(R.string.menu_language_en)
+                AppLanguage.ENGLISH -> getString(R.string.menu_language_zh)
             }
         }
 
@@ -290,9 +292,11 @@ class MainActivity : AppCompatActivity() {
             R.id.editor_menu_language -> {
                 generationViewModel.language.value?.let { language ->
                     val newLanguage = when (language) {
-                        HWGLanguage.CHINESE -> HWGLanguage.ENGLISH
-                        HWGLanguage.ENGLISH -> HWGLanguage.CHINESE
+                        AppLanguage.CHINESE -> AppLanguage.ENGLISH
+                        AppLanguage.ENGLISH -> AppLanguage.CHINESE
                     }
+
+                    editorViewModel.openPart(newLanguage)
                     generationViewModel.setLanguage(newLanguage)
                 }
                 true
@@ -391,11 +395,11 @@ class MainActivity : AppCompatActivity() {
         val inputText = dialogView.findViewById<EditText>(R.id.text_input)
 
         val spinner = dialogView.findViewById<Spinner>(R.id.profile_dropdown)
-        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles(), generationViewModel.language.value ?: HWGLanguage.ENGLISH)
+        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles(), generationViewModel.language.value ?: AppLanguage.ENGLISH)
         spinner.setAdapter(adapter)
 
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
-        inputTextSize.value = if (generationViewModel.language.value == HWGLanguage.CHINESE) 4f else 3f
+        inputTextSize.value = if (generationViewModel.language.value == AppLanguage.CHINESE) 4f else 3f
 
         val inputForceRandomSeed = dialogView.findViewById<SwitchCompat>(R.id.force_random_seed)
 
@@ -416,10 +420,12 @@ class MainActivity : AppCompatActivity() {
 
         private const val X_OFFSET_DEFAULT_PX = 50f
         private const val Y_OFFSET_DEFAULT_PX = 200f
+
+        private val DEFAULT_LANGUAGE = AppLanguage.ENGLISH
     }
 }
 
-class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>, private val language: HWGLanguage) : BaseAdapter() {
+class StyleAdapter(private val context: Context, private val profiles: List<GenerationProfile>, private val language: AppLanguage) : BaseAdapter() {
 
     override fun getCount(): Int {
         return profiles.size
@@ -447,7 +453,7 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
             profileImageZh.visibility = View.GONE
             profileText.visibility = View.VISIBLE
             profileText.text = File(generationProfile.profilePath).nameWithoutExtension
-        } else if(language == HWGLanguage.CHINESE) {
+        } else if(language == AppLanguage.CHINESE) {
 
             profileImageZh.setImageResource(when (generationProfile.index) {
                 0 -> R.drawable.zh_profile_0

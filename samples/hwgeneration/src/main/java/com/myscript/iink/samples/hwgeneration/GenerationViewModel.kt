@@ -53,11 +53,6 @@ data class GenerationProfile(
     }
 }
 
-enum class HWGLanguage {
-    ENGLISH,
-    CHINESE
-}
-
 class GenerationViewModel(application: Application, private val engine: Engine) : AndroidViewModel(application) {
 
     private var generator: HandwritingGenerator? = null
@@ -78,29 +73,29 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     val message: LiveData<Message?>
         get() = _message
 
-    private val _language = MutableLiveData(DEFAULT_LANGUAGE)
-    val language: LiveData<HWGLanguage>
+    private val _language = MutableLiveData(AppLanguage.ENGLISH)
+    val language: LiveData<AppLanguage>
         get() = _language
 
     init {
         _isGenerating.value = false
 
-        setLanguage(DEFAULT_LANGUAGE)
+//        setLanguage(DEFAULT_LANGUAGE)
     }
 
     private interface HWResultListener {
         fun onResult(result: HWRResult)
     }
 
-    fun setLanguage(language: HWGLanguage) {
+    fun setLanguage(language: AppLanguage) {
         if (generator != null && _language.value == language) return
 
         generator?.cancel()
 
         engine.configuration.apply {
             when (language) {
-                HWGLanguage.ENGLISH -> setString("handwriting-generation.init.resource","mul_Latn-hw-gen.res")
-                HWGLanguage.CHINESE -> setString("handwriting-generation.init.resource","zh-hw-gen.res")
+                AppLanguage.ENGLISH -> setString("handwriting-generation.init.resource","mul_Latn-hw-gen.res")
+                AppLanguage.CHINESE -> setString("handwriting-generation.init.resource","zh-hw-gen.res")
             }
         }
         generator = engine.createHandwritingGenerator()
@@ -235,7 +230,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         })
 
         generator.start("Text", profile, engine.createParameterSet().apply {
-            setBoolean("handwriting-generation.session.preserve-new-line", language.value != HWGLanguage.CHINESE)
+            setBoolean("handwriting-generation.session.preserve-new-line", language.value != AppLanguage.CHINESE)
 
             setNumber("handwriting-generation.session.seed", if (forceRandomSeed) 0L else -1)
 
@@ -288,8 +283,6 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
         private const val LINE_GAP_RATIO = 3
 
         private const val PROFILE_FOLDER = "profiles"
-
-        private val DEFAULT_LANGUAGE = HWGLanguage.ENGLISH
     }
 }
 
