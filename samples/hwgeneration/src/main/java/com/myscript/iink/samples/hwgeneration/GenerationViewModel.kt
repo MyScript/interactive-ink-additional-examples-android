@@ -99,7 +99,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
 
         engine.configuration.apply {
             when (language) {
-                HWGLanguage.ENGLISH -> setString("handwriting-generation.init.resource","en-hw-gen.res")
+                HWGLanguage.ENGLISH -> setString("handwriting-generation.init.resource","mul_Latn-hw-gen.res")
                 HWGLanguage.CHINESE -> setString("handwriting-generation.init.resource","zh-hw-gen.res")
             }
         }
