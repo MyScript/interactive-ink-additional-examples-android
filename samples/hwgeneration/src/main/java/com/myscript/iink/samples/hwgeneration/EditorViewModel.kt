@@ -131,7 +131,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     private var contentPart: ContentPart? = null
     private var editor: Editor? = null
 
-    fun openEditor(engine: Engine, editorView: EditorView) {
+    fun openEditor(engine: Engine, editorView: EditorView, language: AppLanguage) {
         val context = editorView.context.applicationContext
 
         val typefaceMap = FontUtils.loadFontsFromAssets(context.assets)
@@ -145,19 +145,6 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
         editorData.inputController?.inputMode = InputController.INPUT_MODE_AUTO
 
-        val file = File(context.filesDir, "file.iink")
-
-        contentPackage = try {
-            engine.createPackage(file)
-        } catch (e: IOException) {
-            engine.openPackage(file)
-        }
-        contentPart = if (contentPackage?.partCount == 0) {
-            contentPackage?.createPart("Raw Content")
-        } else {
-            contentPackage?.getPart(0)
-        }
-
         editor.addListener(editorListener)
 
         // wait for view size initialization before setting part
@@ -168,18 +155,48 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                     renderer.viewScale = 1f
                     editorView.visibility = View.VISIBLE
 
-                    val configuration = context.assets.open("parts/interactivity.json").bufferedReader().use(Reader::readText)
-                    editor.configuration.inject(configuration)
+                    openPart(language)
 
-                    editor.configuration.setString("lang", "zh_CN")
-
-                    editor.part = contentPart
                     editor.setGestureHandler(gestureHandler)
 
                     setSelectionMode(false)
                 }
             }
         }
+    }
+
+    fun openPart(language: AppLanguage) {
+        val application = getApplication<Application>()
+        val editor = requireNotNull(editor) {
+            "Editor must be initialized before opening a part"
+        }
+
+        reset()
+        editor.part = null
+
+        val configuration = application.assets.open("parts/text_math_shape.json").bufferedReader().use(Reader::readText)
+        editor.configuration.inject(configuration)
+
+        val lang = when(language) {
+            AppLanguage.LATIN -> "mul_Latn"
+            AppLanguage.CHINESE -> "zh_CN"
+        }
+        editor.configuration.setString("lang", lang)
+
+        val file = File(application.filesDir, "file_$language.iink")
+
+        contentPackage = try {
+            editor.engine.createPackage(file)
+        } catch (e: IOException) {
+            editor.engine.openPackage(file)
+        }
+        contentPart = if (contentPackage?.partCount == 0) {
+            contentPackage?.createPart("Raw Content")
+        } else {
+            contentPackage?.getPart(0)
+        }
+
+        editor.part = contentPart
     }
 
     fun closeEditor() {
@@ -270,15 +287,16 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                 try {
                     events.forEachIndexed { index, pointerEvent ->
                         withContext(Dispatchers.Main) {
+                            val timestamp = System.currentTimeMillis()
                             when (pointerEvent.eventType) {
                                 PointerEventType.DOWN -> {
-                                    editor.pointerDown(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerDown(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.MOVE -> {
-                                    editor.pointerMove(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerMove(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.UP -> {
-                                    editor.pointerUp(pointerEvent.x, pointerEvent.y, pointerEvent.t, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
+                                    editor.pointerUp(pointerEvent.x, pointerEvent.y, timestamp, pointerEvent.f, pointerEvent.pointerType, pointerEvent.pointerId)
                                 }
                                 PointerEventType.CANCEL -> {
                                     editor.pointerCancel(pointerEvent.pointerId)
