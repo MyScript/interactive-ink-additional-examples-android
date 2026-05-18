@@ -12,7 +12,7 @@
     <string name="menu_redo">Redo</string>
     <string name="menu_clear">Clear</string>
     <string name="menu_save">Save</string>
-    <string name="menu_language_en">Switch to english</string>
+    <string name="menu_language_en">Switch to latin</string>
     <string name="menu_language_zh">Switch to chinese</string>
 
     <string name="menu_build_profile_from_file">Build Profile from file</string>
