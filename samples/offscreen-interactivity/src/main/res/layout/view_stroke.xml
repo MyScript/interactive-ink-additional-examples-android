@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.ink.authoring.InProgressStrokesView
+        android:id="@+id/strokeview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.google.ink.CanvasView
+        android:id="@+id/canvas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</merge>

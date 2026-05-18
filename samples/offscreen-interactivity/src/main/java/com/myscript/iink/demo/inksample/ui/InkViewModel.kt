@@ -14,7 +14,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.gson.Gson
-import com.microsoft.device.ink.InkView
+import com.google.ink.GoogleInkStroke
 import com.myscript.iink.ContentPart
 import com.myscript.iink.EditorError
 import com.myscript.iink.Engine
@@ -29,8 +29,6 @@ import com.myscript.iink.demo.ink.serialization.jiix.BoundingBox
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.SolverRoot
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
-import com.myscript.iink.demo.ink.serialization.jiix.toBrush
-import com.myscript.iink.demo.ink.serialization.jiix.toPointerEvents
 import com.myscript.iink.demo.ink.serialization.jiix.toScreenCoordinates
 import com.myscript.iink.demo.ink.serialization.json
 import com.myscript.iink.demo.ink.serialization.parseJson
@@ -76,7 +74,7 @@ enum class EditorHistoryAction {
 
 data class EditorHistoryItem(
         val editorHistoryAction: EditorHistoryAction,
-        val strokes: List<InkView.Brush>,
+        val strokes: List<GoogleInkStroke>,
         val iinkHistoryId: String
 )
 
@@ -102,8 +100,8 @@ class InkViewModel(
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
-    private val _strokes: MutableLiveData<List<InkView.Brush>> = MutableLiveData(emptyList())
-    val strokes: LiveData<List<InkView.Brush>>
+    private val _strokes: MutableLiveData<List<GoogleInkStroke>> = MutableLiveData(emptyList())
+    val strokes: LiveData<List<GoogleInkStroke>>
         get() = _strokes
 
     private val undoRedoStack = mutableListOf<List<EditorHistoryItem>>()
@@ -205,7 +203,7 @@ class InkViewModel(
 
             viewModelScope.launch(uiDispatcher) {
                 val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
-                val strokesToRemove = mutableListOf<InkView.Brush>()
+                val strokesToRemove = mutableListOf<GoogleInkStroke>()
 
                 // With workDispatcher, this snippet below will not be processed in parallel but rather one at a time.
                 // This is especially useful when you want to ensure that tasks are executed in a specific order,
@@ -252,7 +250,7 @@ class InkViewModel(
 
             viewModelScope.launch(uiDispatcher) {
                 val remainingStrokes = _strokes.value?.toMutableList() ?: mutableListOf()
-                val strokesToRemove = mutableListOf<InkView.Brush>()
+                val strokesToRemove = mutableListOf<GoogleInkStroke>()
 
                 withContext(workDispatcher) {
                     // Retrieve the full stroke ids
@@ -299,7 +297,7 @@ class InkViewModel(
                     }
 
                     // Convert remaining events to brushes and map to remaining item ids
-                    val brushes = remainingItemEvents.map { pointerEvents -> pointerEvents.toBrush(converter) }
+                    val brushes = remainingItemEvents.map { pointerEvents -> GoogleInkStroke.fromPointerEvents(pointerEvents) }
                     newItemIds?.zip(brushes)?.forEach { (iinkStrokeId, brush) ->
                         strokeIdsMapping[iinkStrokeId] = brush.id
                     }
@@ -481,7 +479,7 @@ class InkViewModel(
         }
     }
 
-    private fun addToUndoRedoStack(action: EditorHistoryAction, strokes: List<InkView.Brush>, iinkHistoryId: String): EditorHistoryState {
+    private fun addToUndoRedoStack(action: EditorHistoryAction, strokes: List<GoogleInkStroke>, iinkHistoryId: String): EditorHistoryState {
         return addToUndoRedoStack(listOf(EditorHistoryItem(action, strokes, iinkHistoryId)))
     }
 
@@ -501,8 +499,8 @@ class InkViewModel(
         }
     }
 
-    private fun addStrokesForUndoRedo(initialStrokes: List<InkView.Brush>, strokesToAdd: List<InkView.Brush>): List<InkView.Brush> {
-        strokesToAdd.map(InkView.Brush::id).forEach { appStrokeId ->
+    private fun addStrokesForUndoRedo(initialStrokes: List<GoogleInkStroke>, strokesToAdd: List<GoogleInkStroke>): List<GoogleInkStroke> {
+        strokesToAdd.map(GoogleInkStroke::id).forEach { appStrokeId ->
             strokeIdsMappingDeleted.entries.firstOrNull { entry ->
                 entry.value == appStrokeId
             }?.key?.also { id ->
@@ -514,8 +512,8 @@ class InkViewModel(
         return initialStrokes + strokesToAdd
     }
 
-    private fun removeStrokesForUndoRedo(initialStrokes: List<InkView.Brush>, strokesToRemove: List<InkView.Brush>): List<InkView.Brush> {
-        val strokeIdsToRemove = strokesToRemove.map(InkView.Brush::id)
+    private fun removeStrokesForUndoRedo(initialStrokes: List<GoogleInkStroke>, strokesToRemove: List<GoogleInkStroke>): List<GoogleInkStroke> {
+        val strokeIdsToRemove = strokesToRemove.map(GoogleInkStroke::id)
 
         strokeIdsToRemove.forEach { id ->
             strokeIdsMapping.remove(id)?.let { appStrokeId ->
@@ -635,13 +633,13 @@ class InkViewModel(
             }
 
             _strokes.value = if (jsonString != null) {
-                val brushes = parseJson(jsonString)
+                val strokes = parseJson(jsonString)
                 offscreenEditor?.clear()
                 strokeIdsMapping.clear()
 
                 val pointerEvents = withContext(defaultDispatcher) {
-                    brushes.flatMap { brush ->
-                        brush.stroke.toPointerEvents().map { pointerEvent ->
+                    strokes.flatMap { stroke ->
+                        stroke.toPointerEvents().map { pointerEvent ->
                             pointerEvent.convertPointerEvent(converter)
                         }
                     }.toTypedArray()
@@ -651,14 +649,14 @@ class InkViewModel(
                 if (pointerEvents.isNotEmpty()) {
                     val addedStrokes = offscreenEditor?.addStrokes(pointerEvents, false)
                     if (addedStrokes != null) {
-                        brushes.forEachIndexed { index, brush ->
+                        strokes.forEachIndexed { index, brush ->
                             if (index in addedStrokes.indices) {
                                 strokeIdsMapping[addedStrokes[index]] = brush.id
                             }
                         }
                     }
                 }
-                brushes
+                strokes
             } else {
                 offscreenEditor?.clear()
                 strokeIdsMapping.clear()
@@ -687,18 +685,18 @@ class InkViewModel(
         }
     }
 
-    fun addStroke(brush: InkView.Brush) {
+    fun addStroke(stroke: GoogleInkStroke) {
         viewModelScope.launch(uiDispatcher) {
-            _strokes.also { it.value = it.value?.plus(brush) }
-            val pointerEvents = brush.stroke.toPointerEvents().map { pointerEvent ->
+            _strokes.also { it.value = it.value?.plus(stroke) }
+            val pointerEvents = stroke.toPointerEvents().map { pointerEvent ->
                 pointerEvent.convertPointerEvent(converter)
             }.toTypedArray()
 
             offscreenEditor?.addStrokes(pointerEvents, true)?.firstNotNullOf { strokeId ->
-                strokeIdsMapping[strokeId] = brush.id
+                strokeIdsMapping[strokeId] = stroke.id
             }
 
-            _editorHistoryState.value = addToUndoRedoStack(EditorHistoryAction.ADD, listOf(brush), iinkHistoryId())
+            _editorHistoryState.value = addToUndoRedoStack(EditorHistoryAction.ADD, listOf(stroke), iinkHistoryId())
         }
     }
 
