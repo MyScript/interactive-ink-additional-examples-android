@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity() {
         generationViewModel.language.value?.let { language ->
             menu?.findItem(R.id.editor_menu_language)?.title = when (language) {
                 AppLanguage.CHINESE -> getString(R.string.menu_language_en)
-                AppLanguage.ENGLISH -> getString(R.string.menu_language_zh)
+                AppLanguage.LATIN -> getString(R.string.menu_language_zh)
             }
         }
 
@@ -292,8 +292,8 @@ class MainActivity : AppCompatActivity() {
             R.id.editor_menu_language -> {
                 generationViewModel.language.value?.let { language ->
                     val newLanguage = when (language) {
-                        AppLanguage.CHINESE -> AppLanguage.ENGLISH
-                        AppLanguage.ENGLISH -> AppLanguage.CHINESE
+                        AppLanguage.CHINESE -> AppLanguage.LATIN
+                        AppLanguage.LATIN -> AppLanguage.CHINESE
                     }
 
                     editorViewModel.openPart(newLanguage)
@@ -395,7 +395,7 @@ class MainActivity : AppCompatActivity() {
         val inputText = dialogView.findViewById<EditText>(R.id.text_input)
 
         val spinner = dialogView.findViewById<Spinner>(R.id.profile_dropdown)
-        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles(), generationViewModel.language.value ?: AppLanguage.ENGLISH)
+        val adapter = StyleAdapter(this@MainActivity, generationViewModel.getProfiles(), generationViewModel.language.value ?: AppLanguage.LATIN)
         spinner.setAdapter(adapter)
 
         val inputTextSize = dialogView.findViewById<Slider>(R.id.text_size)
@@ -421,7 +421,7 @@ class MainActivity : AppCompatActivity() {
         private const val X_OFFSET_DEFAULT_PX = 50f
         private const val Y_OFFSET_DEFAULT_PX = 200f
 
-        private val DEFAULT_LANGUAGE = AppLanguage.ENGLISH
+        private val DEFAULT_LANGUAGE = AppLanguage.LATIN
     }
 }
 

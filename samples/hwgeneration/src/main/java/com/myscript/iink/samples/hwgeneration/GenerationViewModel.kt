@@ -73,14 +73,12 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
     val message: LiveData<Message?>
         get() = _message
 
-    private val _language = MutableLiveData(AppLanguage.ENGLISH)
+    private val _language = MutableLiveData(AppLanguage.LATIN)
     val language: LiveData<AppLanguage>
         get() = _language
 
     init {
         _isGenerating.value = false
-
-//        setLanguage(DEFAULT_LANGUAGE)
     }
 
     private interface HWResultListener {
@@ -94,7 +92,7 @@ class GenerationViewModel(application: Application, private val engine: Engine) 
 
         engine.configuration.apply {
             when (language) {
-                AppLanguage.ENGLISH -> setString("handwriting-generation.init.resource","mul_Latn-hw-gen.res")
+                AppLanguage.LATIN -> setString("handwriting-generation.init.resource","mul_Latn-hw-gen.res")
                 AppLanguage.CHINESE -> setString("handwriting-generation.init.resource","zh-hw-gen.res")
             }
         }

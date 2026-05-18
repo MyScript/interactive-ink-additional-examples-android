@@ -167,7 +167,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         editor.configuration.inject(configuration)
 
         val lang = when(language) {
-            AppLanguage.ENGLISH -> "mul_Latn"
+            AppLanguage.LATIN -> "mul_Latn"
             AppLanguage.CHINESE -> "zh_CN"
         }
         editor.configuration.setString("lang", lang)
