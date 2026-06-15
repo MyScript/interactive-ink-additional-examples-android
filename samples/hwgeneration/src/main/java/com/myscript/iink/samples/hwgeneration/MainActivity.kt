@@ -488,6 +488,13 @@ class StyleAdapter(private val context: Context, private val profiles: List<Gene
                 12 -> R.drawable.generation_12
                 13 -> R.drawable.generation_13
                 14 -> R.drawable.generation_14
+                15 -> R.drawable.generation_15
+                16 -> R.drawable.generation_16
+                17 -> R.drawable.generation_17
+                18 -> R.drawable.generation_18
+                19 -> R.drawable.generation_19
+                20 -> R.drawable.generation_20
+                21 -> R.drawable.generation_21
                 else -> R.drawable.generation_0
             })
             profileImageEn.visibility = View.VISIBLE
