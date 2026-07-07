@@ -253,6 +253,7 @@ class InkViewModel(
                 val strokesToRemove = mutableListOf<GoogleInkStroke>()
 
                 withContext(workDispatcher) {
+                    val displayMetrics = displayMetrics ?: return@withContext
                     // Retrieve the full stroke ids
                     val fullItemIds = itemIds.map { itemId ->
                         if (itemIdHelper.isPartialItem(itemId))
@@ -297,7 +298,7 @@ class InkViewModel(
                     }
 
                     // Convert remaining events to brushes and map to remaining item ids
-                    val brushes = remainingItemEvents.map { pointerEvents -> GoogleInkStroke.fromPointerEvents(pointerEvents) }
+                    val brushes = remainingItemEvents.map { pointerEvents -> GoogleInkStroke.fromPointerEvents(pointerEvents, displayMetrics) }
                     newItemIds?.zip(brushes)?.forEach { (iinkStrokeId, brush) ->
                         strokeIdsMapping[iinkStrokeId] = brush.id
                     }
@@ -337,51 +338,52 @@ class InkViewModel(
                 }
                 // Parse the exported JIIX content and map it to a list of words that are displayed on the screen.
                 // If the exportedData is null, an empty list is used instead.
-                val adjustedWords = if (exportedData == null) {
-                    emptyList()
-                } else {
-                    val recognitionRoot = Gson().fromJson(exportedData, RecognitionRoot::class.java)
+                _recognitionFeedback.value = _recognitionFeedback.value?.copy(items = withContext(defaultDispatcher) {
+                    if (exportedData == null) {
+                        emptyList()
+                    } else {
+                        val recognitionRoot = Gson().fromJson(exportedData, RecognitionRoot::class.java)
 
-                    // Filter out elements that are null or contain any null list of words
-                    val recognitionResult = mutableListOf<RecognitionItem>()
+                        // Filter out elements that are null or contain any null list of words
+                        val recognitionResult = mutableListOf<RecognitionItem>()
 
-                    recognitionRoot.elements?.forEach { element ->
-                        if (element.expressions != null) {
+                        recognitionRoot.elements?.forEach { element ->
+                            if (element.expressions != null) {
 
-                            val isSolvable = try {
-                                offscreenEditor?.mathSolverController?.getAvailableActions(element.id)?.contains("numerical-computation") == true
-                            } catch (e: IllegalArgumentException) {
-                                false
-                            }
+                                val isSolvable = try {
+                                    offscreenEditor?.mathSolverController?.getAvailableActions(element.id)?.contains("numerical-computation") == true
+                                } catch (e: IllegalArgumentException) {
+                                    false
+                                }
 
-                            // If possible, get solver output and strokes.
-                            if (isSolvable) {
-                                val solverJIIX = offscreenEditor?.mathSolverController?.getActionOutput(element.id, "numerical-computation", MimeType.JIIX, engine?.createParameterSet()?.apply {
-                                    setBoolean("export.jiix.strokes", true)
-                                    setStringArray("math.solver.numerical-computation", arrayOf("at-right-of-equal-sign"))
-                                    setBoolean("math.solver.enable-syntactic-correction", false)
-                                    setBoolean("math.solver.display-implicit-multiply", false)
-                                })
+                                // If possible, get solver output and strokes.
+                                if (isSolvable) {
+                                    val solverJIIX = offscreenEditor?.mathSolverController?.getActionOutput(element.id, "numerical-computation", MimeType.JIIX, engine?.createParameterSet()?.apply {
+                                        setBoolean("export.jiix.strokes", true)
+                                        setStringArray("math.solver.numerical-computation", arrayOf("at-right-of-equal-sign"))
+                                        setBoolean("math.solver.enable-syntactic-correction", false)
+                                        setBoolean("math.solver.display-implicit-multiply", false)
+                                    })
 
-                                val solverRoot = Gson().fromJson(solverJIIX, SolverRoot::class.java)
-                                if (solverRoot.type == "Math") {
-                                    solverRoot.expressions?.forEach { expression ->
-                                        expression.operands?.forEach { operand ->
-                                            if (operand.solverOutput) {
-                                                val strokes = mutableListOf<Stroke>()
-                                                operand.items?.forEach loop@{ item ->
-                                                    val xPoints = item.X ?: return@loop
-                                                    val yPoints = item.Y ?: return@loop
-                                                    val converter = converter ?: return@loop
+                                    val solverRoot = Gson().fromJson(solverJIIX, SolverRoot::class.java)
+                                    if (solverRoot.type == "Math") {
+                                        solverRoot.expressions?.forEach { expression ->
+                                            expression.operands?.forEach { operand ->
+                                                if (operand.solverOutput) {
+                                                    val strokes = mutableListOf<Stroke>()
+                                                    operand.items?.forEach loop@{ item ->
+                                                        val xPoints = item.X ?: return@loop
+                                                        val yPoints = item.Y ?: return@loop
+                                                        val converter = converter ?: return@loop
 
-                                                    val points = mutableListOf<PointF>()
-                                                    for (index in xPoints.indices) {
+                                                        val points = mutableListOf<PointF>()
+                                                        for (index in xPoints.indices) {
                                                         points.add(PointF(
                                                                 converter.x_mm2px(xPoints[index]),
                                                                 converter.y_mm2px(yPoints[index])))
+                                                        }
+                                                        strokes.add(Stroke(points))
                                                     }
-                                                    strokes.add(Stroke(points))
-                                                }
 
                                                 recognitionResult.add(
                                                     RecognitionItem(
@@ -391,19 +393,19 @@ class InkViewModel(
                                                         strokes = strokes
                                                     )
                                                 )
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
                             recognitionResult.add(RecognitionItem(
                                 text = "",
                                 type = BlockType.MATH,
                                 boundingBox = element.boundingBox.toScreenCoordinates(converter)
                             ))
-                        }
-                        if (element.words != null) {
+                            }
+                            if (element.words != null) {
                             recognitionResult.addAll(
                                 element.words.map { word ->
                                     RecognitionItem(
@@ -413,11 +415,12 @@ class InkViewModel(
                                     )
                                 }
                             )
+                            }
                         }
-                    }
 
-                    recognitionResult
-                }
+                        recognitionResult
+                    }
+                })
 
                 _iinkJIIX.value = withContext(defaultDispatcher) {
                     val engine = engine ?: return@withContext ""
@@ -433,9 +436,10 @@ class InkViewModel(
                     })
                 } ?: ""
 
-                fullJIIX = offscreenEditor?.export_(emptyArray(), MimeType.JIIX, engine?.createParameterSet()) ?: ""
+                fullJIIX = withContext(defaultDispatcher) {
+                    offscreenEditor?.export_(emptyArray(), MimeType.JIIX, engine?.createParameterSet())
+                }  ?: ""
 
-                _recognitionFeedback.value = _recognitionFeedback.value?.copy(items = adjustedWords)
             }
         }
 
