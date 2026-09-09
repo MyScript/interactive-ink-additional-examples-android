@@ -26,6 +26,7 @@ import com.myscript.iink.MimeType
 import com.myscript.iink.OffscreenEditor
 import com.myscript.iink.OffscreenGestureAction
 import com.myscript.iink.demo.ink.serialization.jiix.BoundingBox
+import com.myscript.iink.demo.ink.serialization.jiix.OperandSolver
 import com.myscript.iink.demo.ink.serialization.jiix.RecognitionRoot
 import com.myscript.iink.demo.ink.serialization.jiix.SolverRoot
 import com.myscript.iink.demo.ink.serialization.jiix.convertPointerEvent
@@ -370,29 +371,11 @@ class InkViewModel(
                                         solverRoot.expressions?.forEach { expression ->
                                             expression.operands?.forEach { operand ->
                                                 if (operand.solverOutput) {
-                                                    val strokes = mutableListOf<Stroke>()
-                                                    operand.items?.forEach loop@{ item ->
-                                                        val xPoints = item.X ?: return@loop
-                                                        val yPoints = item.Y ?: return@loop
-                                                        val converter = converter ?: return@loop
+                                                    val strokes = strokesFromOperands(listOf(operand))
 
-                                                        val points = mutableListOf<PointF>()
-                                                        for (index in xPoints.indices) {
-                                                        points.add(PointF(
-                                                                converter.x_mm2px(xPoints[index]),
-                                                                converter.y_mm2px(yPoints[index])))
-                                                        }
-                                                        strokes.add(Stroke(points))
+                                                    if (strokes.isNotEmpty()) {
+                                                        recognitionResult.add(RecognitionItem(text = operand.label ?: "", type = BlockType.SOLVING, boundingBox = operand.boundingBox?.toScreenCoordinates(converter), strokes = strokes))
                                                     }
-
-                                                recognitionResult.add(
-                                                    RecognitionItem(
-                                                        text = operand.label ?: "",
-                                                        type = BlockType.SOLVING,
-                                                        boundingBox = operand.boundingBox?.toScreenCoordinates(converter),
-                                                        strokes = strokes
-                                                    )
-                                                )
                                                 }
                                             }
                                         }
@@ -441,6 +424,29 @@ class InkViewModel(
                 }  ?: ""
 
             }
+        }
+
+        private fun strokesFromOperands(operands: List<OperandSolver>): List<Stroke> {
+            val strokes = mutableListOf<Stroke>()
+            operands.forEach { operand ->
+                operand.items?.forEach loop@{ item ->
+                    if (item.id == "generated-stroke") {
+                        val xPoints = item.X ?: return@loop
+                        val yPoints = item.Y ?: return@loop
+                        val converter = converter ?: return@loop
+
+                        val points = mutableListOf<PointF>()
+                        for (index in xPoints.indices) {
+                            points.add(PointF(converter.x_mm2px(xPoints[index]), converter.y_mm2px(yPoints[index])))
+                        }
+                        strokes.add(Stroke(points))
+                    }
+                }
+                if (!operand.operands.isNullOrEmpty()) {
+                    strokes.addAll(strokesFromOperands(operand.operands))
+                }
+            }
+            return strokes
         }
 
         override fun onError(editor: OffscreenEditor, blockId: String, err: EditorError, message: String) {

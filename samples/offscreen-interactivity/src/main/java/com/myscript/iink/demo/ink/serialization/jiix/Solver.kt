@@ -11,6 +11,8 @@ data class ItemSolver(
     val X: List<Float>? = null,
     @SerializedName("Y")
     val Y: List<Float>? = null,
+    @SerializedName("id")
+    val id: String? = null
 )
 
 data class OperandSolver(
@@ -21,7 +23,9 @@ data class OperandSolver(
     @SerializedName("solver-output")
     val solverOutput: Boolean = false,
     @SerializedName("items")
-    val items: List<ItemSolver>? = null
+    val items: List<ItemSolver>? = null,
+    @SerializedName("operands")
+    val operands: List<OperandSolver>? = null
 )
 
 data class ExpressionSolver(
